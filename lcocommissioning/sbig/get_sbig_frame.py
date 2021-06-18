@@ -20,7 +20,18 @@ class LCOLab:
     def __init__(self):
         self.ins = vxi11.Instrument('172.16.4.6')
 
-        _logger.debug ("VXI11 interface: %s" % (self.ins.ask("*IDN?")))
+        _logger.info ("VXI11 interface: %s" % (self.ins.ask("*IDN?")))
+        _logger.info ("Voltage High is %5.2f V" % (float(self.ins.ask("voltage:level:high?"))))
+
+
+    def set_high_voltage (self, v):
+        if v > 5.0:
+            _logger.error ("voltage higher than 5 Volts is not allowed. Aborting")
+            exit (1)
+        if v < 0.0:
+            _logger.error ("voltage lower than 0 v is not allowed! Aborting")
+            exit (1)
+        self.ins.write (f"voltage:level:high {v}V")
 
     def expose(self, exptime, block=True, overhead=0):
         _logger.debug ("Lab exposing for % 5.2f s" % (exptime))
@@ -167,6 +178,13 @@ def main():
         lab.expose(exptime = args.testled, overhead = 1, block=True)
         print ("LED OFF")
         exit (0)
+
+    if args.setledhigh:
+        lab = LCOLab()
+        lab.set_high_voltage(args.setledhigh)
+        exit (0)
+
+
     qhyccd = restcam("inst.1m0a.doma.mfg.lco.gtn:8080")
 
 
@@ -202,11 +220,14 @@ def main():
 
 
     for exptime in args.exptime:
-        _logger.info (f"takeing exposures for exptie {exptime}")
+        _logger.info (f"takeing exposures for exptime {exptime}")
         for ii in range (args.expcnt):
             imagename=f"{args.outputpath}/restcam-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%S')}.{suffix}.fits"
             if args.flat and lab is not None:
-                lab.expose(exptime = exptime, overhead = 2, block=False)
+                lab.expose(exptime = exptime, overhead = 10, block=False)
+                # let the led intensity stabilize. Seems important for very short <5) sec exposure times.
+                time.sleep (5)
+
 
             qhyccd.getframe(exptime, imagename)
 
@@ -231,6 +252,7 @@ def parseCommandLine():
     actions.add_argument ("--settemp", type=float, help="Set CCD target temperature" )
     actions.add_argument ("--gettemp", action = "store_true",  help="get CCD target temperature" )
     actions.add_argument ("--testled", type=float,  help="testled" )
+    actions.add_argument ("--setledhigh", type=float,  default=5.0, help="testled" )
     actions.add_argument ("--chamberpump", type = bool,  help="cycle detector chaber decissitant" )
 
 

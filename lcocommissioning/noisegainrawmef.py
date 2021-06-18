@@ -171,7 +171,7 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, max
                 bestgain = np.mean(statdata[goodgains])
 
         plt.plot(alllevels[ext], allgains[ext], 'o', label="extension %s data" % (ext))
-        plt.hlines(bestgain, 0, 64000, label="Ext %d gain: %5.2f e-/ADU" % (ext, bestgain))
+        plt.hlines(bestgain, 0, np.max(levels), label="Ext %d gain: %5.2f e-/ADU" % (ext, bestgain))
         print("Best gain for ext %d: %5.2f" % (ext, bestgain))
 
     plt.ylim([0, 7])
@@ -220,9 +220,9 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, max
     ax2.set_xlabel ("Exposure Level [ADU]")
     ax2.set_ylabel ("Residual (%)")
 
-    ax1.set_ylim([0, 65000])
-    ax2.set_xlim([0, 65000])
-    ax2.set_ylim([-1,1])
+    #ax1.set_ylim([0, 65000])
+    #ax2.set_xlim([0, 65000])
+    #ax2.set_ylim([-5,5])
     plt.savefig("texplevel.png", bbox_inches="tight")
     plt.close()
 

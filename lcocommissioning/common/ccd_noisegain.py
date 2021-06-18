@@ -126,7 +126,9 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
         shotnoises.append(shotnoise)
         level1s.append(level1)
         level2s.append(level2)
-        exptimes.append(flat1.primaryheader['EXPTIME'])
+        et  = flat1.primaryheader['EXPTIME']
+        exptimes.append(et)
+
 
     # sanity check on gain and levels:
     retval = (gains, levels, noises, shotnoises, level1s, level2s, exptimes)

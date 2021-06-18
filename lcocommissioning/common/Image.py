@@ -54,9 +54,11 @@ class Image(object):
 
         # Get the main header
         self.primaryheader = hdulist[0].header
-        if (alreadyopenedhdu or filename.endswith(".fz")) and (len (hdulist) > 1) :
-            for card in hdulist[1].header:
-                self.primaryheader.append (card)
+        # if (alreadyopenedhdu or filename.endswith(".fz")) and (len (hdulist) > 1) :
+        #     for card in hdulist[1].header:
+        #         if card not in self.primaryheader:
+        #
+        #             self.primaryheader[card] = hdulist[1].header[card]
 
         # Check for multi-extension fits
         self.extension_headers = []
@@ -69,6 +71,7 @@ class Image(object):
         if len (sci_extensions) == 0:
             _log.debug ("No SCI extenstion found in image %s. Forcing primary ." % filename)
             sci_extensions = [hdulist[0]]
+        self.primaryheader['EXPTIME'] = sci_extensions[0].header['REQTIME']
 
         # Find out whow big dat are. Warning: assumption is that all extensions have same dimensions.
         datasec = sci_extensions[0].header.get('DATASEC')
