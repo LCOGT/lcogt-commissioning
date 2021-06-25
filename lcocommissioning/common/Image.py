@@ -71,7 +71,7 @@ class Image(object):
         if len (sci_extensions) == 0:
             _log.debug ("No SCI extenstion found in image %s. Forcing primary ." % filename)
             sci_extensions = [hdulist[0]]
-        self.primaryheader['EXPTIME'] = sci_extensions[0].header['REQTIME']
+        #self.primaryheader['EXPTIME'] = sci_extensions[0].header['EXPTIME']
 
         # Find out whow big dat are. Warning: assumption is that all extensions have same dimensions.
         datasec = sci_extensions[0].header.get('DATASEC')

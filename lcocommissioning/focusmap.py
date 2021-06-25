@@ -21,11 +21,12 @@ def plotdistribution(imagecatalog, name=None):
     std = np.std (imagecatalog['fwhm'])
     medianfwhm = np.median (imagecatalog['fwhm'][ np.abs (imagecatalog['fwhm'] - medianfwhm) < std*2])
     good =  np.abs (imagecatalog['fwhm'] - medianfwhm) < std*2
-
+    print (f"Median FWHM {medianfwhm}")
 
     fig, ax = plt.subplots()
     ax.set_box_aspect(1)
     plt.scatter (x=imagecatalog['x'][good], y=imagecatalog['y'][good], c=imagecatalog['ellipticity'][good], vmin=0,vmax=0.15)
+    #plt.scatter (x=imagecatalog['x'][good], y=imagecatalog['y'][good], c=imagecatalog['fwhm'][good], vmin=medianfwhm-1,vmax=medianfwhm+1)
     plt.colorbar()
     plt.xlabel ("x center")
     plt.ylabel ("y center")
@@ -37,14 +38,13 @@ def plotdistribution(imagecatalog, name=None):
     plt.plot (imagecatalog['x'][good], imagecatalog['ellipticity'][good],'.')
     plt.xlabel ("x position")
     plt.ylabel ("ellipticity")
+    plt.ylim([0,0.3])
 
-
-    plt.ylim([0,0.2])
     plt.subplot (2,1,1)
     plt.plot (imagecatalog['y'][good], imagecatalog['ellipticity'][good], '.')
     plt.xlabel ("y position")
     plt.ylabel ("ellipticity")
-    plt.ylim([0,0.2])
+    plt.ylim([0,0.3])
     plt.savefig ('ellipticity1d.png')
 
 
@@ -53,10 +53,7 @@ def main():
     catalogmaker = SEPSourceCatalogProvider()
 
     for image in sys.argv[1:]:
-
         catalog, wcs = catalogmaker.get_source_catalog(image, )
-
-        print (catalog['x'])
         plotdistribution(catalog)
 
 
