@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import logging
+import math
 import tempfile
 import threading
 from ctypes import *
@@ -98,17 +99,22 @@ class restcam:
         pass
 
 
-    def sendSettings (self, payload):
-        r = requests.get(f"http://{self.ipaddr}/api/ImagerSetSettings.cgi", data = payload)
+    def sendSettings (self, key, value):
+        r = requests.get(f"http://{self.ipaddr}/api/ImagerSetSettings.cgi?{key}={value}")
         return r
+
+    def getSettings (self, datum):
+
+        r = requests.get(f"http://{self.ipaddr}/api/ImagerGetSettings.cgi?{datum}")
+        _logger.debug (f'get Settings text: {r.text}')
+        return r.text
 
     def setBinning(self, wbin, hbin):
         self.bin_x = wbin
         self.bin_y = hbin
-        payload = {'BinX' : self.bin_x,
-                   'BinY' : self.bin_y}
-        r = self.sendSettings(payload)
-        _logger.info(f"Binning returned {r}")
+        r = self.sendSettings('BinX', self.bin_x)
+        r = self.sendSettings('BinY', self.bin_y)
+        _logger.info(f"Binning returned {r} {r.text}")
 
 
     def setGain(self, gain):
@@ -118,17 +124,27 @@ class restcam:
     def getGain (self):
         return 1.0
 
-
     def setTemp (self, temperature):
-        self.setpoint = (temperature)
-
-
+        self.setpoint = float(temperature)
+        assert (self.setpoint > -30)
+        assert (self.setpoint < 30)
+        self.sendSettings('CCDTemperatureSetpoint', self.setpoint)
+        self.sendSettings('CoolerState',1)
 
 
     def getTemp (self):
+        try:
+            r = float(self.getSettings('CCDTemperature'))
+        except:
+            r = math.nan
+        return r
 
-        return 0.0
-
+    def getTempSetpoint (self):
+        try:
+            r = float(self.getSettings('CCDTemperatureSetpoint'))
+        except:
+            r = math.nan
+        return r
 
 
     def setROI(self,x,y):
@@ -154,6 +170,7 @@ class restcam:
 
         _logger.info (f"Starting exposure {exptime} seconds")
 
+        self.sendSettings('OverScan',1)
         frametype = 1
         if ('b00' in filename) or ('d00') in filename:
             frametype=2
@@ -223,13 +240,16 @@ def main():
 
 
     if args.settemp is not None:
+        print (f"Setting target temperature to {args.settemp: 6.2f}")
         qhyccd.setTemp(args.settemp)
         qhyccd.close()
         exit(0)
 
 
     if args.gettemp:
-        qhyccd.getTemp()
+        t = qhyccd.getTemp()
+        setpoint = qhyccd.getTempSetpoint()
+        print (f"detector temperature is {t: 6.2f} deg C, setpoint is {setpoint: 6.2f}")
         qhyccd.close()
         exit(0)
 
