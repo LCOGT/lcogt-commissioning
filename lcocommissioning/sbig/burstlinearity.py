@@ -46,7 +46,7 @@ def parseCommandLine():
 
     args = parser.parse_args()
 
-    logging.basicConfig(level=getattr(logging, 'DEBUG'),
+    logging.basicConfig(level=getattr(logging, 'INFO'),
                     format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
 
 
