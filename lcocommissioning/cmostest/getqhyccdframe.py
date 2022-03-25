@@ -162,7 +162,7 @@ class QHYCCD:
     def getPixelSize(self):
         return self.w.value, self.h.value
 
-    def getframe(self, exptime, filename):
+    def getframe(self, exptime, filename, args=None):
 
         self.qhyccd.SetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_EXPOSURE,
                                    c_double((exptime * 1000. * 1000.)))  # unit: us
@@ -182,9 +182,11 @@ class QHYCCD:
         _logger.debug(f"Starting fits write to {filename}")
         start_fitswrite = datetime.datetime.utcnow()
         x = np.asarray(self.imgdata)
-
+        object = None
+        if args is not None:
+            object = f"led {args.ledvoltage} nburst {args.nburstcycles}"
         prihdr = fits.Header()
-        prihdr['OBJECT'] = ""
+        prihdr['OBJECT'] = object
         prihdr['EXPTIME'] = exptime
         prihdr['FILTER'] = 'None'
         prihdr['AIRMASS'] = 1.0
@@ -264,7 +266,7 @@ def main():
                     th =threading.Thread ( target=lab.expose_burst, kwargs={'exptime':exptime, 'ncycles':args.nburstcycles, 'overhead':7, 'voltage':args.ledvoltage, 'block':False})
                     th.start()
 
-            qhyccd.getframe(exptime, imagename)
+            qhyccd.getframe(exptime, imagename, args=args)
 
             if args.flat:
                 time.sleep(1)
