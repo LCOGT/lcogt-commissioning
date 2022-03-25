@@ -78,8 +78,8 @@ def combinedarks (listofdarks):
         a[i, :, :] = data.data[0][:, :] #- dark
         #_logger.info (f"dark oversan: {dark}")
     stacked_data = a.sum(axis=0) / len(listofdarks)
-    std = np.std(stacked_data)
-    m = np.median(stacked_data)
+    std = np.std(stacked_data[100:-100,100:-100])
+    m = np.median(stacked_data[100:-100,100:-100])
     plt.figure()
     plt.imshow (stacked_data, vmin=m-1*std, vmax = m+1*std)
     plt.savefig('masterdark.png')
