@@ -5,77 +5,17 @@ import math
 import tempfile
 import threading
 from ctypes import *
-import numpy as np
-import time
 import astropy.io.fits as fits
-import vxi11
 import requests
 import time
-from io import BytesIO
+from lcocommissioning.common.lco_ccdlab import LED_Illuminator
+
 _logger = logging.getLogger(__name__)
 
 requests_logger = logging.getLogger('connectionpool')
 requests_logger.setLevel(logging.ERROR)
 
-class LCOLab:
 
-    def __init__(self):
-        self.ins = vxi11.Instrument('172.16.4.6')
-
-        _logger.debug ("VXI11 interface: %s" % (self.ins.ask("*IDN?")))
-
-    def expose(self, exptime, voltage = None, block=True, overhead=0):
-        ''' Expose via constant illumination.
-        Sets the function generator into pulse mode'''
-        _logger.debug ("Lab exposing for % 5.2f s" % (exptime))
-        self.ins.write ("puls:mode TRIG")
-        self.ins.write (f"burst:ncycles 1")
-        self.ins.write ("puls:state ON")
-        self.ins.write ("puls:per %fs" % (exptime+overhead+1))
-        self.ins.write ("puls:widt %fs" % (exptime+overhead))
-        self.ins.write ("PULSe:DELay 0s")
-        self.ins.write ("burst:DELay 0s")
-
-        # self.ins.write (f"PULSe:DCYCs 100" )
-        if (voltage is not None) and (voltage >=0.) and (voltage <= 5.):
-            _logger.debug (f"Setting LED voltage to {voltage}")
-            self.ins.write(f"voltage:level:imm:high {voltage} V")
-
-        self.ins.trigger()
-        if block:
-            _logger.info("Blocking during exposure time")
-            time.sleep (exptime)
-        _logger.debug ("Done exposing")
-
-
-    def expose_burst (self, exptime,  frequency=100, ncycles = 10, voltage=None, block=True, overhead=5):
-        _logger.info (f"Lab burst exposing for {exptime}, led {voltage}, overhead {overhead}")
-        time.sleep(overhead)
-        _logger.info ("Done sleeping, firing up the LED")
-        if ncycles == 0:
-            return
-        self.ins.write ("burst:state ON")
-        self.ins.write ("burst:mode TRIG")
-        self.ins.write (f"burst:ncycles {ncycles}")
-        self.ins.write (f"freq:fixed {frequency}Hz")
-        self.ins.write (f"PULSe:DCYC 50.0" )
-        self.ins.write (f"burst:DELay {overhead}s")
-        self.ins.write (f"pulse:DELay {overhead}s")
-
-        if (voltage is not None) and (voltage >=0.) and (voltage <= 5.):
-            _logger.debug (f"Setting LED voltage to {voltage}")
-            self.ins.write(f"voltage:level:imm:high {voltage} V")
-
-        self.ins.trigger()
-        if block:
-            _logger.info("Blocking during exposure time")
-            time.sleep (exptime)
-            _logger.debug ("Done exposing")
-
-
-
-    def close(self):
-        self.ins.close()
 
 
 class restcam:
@@ -223,14 +163,14 @@ def main():
 
 
     if args.testled is not None:
-        lab = LCOLab()
+        lab = LED_Illuminator()
         print ("LED ON")
         lab.expose(exptime = args.testled, overhead = 1, block=True, voltage=args.ledvoltage)
         print ("LED OFF")
         exit (0)
 
     if args.testledburst:
-        lab = LCOLab()
+        lab = LED_Illuminator()
         print ("LED ON")
         lab.expose_burst(exptime = args.testledburst, overhead = 1, block=True, voltage=args.ledvoltage)
         print ("LED OFF")
@@ -262,7 +202,7 @@ def main():
         suffix = 'd00'
     if args.flat:
         suffix = 'f00'
-        lab = LCOLab()
+        lab = LED_Illuminator()
 
 
     for exptime in args.exptime:
