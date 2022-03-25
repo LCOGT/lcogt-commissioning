@@ -1,52 +1,30 @@
 import argparse
 import datetime
 import logging
-from ctypes import *
-import numpy as np
+import threading
 import time
-from lcocommissioning.cmostest.qhyccdpython.libqhy import *
+from ctypes import *
 import astropy.io.fits as fits
-import vxi11
+import numpy as np
+from lcocommissioning.cmostest.qhyccdpython.libqhy import *
+from lcocommissioning.common.lco_ccdlab import LED_Illuminator
 
 _logger = logging.getLogger(__name__)
 
-
-
-class LCOLab:
-
-    def __init__(self):
-        self.ins = vxi11.Instrument('172.16.4.6')
-        _logger.debug ("VXI11 interface: %s" % (self.ins.ask("*IDN?")))
-
-    def expose(self, exptime, block=True, overhead=0):
-        _logger.debug ("Lab exposing for % 5.2f s" % (exptime))
-        self.ins.write ("puls:per %f" % (exptime+overhead+1))
-
-        self.ins.write ("puls:widt %f" % (exptime+overhead))
-
-        self.ins.trigger()
-        if block:
-            _logger.info("Blocking during exposure time")
-            time.sleep (exptime)
-        _logger.debug ("Done exposing")
-
-    def close(self):
-        self.ins.close()
 class QHYCCD:
-
 
     def __init__(self):
         self.overscan = None
         self.qhyccd = CDLL('/usr/local/lib/libqhyccd.so')
-        self.qhyccd.GetQHYCCDParam.restype=c_double
-        self.qhyccd.OpenQHYCCD.restype=ctypes.POINTER(c_uint32)
+        self.qhyccd.GetQHYCCDParam.restype = c_double
+        self.qhyccd.OpenQHYCCD.restype = ctypes.POINTER(c_uint32)
         ret = -1
         self.qhyccd.InitQHYCCDResource()
         self.qhyccd.ScanQHYCCD()
-        type_char_array_32 = c_char*32
-        self.id=type_char_array_32()
-        self.qhyccd.GetQHYCCDId(c_int(0), self.id)    # open the first camera
-        _logger.info (f"Found camera: {self.id.value.decode('UTF-8')}")
+        type_char_array_32 = c_char * 32
+        self.id = type_char_array_32()
+        self.qhyccd.GetQHYCCDId(c_int(0), self.id)  # open the first camera
+        _logger.info(f"Found camera: {self.id.value.decode('UTF-8')}")
         self.cam = self.qhyccd.OpenQHYCCD(self.id)
         self.qhyccd.SetQHYCCDStreamMode(self.cam, 0)  # 0 for single frame
         self.qhyccd.InitQHYCCD(self.cam)
@@ -60,118 +38,113 @@ class QHYCCD:
         self.gain = c_double()
         self.channels = c_uint32(1)
         self.qhyccd.GetQHYCCDChipInfo(self.cam, byref(self.chipw), byref(self.chiph), byref(self.w), byref(self.h),
-                         byref(self.pixelw), byref(self.pixelh), byref(self.bpp))
-        self.setBinning(1,1)
-        self.setROI(self.w.value,self.h.value)
-        self.gain = c_uint (int(self.getGain()))
+                                      byref(self.pixelw), byref(self.pixelh), byref(self.bpp))
+        self.setBinning(1, 1)
+        self.setROI(self.w.value, self.h.value)
+        self.gain = c_uint(int(self.getGain()))
 
+        _logger.info(self)
 
-        _logger.info (self)
-
-        numreadmodes = c_uint32 ()
+        numreadmodes = c_uint32()
         self.qhyccd.GetQHYCCDNumberOfReadModes(self.cam, byref(numreadmodes))
-        print (f"Number of readmodes: {numreadmodes.value}")
+        print(f"Number of readmodes: {numreadmodes.value}")
 
-        for readmode in range (numreadmodes.value):
-            readmodename = (c_char*64)()
+        for readmode in range(numreadmodes.value):
+            readmodename = (c_char * 64)()
             self.qhyccd.GetQHYCCDReadModeName(self.cam, c_uint(readmode), readmodename)
-            _logger.info (f"\treadmode #{readmode} : {readmodename.value.decode('UTF-8')} ")
-
-
+            _logger.info(f"\treadmode #{readmode} : {readmodename.value.decode('UTF-8')} ")
 
     """ Relase camera and close sdk """
+
     def close(self):
         self.qhyccd.CloseQHYCCD(self.cam)
         self.qhyccd.ReleaseQHYCCDResource()
 
     def __str__(self):
-        w,h = self.getPixelSize()
+        w, h = self.getPixelSize()
         return f" {str(self.id.value.decode('UTF-8'))} Pixels: {w} x {h} pixels"
 
-    def setReadMode (self, readmodenumber):
-        numreadmodes = c_uint32 ()
+    def setReadMode(self, readmodenumber):
+        numreadmodes = c_uint32()
         self.qhyccd.GetQHYCCDNumberOfReadModes(self.cam, byref(numreadmodes))
         if readmodenumber < numreadmodes.value:
-            ret = self.qhyccd.SetQHYCCDReadMode (self.cam, c_uint32(readmodenumber))
+            ret = self.qhyccd.SetQHYCCDReadMode(self.cam, c_uint32(readmodenumber))
             if ret == ERR.QHYCCD_SUCCESS:
                 self.readmode = c_uint32(readmodenumber)
-                _logger.debug (f"Set readmode to {readmodenumber}")
+                _logger.debug(f"Set readmode to {readmodenumber}")
             else:
                 _logger.error(f"Error setting readmode {readmodenumber}")
         else:
-            _logger.error ("Cannot set readmode larger than available read mode number")
+            _logger.error("Cannot set readmode larger than available read mode number")
 
     def setBinning(self, wbin, hbin):
-        self.wbin= c_uint (wbin)
-        self.hbin= c_uint (hbin)
-        ret = self.qhyccd.SetQHYCCDBinMode (self.cam, self.wbin, self.hbin)
+        self.wbin = c_uint(wbin)
+        self.hbin = c_uint(hbin)
+        ret = self.qhyccd.SetQHYCCDBinMode(self.cam, self.wbin, self.hbin)
         if ret != ERR.QHYCCD_SUCCESS:
-            _logger.error (f"Error while setting binning {ret}")
+            _logger.error(f"Error while setting binning {ret}")
         else:
-            _logger.debug (f"Set binning to {wbin} {hbin}")
+            _logger.debug(f"Set binning to {wbin} {hbin}")
 
     def setGain(self, gain):
         """ Set camera gain """
 
-        _logger.debug (f"current gain is {self.getGain()}")
+        _logger.debug(f"current gain is {self.getGain()}")
 
-        ret = self.qhyccd.IsQHYCCDControlAvailable (self.cam, CONTROL_ID.CONTROL_GAIN)
+        ret = self.qhyccd.IsQHYCCDControlAvailable(self.cam, CONTROL_ID.CONTROL_GAIN)
         if ret == ERR.QHYCCD_SUCCESS:
             self.gain = c_short(gain)
             self.qhyccd.SetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_GAIN, self.gain)
-            _logger.debug (f"Setting gain to {gain}")
+            _logger.debug(f"Setting gain to {gain}")
         else:
             _logger.warning("Sett gain is not supported on this camera")
 
-    def getGain (self):
-        return self.qhyccd.GetQHYCCDParam (self.cam, CONTROL_ID.CONTROL_GAIN)
-
-
+    def getGain(self):
+        return self.qhyccd.GetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_GAIN)
 
     def SetBit(self, bpp):
         """ Set camera depth """
         self.bpp.value = c_double(bpp)
         self.qhyccd.SetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_TRANSFERBIT, self.bpp)
 
-    def setTemp (self, temperature):
+    def setTemp(self, temperature):
         self.setpoint = c_double(temperature)
 
-        settempsupported = self.qhyccd.IsQHYCCDControlAvailable (self.cam, CONTROL_ID.CONTROL_COOLER)
+        settempsupported = self.qhyccd.IsQHYCCDControlAvailable(self.cam, CONTROL_ID.CONTROL_COOLER)
         if settempsupported != ERR.QHYCCD_SUCCESS:
-            print ("Setting temeprature is not supported on this camera.")
+            print("Setting temeprature is not supported on this camera.")
             return
 
         ret = self.qhyccd.SetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_COOLER, self.setpoint)
         if ret == ERR.QHYCCD_SUCCESS:
-            print  (f"Set temperature control to {temperature}")
+            print(f"Set temperature control to {temperature}")
         else:
-            print (f"Setting temeprature failed with error {ret}")
+            print(f"Setting temeprature failed with error {ret}")
 
-
-    def getTemp (self):
-        ret = self.qhyccd.GetQHYCCDParam (self.cam, CONTROL_ID.CONTROL_CURTEMP)
-        print (f"CCD temperature is {ret}")
+    def getTemp(self):
+        ret = self.qhyccd.GetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_CURTEMP)
+        print(f"CCD temperature is {ret}")
         rh = self.getRH()
         return ret
 
     def setSensorChamberCycle(self, on):
         onoff = 1 if on else 0
-        if self.qhyccd.IsQHYCCDControlAvailable(self.cam, CONTROL_ID.CONTROL_SensorChamberCycle_PUMP) != ERR.QHYCCD_SUCCESS:
-            _logger.info ("Chamber pump not available")
+        if self.qhyccd.IsQHYCCDControlAvailable(self.cam,
+                                                CONTROL_ID.CONTROL_SensorChamberCycle_PUMP) != ERR.QHYCCD_SUCCESS:
+            _logger.info("Chamber pump not available")
         else:
-            ret = self.qhyccd.SetQHYCCDParam (self.cam, CONTROL_ID.CONTROL_SensorChamberCycle_PUMP, onoff)
+            ret = self.qhyccd.SetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_SensorChamberCycle_PUMP, onoff)
             if ret != ERR.QHYCCD_SUCCESS:
-                _logger.error (f"Error while  toggling SensorchamberCyclePUmp {ret}")
+                _logger.error(f"Error while  toggling SensorchamberCyclePUmp {ret}")
             else:
-                _logger.info (f"Turned SnesorchamberCyclePump to {onoff.value}")
+                _logger.info(f"Turned SnesorchamberCyclePump to {onoff.value}")
 
-
-    def getRH (self):
-        ret = self.qhyccd.GetQHYCCDParam (self.cam, CONTROL_ID.CAM_HUMIDITY)
-        _logger.info (f"Relative Humidity is {ret}")
+    def getRH(self):
+        ret = self.qhyccd.GetQHYCCDParam(self.cam, CONTROL_ID.CAM_HUMIDITY)
+        _logger.info(f"Relative Humidity is {ret}")
         return ret
 
-    def setROI(self,x,y):
+    def setROI(self, x, y):
 
         if (x <= self.w.value) & (y <= self.h.value):
             self.roi_w = c_uint(x)
@@ -179,11 +152,9 @@ class QHYCCD:
 
             ret = self.qhyccd.SetQHYCCDResolution(self.cam, 0, 0, self.roi_w, self.roi_h)
             if ret == ERR.QHYCCD_SUCCESS:
-                _logger.debug (f'Setting ROI to {x} x {y}')
+                _logger.debug(f'Setting ROI to {x} x {y}')
             else:
-                _logger.error ("Error while setting ROI")
-
-
+                _logger.error("Error while setting ROI")
 
     def getChipDimensions(self):
         return self.chipw.value, self.chiph.value
@@ -191,23 +162,23 @@ class QHYCCD:
     def getPixelSize(self):
         return self.w.value, self.h.value
 
-
     def getframe(self, exptime, filename):
 
-
-        self.qhyccd.SetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_EXPOSURE, c_double( (exptime * 1000. * 1000.))) # unit: us
-        _logger.info (f"Starting exposure {exptime} seconds")
+        self.qhyccd.SetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_EXPOSURE,
+                                   c_double((exptime * 1000. * 1000.)))  # unit: us
+        _logger.info(f"Starting exposure {exptime} seconds")
         start_expose = datetime.datetime.utcnow()
         ret = self.qhyccd.ExpQHYCCDSingleFrame(self.cam)
 
         _logger.debug(f"Starting readout")
         start_readout = datetime.datetime.utcnow()
-        binned_w = c_uint ( int(self.roi_w.value / self.wbin.value))
-        binned_h = c_uint (int(self.roi_h.value / self.hbin.value))
+        binned_w = c_uint(int(self.roi_w.value / self.wbin.value))
+        binned_h = c_uint(int(self.roi_h.value / self.hbin.value))
         self.imgdata = (ctypes.c_uint16 * binned_w.value * binned_h.value)()
-        ret = self.qhyccd.GetQHYCCDSingleFrame(self.cam, byref(binned_w), byref(binned_h), byref(self.bpp), byref(self.channels), self.imgdata)
+        ret = self.qhyccd.GetQHYCCDSingleFrame(self.cam, byref(binned_w), byref(binned_h), byref(self.bpp),
+                                               byref(self.channels), self.imgdata)
         if ret != ERR.QHYCCD_SUCCESS:
-            _logger.error (f"failure while downloading iamge data {ret}")
+            _logger.error(f"failure while downloading iamge data {ret}")
         _logger.debug(f"Starting fits write to {filename}")
         start_fitswrite = datetime.datetime.utcnow()
         x = np.asarray(self.imgdata)
@@ -226,30 +197,26 @@ class QHYCCD:
         hdu = fits.PrimaryHDU(x, header=prihdr)
         hdul = fits.HDUList([hdu])
 
-
-        hdul.writeto (filename,  overwrite=True )
+        hdul.writeto(filename, overwrite=True)
         end_fitswrite = datetime.datetime.utcnow()
         _logger.info("done taking image")
-        _logger.debug (f"Timing statistics:\n"
-                f"\tTotal     : {end_fitswrite-start_expose} s\n"\
-                f"\tExposing  : {start_readout - start_expose} s\n"\
-                f"\tReadout   : {start_fitswrite-start_readout} s\n"\
-                f"\tFITS write: {end_fitswrite-start_fitswrite} s\n")
-
+        _logger.debug(f"Timing statistics:\n"
+                      f"\tTotal     : {end_fitswrite - start_expose} s\n" \
+                      f"\tExposing  : {start_readout - start_expose} s\n" \
+                      f"\tReadout   : {start_fitswrite - start_readout} s\n" \
+                      f"\tFITS write: {end_fitswrite - start_fitswrite} s\n")
 
 
 def main():
     args = parseCommandLine()
 
-
     if args.testled:
-        lab = LCOLab()
-        print ("LED ON")
-        lab.expose(exptime = 10, overhead = 1, block=True)
-        print ("LED OFF")
-        exit (0)
+        lab = LED_Illuminator()
+        print("LED ON")
+        lab.expose(exptime=10, overhead=1, block=True)
+        print("LED OFF")
+        exit(0)
     qhyccd = QHYCCD()
-
 
     if args.settemp is not None:
         qhyccd.setTemp(args.settemp)
@@ -267,8 +234,8 @@ def main():
         exit(0)
 
     qhyccd.setReadMode(args.readmode)
-    qhyccd.setGain (args.gain)
-    qhyccd.setBinning (args.binning, args.binning)
+    qhyccd.setGain(args.gain)
+    qhyccd.setBinning(args.binning, args.binning)
 
     suffix = None
     if args.bias:
@@ -277,21 +244,30 @@ def main():
         suffix = 'd00'
     if args.flat:
         suffix = 'f00'
-        lab = LCOLab()
-
+        lab = LED_Illuminator()
 
     for exptime in args.exptime:
-        _logger.info (f"takeing exposures for exptie {exptime}")
-        for ii in range (args.expcnt):
-            imagename=f"{args.outputpath}/qhytest-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%S')}.{suffix}.fits"
+        _logger.info(f"takeing exposures for exptie {exptime}")
+        for ii in range(args.expcnt):
+            imagename = f"{args.outputpath}/qhytest-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%S')}.{suffix}.fits"
             if args.flat and lab is not None:
-                lab.expose(exptime = exptime, overhead = 1, block=False)
+                if args.nburstcycles is None:
+                    # This is a conventional exposure where we ensure the LED is on befor we open the shutter and stays on until shutter closes.
+                    _logger.info ("Starting conventional shutter-defined exposure")
+                    lab.expose(exptime=exptime, overhead=1, block=False)
+
+                else:
+                    # Here we open the shutter, and then turn the LED on for a determined amount of time. it takes a few seconds from requesting an exposure
+                    # until the shutter actually opens. Hence we are putting the LED con command into a background thread that starts its working day with sleeping.
+
+                    _logger.info (f"Starting frequencey generator defined exposure for {args.nburstcycles} cycles.")
+                    th =threading.Thread ( target=lab.expose_burst, kwargs={'exptime':exptime, 'ncycles':args.nburstcycles, 'overhead':7, 'voltage':args.ledvoltage, 'block':False})
+                    th.start()
 
             qhyccd.getframe(exptime, imagename)
 
             if args.flat:
-                time.sleep (1)
-
+                time.sleep(1)
 
     qhyccd.close()
     if args.flat:
@@ -304,23 +280,23 @@ def parseCommandLine():
         description='QHYCCD command line control')
 
     actions = parser.add_mutually_exclusive_group()
-    actions.add_argument ("--bias", action = "store_true", help="Take bias exposures. Set number via --expcnt" )
-    actions.add_argument ("--dark", action = "store_true", help="Take dark exposures. Set number via --expcnt and darktime via --exptime" )
-    actions.add_argument ("--flat", action = "store_true", help="Take flat exposures. Set number via --expcnt and darktime via --exptime" )
-    actions.add_argument ("--settemp", type=float, help="Set CCD target temperature" )
-    actions.add_argument ("--gettemp", action = "store_true",  help="get CCD target temperature" )
-    actions.add_argument ("--testled", action = "store_true",  help="testled" )
-    actions.add_argument ("--chamberpump", type = bool,  help="cycle detector chaber decissitant" )
-
-
+    actions.add_argument("--bias", action="store_true", help="Take bias exposures. Set number via --expcnt")
+    actions.add_argument("--dark", action="store_true",
+                         help="Take dark exposures. Set number via --expcnt and darktime via --exptime")
+    actions.add_argument("--flat", action="store_true",
+                         help="Take flat exposures. Set number via --expcnt and darktime via --exptime")
+    actions.add_argument("--settemp", type=float, help="Set CCD target temperature")
+    actions.add_argument("--gettemp", action="store_true", help="get CCD target temperature")
+    actions.add_argument("--testled", action="store_true", help="testled")
+    actions.add_argument("--chamberpump", type=bool, help="cycle detector chaber decissitant")
 
     parser.add_argument('--expcnt', type=int, dest="expcnt", default=1)
-    parser.add_argument('--exptime', type=float, nargs='*', default=[0,])
+    parser.add_argument('--exptime', type=float, nargs='*', default=[0, ])
     parser.add_argument('--gain', type=int, default=5)
     parser.add_argument('--binning', type=int, default=1)
     parser.add_argument('--readmode', type=int, default=0)
-
-
+    parser.add_argument('--ledvoltage', type=float, default=5.0)
+    parser.add_argument('--nburstcycles', type=int, default=None)
 
     parser.add_argument('--outputpath', type=str, default="data", help="outputpath")
     parser.add_argument('--loglevel', dest='log_level', default='DEBUG', choices=['DEBUG', 'INFO', 'WARN'],
@@ -331,9 +307,6 @@ def parseCommandLine():
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
 
     return args
-
-
-
 
 
 if __name__ == '__main__':
