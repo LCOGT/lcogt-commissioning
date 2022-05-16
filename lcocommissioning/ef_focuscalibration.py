@@ -119,8 +119,6 @@ def getImageData(imagename, minarea=20, deblend=0.5, archive = False):
             fwhmcat = np.append(fwhmcat, cat['fwhm'])
             thetacat = np.append(thetacat, cat['theta'])
             ellcat = np.append(thetacat, cat['ellipticity'])
-    hdul.close()
-
     # comprehension of the object catalog....
     good = fwhmcat > 0
     goodtheta = thetacat > -720
@@ -210,7 +208,7 @@ def main():
 
 
     for image in efimages:
-        focus, fwhm, theta, ell = getImageData(image, minarea=20, deblend=0.5, archive = args.requestid is not None)
+        focus, fwhm, theta, ell = getImageData(image, minarea=10, deblend=0.5, archive = args.requestid is not None)
         if np.isfinite(fwhm):
             focuslist.append(focus)
             fwhmlist.append(fwhm)

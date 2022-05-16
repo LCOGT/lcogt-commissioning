@@ -78,8 +78,6 @@ class SEPSourceCatalogProvider(SourceCatalogProvider):
 
         image_wcs = None
 
-
-
         for hdu in fitsimage:
             # search the first valid WCS. Search since we might have a fz compressed file which complicates stuff.
             try:
@@ -102,9 +100,9 @@ class SEPSourceCatalogProvider(SourceCatalogProvider):
             cs = [int(n) for n in re.split(',|:', datasec[1:-1])]
             bs = [int(n) for n in re.split(',|:', fitsimage[ext].header['BIASSEC'][1:-1])]
             ovpixels = fitsimage[ext].data[bs[2] + 1:bs[3] - 1, bs[0] + 1: bs[1] - 1]
-            overscan = np.median(ovpixels)
-            std = np.std(ovpixels)
-            overscan = np.mean(ovpixels[np.abs(ovpixels - overscan) < 2 * std])
+            overscan = np.median_nan(ovpixels)
+            std = np.std_nan(ovpixels)
+            overscan = np.mean_nan(ovpixels[np.abs(ovpixels - overscan) < 2 * std])
             image_data = fitsimage[ext].data[cs[2] - 1:cs[3], cs[0] - 1:cs[1]] - overscan
         except:
             log.debug("No overscan specified")
