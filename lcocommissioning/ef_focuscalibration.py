@@ -166,7 +166,7 @@ def parseCommandLine():
     group = parser.add_mutually_exclusive_group(required=True)
 
     group.add_argument ('--files', type=str, nargs='+')
-    group.add_argument ('--requestid', type=int, nargs=1)
+    group.add_argument ('--requestid', type=int, nargs='?')
 
     parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
