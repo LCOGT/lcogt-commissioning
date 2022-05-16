@@ -13,6 +13,8 @@ from lcocommissioning.common.common import lco_site_lonlat
 from opensearchpy import OpenSearch
 from opensearch_dsl import Search
 
+import json
+
 log = logging.getLogger(__name__)
 logging.getLogger('opensearch').setLevel(logging.WARNING)
 logging.getLogger('connectionpool').setLevel(logging.WARNING)
@@ -59,10 +61,9 @@ class ArchiveDiskCrawler:
         dir = "{}{}/{}/{}/{}".format(prefix, sitecamera, date, raworprocessed, filetempalte)
         files = glob.glob(dir)
         if (files is not None) and (len(files) > 0):
-            myfiles = np.asarray ([[f, "-1"] for f in files])
+            myfiles = np.asarray([[f, "-1"] for f in files])
             return Table(myfiles, names=['FILENAME', 'FRAMEID'])
         return None
-
 
 
 def make_opensearch(index, filters, queries=None, exclusion_filters=None, range_filters=None, prefix_filters=None,
@@ -126,7 +127,7 @@ def get_frames_for_noisegainanalysis(dayobs, site=None, cameratype=None, camera=
         Selection criteria are by DAY-OBS, site, by camera type (fs,fa,kb), what filters to use, and minimum exposure time.
         Only day-obs is a mandatory fields, we do not want to query the entire archive at once.
      """
-    log.debug ("Starting opensearch query")
+    log.debug("Starting opensearch query")
     query_filters = [{'DAY-OBS': dayobs}, {'RLEVEL': 0}, {'CONFMODE': readmode}]
     range_filters = []
     terms_filters = [{'OBSTYPE': obstype}]
@@ -140,7 +141,8 @@ def get_frames_for_noisegainanalysis(dayobs, site=None, cameratype=None, camera=
         prefix_filters.append({'INSTRUME': cameratype})
 
     queries = []
-    records = make_opensearch('fitsheaders', query_filters, queries, exclusion_filters=None, opensearch_url=opensearch_url,
+    records = make_opensearch('fitsheaders', query_filters, queries, exclusion_filters=None,
+                              opensearch_url=opensearch_url,
                               range_filters=range_filters, prefix_filters=prefix_filters,
                               terms_filters=terms_filters).scan()
     records_sanitized = [[record['filename'], record['SITEID'], record['INSTRUME'], record['RLEVEL'], record['DAY-OBS'],
@@ -166,6 +168,27 @@ def filename_to_archivepath_dict(filenametable, rootpath=ARCHIVE_ROOT):
         returndict[camera] = Table(np.asarray(returndict[camera]), names=['FILENAME', 'frameid'])
     return returndict
 
+
+def get_frames_from_request(requestid):
+    url = f'https://archive-api.lco.global/frames/'
+    params = {'request_id': requestid,
+              'reduction_level': 0,
+              }
+    headers = {'Authorization': 'Token {}'.format(ARCHIVE_API_TOKEN)}
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+    return response.json()
+
+
+def get_auto_focus_frames(requestid):
+    candidates = get_frames_from_request(requestid)
+    focusimagelist = []
+    for imageinfo in candidates['results']:
+        if 'x00' in imageinfo['basename']:
+            focusimagelist.append(
+                {'basename': imageinfo['basename'], 'id': imageinfo['id'], 'INSTRUME': imageinfo['INSTRUME']})
+
+    return focusimagelist
 
 def download_from_archive(frameid):
     """

@@ -69,10 +69,16 @@ class SEPSourceCatalogProvider(SourceCatalogProvider):
         self.refineWCSViaLCO = refineWCSViaLCO
 
     def get_source_catalog(self, imagename, ext=1, minarea=20, deblend=0.5):
+        fitsobject = fits.open(imagename)
+        result =  self.get_source_catalog_from_fitsobject (fitsobject, ext=ext, minarea= minarea, deblend = deblend)
+        fitsobject.close()
+        return result
+
+    def get_source_catalog_from_fitsobject(self, fitsimage, ext=1, minarea=20, deblend=0.5):
 
         image_wcs = None
 
-        fitsimage = fits.open(imagename)
+
 
         for hdu in fitsimage:
             # search the first valid WCS. Search since we might have a fz compressed file which complicates stuff.

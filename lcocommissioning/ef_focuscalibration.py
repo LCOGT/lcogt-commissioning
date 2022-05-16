@@ -1,3 +1,4 @@
+import argparse
 import logging
 import math
 import os
@@ -9,13 +10,14 @@ from astropy.io import fits
 from astropy.io.fits import ImageHDU, CompImageHDU
 from scipy import optimize
 
+from lcocommissioning.common.lco_archive_utilities import get_auto_focus_frames, download_from_archive
 from lcocommissioning.common.SourceCatalogProvider import SEPSourceCatalogProvider
 
 from matplotlib import rc
 rc('text', usetex=True)
 
 _log = logging.getLogger(__name__)
-
+logging.getLogger('matplotlib.font_manager').disabled = True
 L1FWHM = "L1FWHM"
 FOCDMD = "FOCDMD"
 
@@ -90,11 +92,14 @@ def overplot_fit(func, paramset, color=None):
              label="sqrt {:5.2f}".format(paramset[3]) if func == sqrtfit else "parabola")
 
 
-def getImageData(imagename, minarea=20, deblend=0.5):
+def getImageData(imagename, minarea=20, deblend=0.5, archive = False):
     """ Measure the FWHM of an image, tuned to get a reasonable FWHM also for defocussed images.
     """
 
-    hdul = fits.open(imagename, 'readonly', ignore_missing_end=True)
+    if archive:
+        hdul = download_from_archive (imagename)
+    else:
+        hdul = fits.open(imagename, 'readonly', ignore_missing_end=True)
 
     deltaFocus = None
     pixelscale = None
@@ -110,7 +115,7 @@ def getImageData(imagename, minarea=20, deblend=0.5):
     ellcat = np.asarray([])
     for ii in range(len(hdul)):
         if isinstance(hdul[ii], ImageHDU) or isinstance(hdul[ii], CompImageHDU):
-            cat, wcs = catalog.get_source_catalog(imagename, ext=ii, minarea=minarea, deblend=deblend)
+            cat, wcs = catalog.get_source_catalog_from_fitsobject(hdul, ext=ii, minarea=minarea, deblend=deblend)
             fwhmcat = np.append(fwhmcat, cat['fwhm'])
             thetacat = np.append(thetacat, cat['theta'])
             ellcat = np.append(thetacat, cat['ellipticity'])
@@ -144,7 +149,7 @@ def getImageData(imagename, minarea=20, deblend=0.5):
         pixelscale = 1
     medianfwhm *= pixelscale
 
-    _log.info ("{}  FOCCMD {: 5.3f} FWHM (\" : pix) ({: 5.2f} : {: 5.2f}) \pm {: 5.2f} pixel  {: 5.2f} {: 6.4f}".format(os.path.basename(imagename), deltaFocus,
+    _log.info ("{}  FOCCMD {: 5.3f} FWHM (\" : pix) ({: 5.2f} : {: 5.2f}) \pm {: 5.2f} pixel  {: 5.2f} {: 6.4f}".format(imagename, deltaFocus,
                                                                                              medianfwhm, medianfwhm / pixelscale,
                                                                                              fwhmstd, mediantheta, pixelscale))
 
@@ -153,24 +158,59 @@ def getImageData(imagename, minarea=20, deblend=0.5):
     return deltaFocus, medianfwhm, mediantheta, medianell
 
 
-def main():
-    logging.basicConfig(level=getattr(logging, 'INFO'),
+def parseCommandLine():
+    parser = argparse.ArgumentParser(
+        description='Do a simultanesous focus fit of fa and ef focus images to check parfocality.')
+
+
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument ('--files', type=str, nargs='+')
+    group.add_argument ('--requestid', type=int, nargs=1)
+
+    parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
+                        help='Set the debug level')
+
+    args = parser.parse_args()
+
+    logging.basicConfig(level=getattr(logging, args.log_level.upper()),
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
+
+
+
+
+    return args
+
+
+def main():
+
+    args = parseCommandLine()
+
+    if args.files:
+        efimages = [i for i in args.files if ("ef" in os.path.basename(i))]
+        faimages = [i for i in args.files if ("fa" in os.path.basename(i))]
+    if args.requestid:
+        inputlist = get_auto_focus_frames(args.requestid)
+        efimages = [i['id'] for i in inputlist if ("ef" in i['basename'])]
+        faimages = [i['id'] for i in inputlist if ("fa" in i['basename'])]
+
+    print (efimages)
+    print (faimages)
+
 
     focuslist = []
     fwhmlist = []
     thetalist = []
     elllist = []
 
-    efimages = [i for i in sys.argv[1:] if ("ef" in os.path.basename(i))]
-    faimages = [i for i in sys.argv[1:] if ("fa" in os.path.basename(i))]
+
 
     _log.debug("EF images:", efimages)
     _log.debug("FA images:", faimages)
 
 
     for image in efimages:
-        focus, fwhm, theta, ell = getImageData(image, minarea=20, deblend=0.5)
+        focus, fwhm, theta, ell = getImageData(image, minarea=20, deblend=0.5, archive = args.requestid is not None)
         if np.isfinite(fwhm):
             focuslist.append(focus)
             fwhmlist.append(fwhm)
@@ -181,7 +221,7 @@ def main():
     fafocuslist = []
 
     for image in faimages:
-        focus, fwhm, theta, ell = getImageData(image, minarea=5, deblend=0.5)
+        focus, fwhm, theta, ell = getImageData(image, minarea=5, deblend=0.5, archive = args.requestid is not None)
         fafwhmlist.append(fwhm)
         fafocuslist.append(focus)
 
@@ -197,7 +237,8 @@ def main():
     fermi_p, fermi_rms = focus_curve_fit(focuslist, thetalist, fermifit)
 
     faexponential_p, faexponential_rms = focus_curve_fit(fafocuslist, fafwhmlist, sqrtfit)
-
+    bestfocus_error = 0
+    bestfocus=0
     # we will need this a few times - meaningful references here
     if exponential_p is not None:
         bestfocus = exponential_p[1]
@@ -259,7 +300,7 @@ def main():
                                                                                                         bestfocusfa_error) if math.isfinite(
         bestfocus_error) else "Fit failed")
 
-    plt.savefig("{}".format("ef_focus.png"), bbox_inches="tight")
+    plt.savefig(f"ef_focus_{args.requestid}.png", bbox_inches="tight")
     _log.info ("All done")
 
 if __name__ == '__main__':
