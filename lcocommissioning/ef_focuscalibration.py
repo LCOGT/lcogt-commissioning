@@ -14,7 +14,7 @@ from lcocommissioning.common.lco_archive_utilities import get_auto_focus_frames,
 from lcocommissioning.common.SourceCatalogProvider import SEPSourceCatalogProvider
 
 from matplotlib import rc
-rc('text', usetex=True)
+#rc('text', usetex=True)
 
 _log = logging.getLogger(__name__)
 logging.getLogger('matplotlib.font_manager').disabled = True
