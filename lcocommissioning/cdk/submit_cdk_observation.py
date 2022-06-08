@@ -14,19 +14,19 @@ _log = logging.getLogger(__name__)
 def createCDKRequestConfiguration(args):
     configuration = {
         'type': None,
-        'instrument_type': '0m4-SCICAM-QHY268',
+        'instrument_type': '0m4-SCICAM-QHY600',
         'guiding_config': {'mode': 'ON', 'optional': True},
         'acquisition_config': {},
         'instrument_configs': [{
             'exposure_count': None if args.exp_cnt is None else args.exp_cnt,
             'exposure_time': args.exp_time,
-            'mode': 'High Gain Mode' if args.readmode is None else args.readmode,
+            'mode': 'default' if args.readmode is None else args.readmode,
             'optical_elements': {
                 'filter': args.filter,
             },
             'extra_params': {
-                'bin_x': 2,
-                'bin_y': 2,
+                'bin_x': 1,
+                'bin_y': 1,
                 'defocus': args.defocus,
                 'offset_ra': args.offsetRA,
                 'offset_dec': args.offsetDec,
@@ -55,7 +55,7 @@ def createCDKRequestConfiguration(args):
 
 def createRequest(args):
     requestgroup = {"name": args.title,
-                    "proposal": "CDK17 Commissioning",
+                    "proposal": "delta rho Commissioning",
                     "ipp_value": args.ipp,
                     "operator": "SINGLE",  # "MANY" if args.dither else "SINGLE",
                     "observation_type": "NORMAL",
@@ -96,13 +96,13 @@ def createRequest(args):
 
 def parseCommandLine():
     parser = argparse.ArgumentParser(
-        description='CDK17 @ LCO engineering commissioning submission tool')
+        description='Delta Rho @ LCO engineering commissioning submission tool')
 
     parser.add_argument('--targetname', default='auto', type=str,
                         help='Name of object to observe; will beresolved via simbad. Can be coordinates in the form of Jhhmmss+ddmmss')
     parser.add_argument('--title', default="CDK17 commissioning", help="Descriptive title for observation request")
 
-    parser.add_argument('--site', default='coj', choices=common.lco_2meter_sites,
+    parser.add_argument('--site', default='ogg', choices=common.lco_2meter_sites,
                         help="To which site to submit")
 
     parser.add_argument('--start', default=None,
