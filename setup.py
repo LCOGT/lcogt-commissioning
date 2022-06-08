@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="lcocommissioning",
-    version="2.0.16RC",
+    version="2.1.0",
     author="Daniel Harbeck",
     author_email="dharbeck@lco.global",
     description="Tool to characterize CCD detectors and other commissioning tasks for the LCO observatory.",
@@ -31,7 +31,8 @@ setuptools.setup(
                             'submit_floyds_observation = lcocommissioning.floyds.submitFloydsObservation:main',
                             'submit_muscat_observation = lcocommissioning.muscat.submitMuscatObservation:main',
                             'submit_cdk_observation = lcocommissioning.cdk.submit_cdk_observation:main',
-                            'get_sbigframe = lcocommissioning.sbig.get_sbig_frame:main'],
+                            'get_sbigframe = lcocommissioning.sbig.get_sbig_frame:main',
+                            'get_qhyframe = lcocommissioning.cmostest.getqhyccdframe:main'],
 
     },
     zip_safe=False,

@@ -1,0 +1,1116 @@
+{
+  "apiVersion": "0.0",
+  "swaggerVersion": "1.2",
+  "basePath": "http://inst.1m0a.doma.mfg.lco.gtn:8080",
+  "resourcePath": "/restcam",
+  "produces": [
+    "text/plain"
+  ],
+  "apis": [
+    {
+      "path": "/api/_/restcam/config",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "Returns the current camera-specific configuration.",
+          "notes": "",
+          "type": "RestCamConfiguration",
+          "nickname": "config",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "a JSON representation of the configuration"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/Description.cgi",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "Queries the camera model number.",
+          "notes": "\n                Description:\n\n                Queries the camera model number.\n\n                Returns:\n\n                Text string containing the camera model number, e.g. \"SBIG STX-16803\".\n",
+          "type": "void",
+          "nickname": "description",
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "Text string containing the camera model number, e.g. \"SBIG STX-16803\"."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/_/camera/info",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "Returns camera-specific information.",
+          "notes": "",
+          "type": "void",
+          "nickname": "info",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "a JSON representation of the information"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/ImagerAbortExposure.cgi",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "Aborts an exposure in progress.",
+          "notes": "\n            Aborts an exposure in progress. If no exposure is in progress, the abort is ignored.\n\n            Errors:\n            If the abort failed, a “400 Bad Request” error will be generated.\n\n            Note: Invalid parameters are ignored.\n",
+          "type": "void",
+          "nickname": "imageAbortExposure",
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "No data is returned."
+            },
+            {
+              "code": 400,
+              "message": "Abort failed."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/VersionNumbers.cgi",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "Queries the camera version numbers.",
+          "notes": "\n                Description:\n\n                    Queries the camera version numbers.\n",
+          "type": "void",
+          "nickname": "versionNumbers",
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "\n                Text string containing the camera version numbers, in the following order:\n                    Firmware Version\n                    Gate Array Version\n                    Imaging ROP Version\n                    Tracker ROP Version\n                    HTTP API Version\n                    Camera Serial Number\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/ImagerImageReady.cgi",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "Queries the state of the image buffer in the camera.",
+          "notes": "\n            Returns:\n            Single integer representing the state of the image buffer in the camera.\n\n            Note: Invalid parameters are ignored.\n",
+          "type": "org.lcogt.restcam.api.sbig.core.ImageReadyState",
+          "nickname": "imagerImageReady",
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "0|1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/ImagerStartExposure.cgi",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "Starts an exposure.",
+          "notes": "\n            Bias and Flat frame types will only impact FITS headers. In all other aspects Bias is the same as\n            Dark and Flat is the same as Light.\n\n            Errors:\n            If either required parameter is missing, or if the camera is busy, or if an invalid value is sent, a\n            “400 Bad Request” error will be generated\n\n            Note: Invalid parameters are ignored.\n",
+          "type": "void",
+          "nickname": "imagerStartExposure",
+          "parameters": [
+            {
+              "name": "Duration",
+              "description": "Duration of the exposure in Seconds",
+              "required": true,
+              "type": "number",
+              "format": "double",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "FrameType",
+              "description": "Frame type selection",
+              "required": true,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "DateTime",
+              "required": false,
+              "type": "string",
+              "paramType": "query",
+              "allowMultiple": false
+            }
+          ],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "No data is returned."
+            },
+            {
+              "code": 400,
+              "message": "Camera is busy."
+            },
+            {
+              "code": 400,
+              "message": "Bad parameter."
+            },
+            {
+              "code": 400,
+              "message": "Parameter(s) missing."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/ImagerGetSettings.cgi",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "The function is used to query many different camera parameters.",
+          "notes": "\n            This function is used to query any of the parameters listed above. Any number of parameters can\n            be included in a single call to the function.\n\n            Invalid parameters are ignored.\n\n            Note on NumX/NumY parameters. Changing the StartX/StartY value impacts the allowable limits\n            of NumX/NumY. However, the values of NumX/NumY are never changed automatically. The values\n            of NumX/NumY are limit checked when an exposure is started and “Bad parameter” is returned if\n            their values are not valid.\n\n            Note: Invalid parameters are ignored.\n",
+
+          "type": "string",
+          "nickname": "imagerGetSettingsPlainText",
+          "parameters": [
+            {
+              "name": "BinX",
+              "description": "Binning value for the X axis",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "BinY",
+              "description": "Binning value for the Y axis",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "CoolerState",
+              "description": "Current cooler state: 0=Off, 1=On",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "CCDTemperature",
+              "description": "Current CCD temperature in degrees Celsius",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "CCDTemperatureSetpoint",
+              "description": "Current CCD temperature set point in degrees Celsius",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "CoolerPower",
+              "description": "Current cooler power level in percent",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "CameraXSize",
+              "description": "Width of the camera sensor in unbinned pixels",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "CameraYSize",
+              "description": "Height of the camera sensor in unbinned pixels",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "ElectronsPerADU",
+              "description": "Gain of the CCD in electrons per A/D unit",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "FanState",
+              "description": "Current fan state: 0=Off, 1=On (Manual Control), 2=On (Auto Control)",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "FanPower",
+              "description": "Current fan power (0-100%)",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "FullWellCapacity",
+              "description": "Full well capacity of the CCD in electrons",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "AmbientTemperature",
+              "description": "Current ambient temperature in degrees Celsius",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "MaxADU",
+              "description": "Maximum ADU value the CCD will produce",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "MaxBinX",
+              "description": "Maximum binning value for the X axis",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "MaxBinY",
+              "description": "Maximum binning value for the Y axis",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "StartX",
+              "description": "Frame start position for the X axis in un-binned pixels",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "StartY",
+              "description": "Frame start position for the Y axis in un-binned pixels",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "NumX",
+              "description": "Frame width in un-binned pixels",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "NumY",
+              "description": "Frame height in un-binned pixels",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "PixelSizeX",
+              "description": "Pixel width in microns",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "PixelSizeY",
+              "description": "Pixel height in microns",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "OverScan",
+              "description": "Current over scan state: 0=Over scan disabled, 1=Over scan enabled",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "_ALL_",
+              "description": "(Unsupported API addition) Dumps all parameters - diagnostic",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            },
+            {
+              "name": "_SHOW_KEYS_",
+              "description": "(Unsupported API addition) Shows key/value pairs instead of just values - diagnostic",
+              "required": false,
+              "type": "",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[]"
+              ]
+            }
+          ],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "The values for the requested parameters in the order they were requested."
+            },
+            {
+              "code": 400,
+              "message": "No valid parameter."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/ImagerSetSettings.cgi",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "The function is used to set many different camera parameters.",
+          "notes": "\n            This function is used to set any of the parameters listed above. Any number of parameters can\n            be included in a single call to the function.\n\n            Parameters are parsed in the order they are listed above. If an invalid value is received,\na \\“400 Bad Request\\” error will be generated and no further parsing is performed.\n\n            Note: Invalid parameters are ignored.\n        ",
+          "type": "string",
+          "nickname": "imagerSetSettings",
+          "parameters": [
+            {
+              "name": "BinX",
+              "required": false,
+              "type": "com.google.common.base.Optional[int]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "BinY",
+              "required": false,
+              "type": "com.google.common.base.Optional[int]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "CoolerState",
+              "required": false,
+              "type": "com.google.common.base.Optional[int]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "CCDTemperatureSetpoint",
+              "required": false,
+              "type": "com.google.common.base.Optional[double]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "FanState",
+              "required": false,
+              "type": "com.google.common.base.Optional[int]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "FanPower",
+              "required": false,
+              "type": "com.google.common.base.Optional[int]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "StartX",
+              "required": false,
+              "type": "com.google.common.base.Optional[int]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "StartY",
+              "required": false,
+              "type": "com.google.common.base.Optional[int]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "NumX",
+              "required": false,
+              "type": "com.google.common.base.Optional[int]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "NumY",
+              "required": false,
+              "type": "com.google.common.base.Optional[int]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "OverScan",
+              "required": false,
+              "type": "com.google.common.base.Optional[int]",
+              "paramType": "query",
+              "allowMultiple": false
+            },
+            {
+              "name": "BinX",
+              "description": "Binning value for the X axis",
+              "defaultValue": "1",
+              "required": false,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "",
+              "allowMultiple": false
+            },
+            {
+              "name": "BinY",
+              "description": "Binning value for the Y axis",
+              "defaultValue": "1",
+              "required": false,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "",
+              "allowMultiple": false
+            },
+            {
+              "name": "CoolerState",
+              "description": "Current cooler state: 0=Off, 1=On",
+              "defaultValue": "0 = Off",
+              "required": false,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[0",
+                " 1]"
+              ]
+            },
+            {
+              "name": "CCDTemperatureSetpoint",
+              "description": "Current CCD temperature set point in degrees Celsius",
+              "defaultValue": "20.0",
+              "required": false,
+              "type": "number",
+              "format": "double",
+              "paramType": "",
+              "allowMultiple": false
+            },
+            {
+              "name": "FanState",
+              "description": "Current fan state: 0=Off, 1=On (Manual Control), 2=On (Auto Control)",
+              "defaultValue": "2 = On (Auto)",
+              "required": false,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[0",
+                " 1",
+                " 2]"
+              ]
+            },
+            {
+              "name": "FanPower",
+              "description": "Current fan power (0-100%)",
+              "defaultValue": "Varies",
+              "required": false,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "",
+              "allowMultiple": false,
+              "minimum": "0.0",
+              "maximum": "100.0"
+            },
+            {
+              "name": "StartX",
+              "description": "Frame start position for the X axis in un-binned pixels",
+              "defaultValue": "0",
+              "required": false,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "",
+              "allowMultiple": false
+            },
+            {
+              "name": "StartY",
+              "description": "Frame start position for the Y axis in un-binned pixels",
+              "defaultValue": "0",
+              "required": false,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "",
+              "allowMultiple": false
+            },
+            {
+              "name": "NumX",
+              "description": "Frame width in un-binned pixels",
+              "defaultValue": "CameraXSize",
+              "required": false,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "",
+              "allowMultiple": false
+            },
+            {
+              "name": "NumY",
+              "description": "Frame height in un-binned pixels",
+              "defaultValue": "CameraYSize",
+              "required": false,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "",
+              "allowMultiple": false
+            },
+            {
+              "name": "OverScan",
+              "description": "Current over scan state: 0=Over scan disabled, 1=Over scan enabled",
+              "defaultValue": "0 = Disabled",
+              "required": false,
+              "type": "integer",
+              "format": "int32",
+              "paramType": "",
+              "allowMultiple": false,
+              "enum": [
+                "[0",
+                " 1]"
+              ]
+            }
+          ],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "No data is returned."
+            },
+            {
+              "code": 400,
+              "message": "No valid parameter."
+            },
+            {
+              "code": 400,
+              "message": "BinX < 1 or > MaxBin"
+            },
+            {
+              "code": 400,
+              "message": "BinY < 1 or > MaxBin"
+            },
+            {
+              "code": 400,
+              "message": "StartX < 0 or > (CameraXSize - 1)"
+            },
+            {
+              "code": 400,
+              "message": "StartY < 0 or > (CameraYSize - 1)"
+            },
+            {
+              "code": 400,
+              "message": "NumX < 0 or > (CameraXSize - StartX)"
+            },
+            {
+              "code": 400,
+              "message": "NumY < 0 or > (CameraYSize - StartY)"
+            },
+            {
+              "code": 400,
+              "message": "FanState invalid"
+            },
+            {
+              "code": 400,
+              "message": "FanPower invalid"
+            },
+            {
+              "code": 400,
+              "message": "Fan Power not settable when FanState is Auto if Off"
+            },
+            {
+              "code": 400,
+              "message": "Over Scan invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/ImagerState.cgi",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "The function the current state of the camera.",
+          "notes": "\n            This function queries the current state of the imaging CCD.\n\n            Returns:\n                0 Idle\n                2 Exposing\n                3 Reading out the CCD\n                5 Error\n",
+          "type": "org.lcogt.restcam.api.sbig.core.CameraState",
+          "nickname": "imagerStateName",
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "0|2|3|5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/Imager.FIT",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "This downloads the binary image data from the camera in FITS format.",
+          "notes": "\n            Description:\n            This downloads the binary image data from the camera in FITS format.y\n\n\n            Returns:\n            A stream of FITS format image data. The FITS header contains some user settable parameters.\n            See the FITS Setup function.\n\n            Note: Invalid parameters are ignored.\n",
+          "type": "void",
+          "nickname": "imagerFits",
+          "produces": [
+            "application/octet-stream"
+          ],
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "an array of 16-bit little-endian pixel values"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/ImagerData.bin",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "This downloads the binary image data from the camera.",
+          "notes": "\n            Description:\n            This downloads the binary image data from the camera.\n\n            Returns:\n            A stream of binary image data. Data is 16-bits per pixel, little-endian (low byte first) format.\n            The number of bytes sent to the client is equal to: (NumX/BinX)*(NumY/BinY)*2\n\n            Note: Invalid parameters are ignored.\n",
+          "type": "{ \"type\" : \"array\", \"items\": { \"type\": \"integer\", \"format\" : \"1nt16\" } }[java.lang.Void]",
+          "nickname": "imagerData",
+          "produces": [
+            "application/octet-stream"
+          ],
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "an array of 16-bit little-endian pixel values"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/_/camera/serial-number",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "\n                Get the camera serial number.\n            ",
+          "notes": "",
+          "type": "void",
+          "nickname": "cameraSerialNumber",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "the camera serial number"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/_/imager/settings",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "\n                Retrieve camera-specific settings.\n            ",
+          "notes": "",
+          "type": "void",
+          "nickname": "imagerGetSettingsJson",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "the settings"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/_/camera/image/ready",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "\n                Whether or not an image is ready for readout.\n            ",
+          "notes": "",
+          "type": "void",
+          "nickname": "cameraImageReady",
+          "produces": [
+            "application/json"
+          ],
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "true"
+            },
+            {
+              "code": 200,
+              "message": "false"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/_/restcam/start-time",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "\n                The time the system started in ISO-8601 format.\n            ",
+          "notes": "",
+          "type": "void",
+          "nickname": "restcamStartTime",
+          "produces": [
+            "text/plain"
+          ],
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "ISO-8601 date"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/_/camera/image/png",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "\n                Returns an image of the current image buffer.\n            ",
+          "notes": "",
+          "type": "void",
+          "nickname": "png",
+          "produces": [
+            "image/png"
+          ],
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "an image"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/api/_/camera/reset",
+      "operations": [
+        {
+          "method": "GET",
+          "summary": "Resets the camera.",
+          "notes": "",
+          "type": "string",
+          "nickname": "reset",
+          "parameters": [],
+          "responseMessages": [
+            {
+              "code": 200,
+              "message": "ok"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "models": {
+    "Level": {
+      "id": "Level",
+      "properties": {
+        "levelInt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "levelStr": {
+          "type": "string"
+        }
+      }
+    },
+    "RestCamConfiguration": {
+      "id": "RestCamConfiguration",
+      "properties": {
+        "strictFitsHeaders": {
+          "type": "boolean"
+        },
+        "cameraEventsRefreshInterval": {
+          "$ref": "Duration"
+        },
+        "stateDisplayRefreshTime": {
+          "$ref": "Duration"
+        },
+        "enclosure": {
+          "$ref": "Enclosure"
+        },
+        "instrument": {
+          "$ref": "Instrument"
+        },
+        "maxRecentImages": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tftpPort": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "site": {
+          "$ref": "Site"
+        },
+        "telescope": {
+          "$ref": "Telescope"
+        },
+        "backoffTemperature": {
+          "$ref": "Temperature"
+        },
+        "temperature": {
+          "$ref": "Temperature"
+        },
+        "temperatureMax": {
+          "$ref": "Temperature"
+        },
+        "temperatureMin": {
+          "$ref": "Temperature"
+        },
+        "temperatureTolerance": {
+          "$ref": "Temperature"
+        },
+        "server": {
+          "$ref": "ServerFactory"
+        },
+        "logging": {
+          "$ref": "LoggingFactory"
+        },
+        "metrics": {
+          "$ref": "MetricsFactory"
+        }
+      }
+    },
+    "MetricsFactory": {
+      "id": "MetricsFactory",
+      "properties": {
+        "frequency": {
+          "$ref": "Duration"
+        },
+        "reporters": {
+          "$ref": "com.google.common.collect.ImmutableList<io.dropwizard.metrics.ReporterFactory>"
+        }
+      }
+    },
+    "Duration": {
+      "id": "Duration",
+      "properties": {
+        "unit": {
+          "$ref": "TimeUnit",
+          "enum": [
+            "NANOSECONDS",
+            "MICROSECONDS",
+            "MILLISECONDS",
+            "SECONDS",
+            "MINUTES",
+            "HOURS",
+            "DAYS"
+          ]
+        },
+        "quantity": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "Enclosure": {
+      "id": "Enclosure",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "LoggingFactory": {
+      "id": "LoggingFactory",
+      "properties": {
+        "level": {
+          "$ref": "Level"
+        },
+        "loggers": {
+          "$ref": "com.google.common.collect.ImmutableMap<java.lang.String, ch.qos.logback.classic.Level>"
+        },
+        "appenders": {
+          "$ref": "com.google.common.collect.ImmutableList<io.dropwizard.logging.AppenderFactory>"
+        }
+      }
+    },
+    "Site": {
+      "id": "Site",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "Telescope": {
+      "id": "Telescope",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "Instrument": {
+      "id": "Instrument",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

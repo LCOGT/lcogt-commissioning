@@ -69,10 +69,14 @@ class SEPSourceCatalogProvider(SourceCatalogProvider):
         self.refineWCSViaLCO = refineWCSViaLCO
 
     def get_source_catalog(self, imagename, ext=1, minarea=20, deblend=0.5):
+        fitsobject = fits.open(imagename)
+        result =  self.get_source_catalog_from_fitsobject (fitsobject, ext=ext, minarea= minarea, deblend = deblend)
+        fitsobject.close()
+        return result
+
+    def get_source_catalog_from_fitsobject(self, fitsimage, ext=1, minarea=20, deblend=0.5):
 
         image_wcs = None
-
-        fitsimage = fits.open(imagename)
 
         for hdu in fitsimage:
             # search the first valid WCS. Search since we might have a fz compressed file which complicates stuff.
@@ -96,9 +100,9 @@ class SEPSourceCatalogProvider(SourceCatalogProvider):
             cs = [int(n) for n in re.split(',|:', datasec[1:-1])]
             bs = [int(n) for n in re.split(',|:', fitsimage[ext].header['BIASSEC'][1:-1])]
             ovpixels = fitsimage[ext].data[bs[2] + 1:bs[3] - 1, bs[0] + 1: bs[1] - 1]
-            overscan = np.median(ovpixels)
-            std = np.std(ovpixels)
-            overscan = np.mean(ovpixels[np.abs(ovpixels - overscan) < 2 * std])
+            overscan = np.median_nan(ovpixels)
+            std = np.std_nan(ovpixels)
+            overscan = np.mean_nan(ovpixels[np.abs(ovpixels - overscan) < 2 * std])
             image_data = fitsimage[ext].data[cs[2] - 1:cs[3], cs[0] - 1:cs[1]] - overscan
         except:
             log.debug("No overscan specified")
