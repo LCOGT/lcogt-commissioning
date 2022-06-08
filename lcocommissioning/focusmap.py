@@ -86,7 +86,7 @@ def plotdistribution(imagecatalog, name=None):
 
 
 def main():
-    catalogmaker = SEPSourceCatalogProvider()
+    catalogmaker = SEPSourceCatalogProvider(refineWCSViaLCO=False)
 
     for image in sys.argv[1:]:
 
