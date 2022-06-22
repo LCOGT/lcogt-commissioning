@@ -19,6 +19,8 @@ logging.getLogger('matplotlib').setLevel(logging.FATAL)
 starttimeall = datetime.datetime(2016, 1, 1)
 starttimefa = datetime.datetime(2018, 7, 1)
 starttimeep = datetime.datetime(2020, 10, 1)
+starttimesq = datetime.datetime(2021, 10, 1)
+
 endtime = datetime.datetime.utcnow().replace(day=28) + datetime.timedelta(days=31 + 4)
 endtime.replace(day=1)
 
@@ -161,6 +163,10 @@ def make_plots_for_camera(camera, args, database):
         starttime = starttimeep
         readmodes = epreadmodes
 
+    if 'sq' in camera:
+        starttime = starttimesq
+        readmodes = sqreadmodes
+
     for readmode in readmodes:
         dataset = database.getMeasurementsForCamera(camera, levelratio=0.02, filters=goodfilters, readmode=readmode)
         if dataset is None:
@@ -223,7 +229,7 @@ def plotnoisehist(camera, dataset, extensions, outputdir, starttime, readmode=No
     if 'kb' in camera:
         plt.ylim([7, 20])
     if 'sq' in camera:
-        plt.ylim([5, 15])
+        plt.ylim([1, 10])
     dateformat(starttime, endtime)
     plt.xlabel('Date')
     plt.ylabel('Readnoise [e-]')
