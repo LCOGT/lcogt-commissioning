@@ -26,6 +26,8 @@ fareadmodes = [['full_frame', None], ['central_2k_2x2', ]]
 
 epreadmodes = [['MUSCAT_SLOW',], ['MUSCAT_FAST', ] ]
 
+sqreadmodes = [['default',]]
+
 def parseCommandLine():
     parser = argparse.ArgumentParser(
         description='Analyse long term gain behaviour in LCO cameras')
@@ -112,6 +114,9 @@ def renderHTMLPage(args, cameras, filenames):
 
         if 'ep' in camera:
             readmodes = epreadmodes
+
+        if 'sq' in camera:
+            readmodes = sqreadmodes
 
         message = message + " <h2> %s </h2>\n" % (camera)
         for readmode in readmodes:
