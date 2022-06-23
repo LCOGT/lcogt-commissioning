@@ -125,7 +125,7 @@ def do_linearity_for_fileset (fitsfiles, args):
     plt.ylabel ('Exposure level [ADU]')
 
 
-    good = np.asarray(exptimes)>1000
+    good = np.asarray(exptimes)>500
     z = np.polyfit (exptimes[good], levels[good], 1)
     p = np.poly1d(z)
     plt.plot (exptimes, p(exptimes), label = p)

@@ -196,7 +196,7 @@ def parseCommandLine():
                         choices=common.lco_sinistro1m_cameras.extend('None'),
                         help="To which instrument to submit")
 
-    parser.add_argument('--insttype', type=str, default='1M-SCICAM-SINISTRO')
+    parser.add_argument('--insttype', type=str, default='1M0-SCICAM-SINISTRO')
     parser.add_argument('--readmode', choices=common.archon_readout_modes.append('default'), default=common.archon_readout_modes[0])
     parser.add_argument('--targetname', default='auto', type=str,
                         help='Name of star for X talk measurement. Will be resolved via simbad. If resolve failes, '

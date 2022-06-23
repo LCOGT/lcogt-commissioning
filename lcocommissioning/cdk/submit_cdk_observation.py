@@ -18,7 +18,7 @@ def createCDKRequestConfiguration(args):
         'guiding_config': {'mode': 'ON', 'optional': True},
         'acquisition_config': {},
         'instrument_configs': [{
-            'exposure_count': None if args.exp_cnt is None else args.exp_cnt,
+            'exposure_count': 1 if args.exp_cnt is None else args.exp_cnt,
             'exposure_time': args.exp_time,
             'mode': 'default' if args.readmode is None else args.readmode,
             'optical_elements': {
