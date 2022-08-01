@@ -12,68 +12,70 @@ _logger = logging.getLogger(__name__)
 goodFloydsFluxStandards = ['auto', 'HZ 43', 'GD 71', 'BD+284211', 'HZ 44', 'L745-46A', 'Feige 110', 'EGGR274']
 
 
-def createRequestsForStar(context):
-    exposuretime = context.exptime
-    overheadperexposure = 60  # readout plus fixed overhead
-    telescopeslew = 120 + 90 + 60  # telescope slew, acquire exposure + process, config change time
-    start = context.start
-    nexposure = int(context.expcnt)
+def createRequestsForStar_scheduler(context):
 
-    # create one block per quadrant
-    end = start + \
-          dt.timedelta(seconds=telescopeslew) + \
-          dt.timedelta(seconds=nexposure * (exposuretime + overheadperexposure))
+    absolutestart = context.start
+    windowend = context.start + dt.timedelta(hours=context.schedule_window)
 
+    location = {'telescope': "2m0a",
+                'telescope_class': "2m0",
+                'enclosure' : "clma",
+                'site': context.site, }
 
-    start = str(start).replace(' ', 'T')
-    end = str(end).replace(' ', 'T')
-    # vestigal code, offset better be 0
-    offsetPointing = SkyCoord(context.radec.ra + Angle(context.offsetRA, unit=u.arcsec),
-                              context.radec.dec + Angle(context.offsetDec, unit=u.arcsec))
+    requestgroup = {"name": context.title,
+                    "proposal": context.proposal,
+                    "ipp_value": context.ipp,
+                    "operator": "SINGLE" ,
+                    "observation_type": "NORMAL",
+                    "requests": []
+                    }
+    requests = {'configurations': [],
+               'windows': [{"start": str(absolutestart), "end": str(windowend)}, ],
+               'location': location}
 
-    data = {
-        'name': "Floyds test {}".format(context.targetname),
-        'proposal': 'LCOEngineering',
-        'site': context.site,
-        'enclosure': 'clma',
-        'telescope': '2m0a',
-        'start': start,
-        'end': end,
-        'request': {
-            'acceptability_threshold': 100,
-            'configurations': [
-                {'type': 'SPECTRUM',
-                 'instrument_type': '2M0-FLOYDS-SCICAM',
-                 'target': {
-                     'type': 'ICRS',
-                     'name': context.targetname,
-                     'ra': offsetPointing.ra.degree,
-                     'dec': offsetPointing.dec.degree
-                 },
-                 'acquisition_config': {
-                     'mode': 'WCS'
-                 },
-                 'guiding_config': {
-                     'mode': 'ON',
-                     'optional': False
-                 },
-                 'constraints': {},
-                 'instrument_configs': [{
-                     'exposure_time': context.exptime,
-                     'exposure_count': int(context.expcnt),
-                     'mode': 'default',
-                     'rotator_mode': 'VFLOAT',
-                     'optical_elements': {
-                         'slit': context.slit
-                     }
-                 }]
-                 }
-            ]
-        }
+    pm_ra = context.pm[0]
+    pm_dec = context.pm[1]
+    target = {
+        "type": "ICRS",
+        "name": "{} {}".format(context.title, context.targetname),
+        "epoch": "2000.0000000",
+        "equinox": "2000.0000000",
+        "ra": "%10f" % context.radec.ra.degree,
+        "dec": "%10f" % context.radec.dec.degree,
+        "proper_motion_ra": pm_ra,
+        "proper_motion_dec": pm_dec,
     }
 
-    _logger.debug(json.dumps(data, indent=4))
-    common.submit_observation(data, context.opt_confirmed)
+    configuration =      {'type': 'SPECTRUM',
+                          'instrument_type': '2M0-FLOYDS-SCICAM',
+                          'target': target,
+
+                          'acquisition_config': {
+                              'mode': 'WCS'
+                          },
+                          'guiding_config': {
+                              'mode': 'ON',
+                              'optional': False
+                          },
+                          'constraints': {},
+                          'instrument_configs': [{
+                              'exposure_time': context.exptime,
+                              'exposure_count': int(context.expcnt),
+                              'mode': 'default',
+                              'rotator_mode': 'VFLOAT',
+                              'optical_elements': {
+                                  'slit': context.slit
+                              }
+                          }]
+                          }
+
+    requests['configurations'].append (configuration)
+    requestgroup['requests'].append (requests)
+
+
+
+    _logger.debug(json.dumps(requestgroup, indent=4))
+    common.send_request_to_portal(requestgroup, context.opt_confirmed)
 
 
 def parseCommandLine():
@@ -84,22 +86,21 @@ def parseCommandLine():
                         help='Name of star for Floyds test observation. if none is given, or auto, Software will try to'
                              ' find a cataloged flux stadnard star. Name must resolve via Simbad; if resolve failes,'
                              ' program will exit.')
-
+    parser.add_argument('--pm', type=float, nargs=2, default = None, help="proper motion RA DEC in marcsec / year")
     requiredNamed = parser.add_argument_group('required named arguments')
     requiredNamed.add_argument('--site', choices=common.lco_2meter_sites, required=True, help="To which site to submit")
 
     parser.add_argument('--exp-cnt', type=int, dest="expcnt", default=1)
-    parser.add_argument('--exptime', type=float, default=150)
+    parser.add_argument('--exptime', type=float, default=120)
     parser.add_argument('--slit', type=str, default="slit_1.2as", choices=['slit_1.2as', 'slit_2.0as', 'slit_6.0as'])
 
     parser.add_argument('--start', default=None,
                         help="When to start Floyds observation. If not given, defaults to \"NOW\"")
     parser.add_argument('--user', default='daniel_harbeck', help="Which user name to use for submission")
-
-    # Per default, do not be on chip gap!
-    parser.add_argument('--offsetRA', default=0, help="Extra pointing offset to apply R.A.")
-    parser.add_argument('--offsetDec', default=0, help="Extra pointing offset to apply Dec")
-
+    parser.add_argument('--schedule-window', default=2, type=float)
+    parser.add_argument('--title', default="Floyds commissioning")
+    parser.add_argument('--proposal', default='LCOEngineering')
+    parser.add_argument('--ipp', type=float, default=1.0, help="ipp value")
     parser.add_argument('--CONFIRM', dest='opt_confirmed', action='store_true',
                         help='If set, block will be submitted.')
 
@@ -132,16 +133,19 @@ def parseCommandLine():
     except:
         print("Resolving target name failed, giving up")
         exit(1)
-
+    if args.pm is None:
+        if args.targetname in common.listofpm:
+            args.pm = common.listofpm[args.targetname]
+        else:
+            args.pm = [0,0]
     print("Resolved target %s at corodinates %s %s" % (args.targetname, args.radec.ra, args.radec.dec))
     return args
 
 
 def main():
     args = parseCommandLine()
-    createRequestsForStar(args)
-    print("Need to update this program for direct submission. Quitting.")
-    exit(1)
+    createRequestsForStar_scheduler(args)
+
 
 
 if __name__ == '__main__':
