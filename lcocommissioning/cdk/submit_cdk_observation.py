@@ -131,7 +131,7 @@ def parseCommandLine():
     repeatgroup.add_argument('--exp-cnt', type=int, help="How often to repeat each exposure")
     repeatgroup.add_argument('--filltime', type=float, help="How long to repeat exposures (seconds)")
 
-    parser.add_argument('--readmode', type=int, default=None, )
+    parser.add_argument('--readmode', type=str, default=None, )
     parser.add_argument('--scheduler', action='store_true',
                         help='If set, submit to scheduler instead of trying a direct submission.')
     parser.add_argument('--CONFIRM', dest='opt_confirmed', action='store_true',
