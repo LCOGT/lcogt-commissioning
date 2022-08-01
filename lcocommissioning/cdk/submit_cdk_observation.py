@@ -15,7 +15,7 @@ def createCDKRequestConfiguration(args):
     configuration = {
         'type': None,
         'instrument_type': '0m4-SCICAM-QHY600',
-        'guiding_config': {'mode': 'ON', 'optional': True},
+        'guiding_config': {'mode': 'ON', 'optional': True} if args.selfguide else {'mode': 'OFF'},
         'acquisition_config': {},
         'instrument_configs': [{
             'exposure_count': 1 if args.exp_cnt is None else args.exp_cnt,
@@ -136,7 +136,8 @@ def parseCommandLine():
                         help='If set, submit to scheduler instead of trying a direct submission.')
     parser.add_argument('--CONFIRM', dest='opt_confirmed', action='store_true',
                         help='If set, observation will be submitted. If omitted, nothing will be submitted.')
-
+    parser.add_argument('--selfguide', action='store_true',
+                        help='If set, selfguide.')
     parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
     args = parser.parse_args()
