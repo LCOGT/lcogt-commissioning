@@ -25,6 +25,16 @@ lco_site_lonlat = {'bpl': (-119.863103, 34.433161),
                    'tlv': (30.595833, 30.595833),
                    }
 
+lco_site_alt = {'ogg': 3055,
+                'coj':  1116,
+                'cpt': 1760,
+                'lsc': 2198,
+                'elp': 2070,
+                'tlv': 875,
+                'ngq': 5100,
+
+                }
+
 # Dictionary of NRES instances
 nres_instruments = {'lsc': 'nres01',
                     'elp': 'nres02',
@@ -174,7 +184,7 @@ def send_to_scheduler(user_request, dosubmit=False):
     exit(1)
 
 
-def submit_observation(observation, dosubmit=False):
+def submit_request_group(observation, dosubmit=False):
     """ Submit to LCO via an API call, direct submission"""
 
     if dosubmit:
@@ -183,13 +193,13 @@ def submit_observation(observation, dosubmit=False):
         try:
             response.raise_for_status()
             _log.info(
-                'Direct submitted observation with id: {0}. Check it at {1}/observations/{0}'.format(
+                'Submitted request group with id: {0}. Check it at {1}/observations/{0}'.format(
                     response.json()['id'], VALHALLA_URL
                 )
             )
         except Exception:
             _log.error(
-                'Failed to submit observation: error code {}: {}'.format(response.status_code, response.content))
+                'Failed to submit request group: error code {}: {}'.format(response.status_code, response.content))
     else:
         _log.info("Not submitting block since CONFIRM  is not set")
 

@@ -47,4 +47,4 @@ request = {
 print ("Need to update this program for direct submission. Quitting.")
 exit(1)
 
-common.submit_observation (request, dosubmit=True)
+common.submit_request_group (request, dosubmit=True)

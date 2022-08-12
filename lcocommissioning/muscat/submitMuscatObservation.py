@@ -221,7 +221,7 @@ def main():
         muscat = ammend_request_for_direct_submission(muscat, args)
         _log.info(f"Attempting direct submission {muscat['start']} {muscat['end']}")
         _log.debug(json.dumps(muscat, indent=2))
-        common.submit_observation(muscat, args.opt_confirmed)
+        common.submit_request_group(muscat, args.opt_confirmed)
 
 
 # else:

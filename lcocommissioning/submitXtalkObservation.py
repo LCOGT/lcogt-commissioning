@@ -178,7 +178,7 @@ def createRequestsForStar_pond(context):
 
             observation['request']['configurations'][0]['instrument_configs'].append(instrument_config)
 
-        common.submit_observation(observation, context.opt_confirmed)
+        common.submit_request_group(observation, context.opt_confirmed)
 
 
 def parseCommandLine():
