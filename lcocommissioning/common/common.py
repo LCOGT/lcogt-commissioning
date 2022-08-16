@@ -55,7 +55,7 @@ archon_readout_modes = ["full_frame", "central_2k_2x2"]
 lco_muscat_instruments = ['mc03']
 lco_muscat_readmodes = ['MUSCAT_FAST', 'MUSCAT_SLOW']
 
-goodXTalkTargets = ['auto', '91 Aqr', 'HD30562', '15 Sex', '30Psc', '51Hya', 'Zet Boo',]
+goodXTalkTargets = ['auto', '30Psc', 'HD30562', '15 Sex',   '51Hya', 'Zet Boo', '9Peg', '91 Aqr',   ]
 
 goodNRESFluxTargets = ['auto', 'HR9087', 'HR1544', 'HR4468', 'HD93521', 'HR3454', 'HR5501', 'HR7596']
 
@@ -97,7 +97,7 @@ def is_valid_lco_site(sitecode):
     return sitecode in lco_site_lonlat
 
 
-def get_auto_target(targetlist, site, starttime, moonseparation=29, minalt=50):
+def get_auto_target(targetlist, sitecode, starttime, moonseparation=29, minalt=45):
     """ Go through a list of Simbad-resolvable objects and return the first visible object at the given site and time.
 
     :param targetlist: List of possible target names, as strings. Must resolve via simbad
@@ -108,10 +108,10 @@ def get_auto_target(targetlist, site, starttime, moonseparation=29, minalt=50):
     :return: Name of viable target or None
     """
 
-    site = get_ephem_obj_for_site(site, starttime + dt.timedelta(minutes=30))
+    site = get_ephem_obj_for_site(sitecode, starttime + dt.timedelta(minutes=1))
     moon = ephem.Moon()
     moon.compute(site)
-    _log.debug("Finding suitable star for site %s. Moon phase is  %i %%" % (site, moon.moon_phase * 100))
+    _log.debug(f"Finding suitable star for site {sitecode} at LST {site.sidereal_time()}. Moon phase is  {moon.moon_phase*100} %%" )
 
     for starcandidate in targetlist:
         if 'auto' in starcandidate:
@@ -132,8 +132,8 @@ def get_auto_target(targetlist, site, starttime, moonseparation=29, minalt=50):
         alt = s.alt * 180 / math.pi
         separation = separation * 180 / math.pi
 
-        altok = alt > minalt
-        sepok = separation > moonseparation
+        altok = alt >= minalt
+        sepok = separation >= moonseparation
 
         if (altok and sepok):
             _log.debug("\nViable star found: %s altitude % 4f moon separation % 4f" % (starcandidate, alt, separation))
