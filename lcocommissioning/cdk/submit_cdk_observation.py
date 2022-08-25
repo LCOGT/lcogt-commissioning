@@ -1,19 +1,17 @@
+''' Tool to directly submit observation for Delta Rho Commissioning.'''
 import argparse
 import datetime as dt
 import json
 import logging
-
+import sys
 import astropy.coordinates
-import numpy as np
 from astropy.coordinates import SkyCoord
 
-import lcocommissioning.common.common
 import lcocommissioning.common.common as common
 
 _log = logging.getLogger(__name__)
 
-
-def createCDKRequestConfiguration(args):
+def create_cdk_request_configuration(args):
 
     configuration = {
         'type': None,
@@ -56,7 +54,7 @@ def createCDKRequestConfiguration(args):
     return configuration
 
 
-def createRequest(args):
+def create_request(args):
     '''
     Create a schedulable delta Rho / CDK request
     :param args:
@@ -64,7 +62,7 @@ def createRequest(args):
     '''
 
     requestgroup = {"name": args.title,
-                    "proposal": "delta rho Commissioning",
+                    "proposal": "DeltaRho Commissioning",
                     "ipp_value": args.ipp,
                     "operator": "SINGLE",  # "MANY" if args.dither else "SINGLE",
                     "observation_type": "NORMAL",
@@ -83,7 +81,7 @@ def createRequest(args):
                'windows': [{"start": absolutestart.isoformat(), "end": windowend.isoformat()}, ],
                'location': location}
 
-    cdkconfiguration = createCDKRequestConfiguration(args)
+    cdkconfiguration = create_cdk_request_configuration(args)
 
     target = {
         "type": "ICRS",
@@ -125,7 +123,7 @@ def parseCommandLine():
 
     parser.add_argument('--defocus', type=float, default=0.0, help="Amount to defocus star.")
 
-    parser.add_argument('--filter', default='rp', choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zp', 'U', 'B', 'V'],
+    parser.add_argument('--filter', default='rp', choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zs', 'U', 'B', 'V'],
                         help="Select optical element filter")
 
     parser.add_argument('--exp-time', type=float, default=10,
@@ -161,29 +159,28 @@ def parseCommandLine():
         try:
             args.start = dt.datetime.strptime(args.start, "%Y%m%d %H:%M")
         except ValueError:
-            _log.error("Invalid start time argument: ", args.start)
-            exit(1)
+            _log.error(f"Invalid start time argument: {args.start}")
+            sys.exit(1)
 
-    if ('auto' in args.targetname):
+    if 'auto' in args.targetname:
         # automatically find the best target
         args.targetname = common.get_auto_target(common.goodXTalkTargets, args.site, args.start, moonseparation=40)
         if args.targetname is None:
             _log.error("Could not find a suitable auto target. Exiting.")
-            exit(1)
+            sys.exit(1)
 
 
     try:
-        if ('moon' in args.targetname):
-
+        if 'moon' in args.targetname:
             long, lat = common.lco_site_lonlat[args.site]
-            alt = lcocommissioning.common.common.lco_site_alt[args.site]
+            alt = common.lco_site_alt[args.site]
             args.radec = astropy.coordinates.get_moon(time = astropy.time.Time(args.start), location = astropy.coordinates.EarthLocation.from_geodetic(lat=lat, lon=long, height=alt))
         else:
             _log.debug("Resolving target name")
             args.radec = SkyCoord.from_name(args.targetname, parse=True)
     except:
         _log.exception("Resolving target name failed, giving up")
-        exit(1)
+        sys.exit(1)
 
     print(f"Resolved target >{args.targetname}< at coordinates {args.radec.ra} {args.radec.dec}")
 
@@ -208,7 +205,7 @@ def ammend_request_for_direct_submission(cdk_request, args):
 
     data = {
         'name': args.title,
-        'proposal': 'LCOEngineering',
+        'proposal': 'DeltaRho Commissioning',
         'site': args.site,
         'enclosure': 'clma',
         'telescope': '0m4c',
@@ -226,7 +223,7 @@ def ammend_request_for_direct_submission(cdk_request, args):
 def main():
     args = parseCommandLine()
 
-    cdk = createRequest(args)
+    cdk = create_request(args)
 
     # if args.scheduler:
     #     _log.info("Submitting to scheduler")
