@@ -1,21 +1,22 @@
+''' Tool to directly submit observation for Delta Rho Commissioning.'''
 import argparse
 import datetime as dt
 import json
 import logging
-
-import numpy as np
+import sys
+import astropy.coordinates
 from astropy.coordinates import SkyCoord
 
 import lcocommissioning.common.common as common
 
 _log = logging.getLogger(__name__)
 
+def create_cdk_request_configuration(args):
 
-def createCDKRequestConfiguration(args):
     configuration = {
         'type': None,
         'instrument_type': '0m4-SCICAM-QHY600',
-        'guiding_config': {'mode': 'ON', 'optional': True},
+        'guiding_config': {'mode': 'ON', 'optional': True} if args.selfguide else {'mode': 'OFF'},
         'acquisition_config': {},
         'instrument_configs': [{
             'exposure_count': 1 if args.exp_cnt is None else args.exp_cnt,
@@ -53,9 +54,15 @@ def createCDKRequestConfiguration(args):
     return configuration
 
 
-def createRequest(args):
+def create_request(args):
+    '''
+    Create a schedulable delta Rho / CDK request
+    :param args:
+    :return:
+    '''
+
     requestgroup = {"name": args.title,
-                    "proposal": "delta rho Commissioning",
+                    "proposal": "DeltaRho Commissioning",
                     "ipp_value": args.ipp,
                     "operator": "SINGLE",  # "MANY" if args.dither else "SINGLE",
                     "observation_type": "NORMAL",
@@ -74,7 +81,7 @@ def createRequest(args):
                'windows': [{"start": absolutestart.isoformat(), "end": windowend.isoformat()}, ],
                'location': location}
 
-    cdkconfiguration = createCDKRequestConfiguration(args)
+    cdkconfiguration = create_cdk_request_configuration(args)
 
     target = {
         "type": "ICRS",
@@ -83,12 +90,13 @@ def createRequest(args):
         "equinox": "2000.0000000",
         "ra": "%10f" % args.radec.ra.degree,
         "dec": "%10f" % args.radec.dec.degree,
+        'proper_motion_ra': args.pm[0],
+        'proper_motion_dec': args.pm[1],
     }
 
     cdkconfiguration['target'] = target
     cdkconfiguration['constraints'] = common.default_constraints
     request['configurations'].append(cdkconfiguration)
-
     requestgroup['requests'].append(request)
 
     return requestgroup
@@ -115,7 +123,7 @@ def parseCommandLine():
 
     parser.add_argument('--defocus', type=float, default=0.0, help="Amount to defocus star.")
 
-    parser.add_argument('--filter', default='rp', choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zp', 'U', 'B', 'V'],
+    parser.add_argument('--filter', default='rp', choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zs', 'U', 'B', 'V'],
                         help="Select optical element filter")
 
     parser.add_argument('--exp-time', type=float, default=10,
@@ -125,18 +133,19 @@ def parseCommandLine():
 
     parser.add_argument('--offsetRA', default=0, help="Extra pointing offset to apply R.A.")
     parser.add_argument('--offsetDec', default=0, help="Extra pointing offset to apply Dec")
-    parser.add_argument('--pp', default=[0., 0.], nargs=2, type=float, help="Proper motions RA, Dec, in mas/yr")
+    parser.add_argument('--pm', default=[0., 0.], nargs=2, type=float, help="Proper motions RA, Dec, in mas/yr")
 
     repeatgroup = parser.add_mutually_exclusive_group()
     repeatgroup.add_argument('--exp-cnt', type=int, help="How often to repeat each exposure")
     repeatgroup.add_argument('--filltime', type=float, help="How long to repeat exposures (seconds)")
 
-    parser.add_argument('--readmode', type=int, default=None, )
-    parser.add_argument('--scheduler', action='store_true',
-                        help='If set, submit to scheduler instead of trying a direct submission.')
+    parser.add_argument('--readmode', type=str, default=None, )
+    # parser.add_argument('--scheduler', action='store_true',
+    #                     help='If set, submit to scheduler instead of trying a direct submission.')
     parser.add_argument('--CONFIRM', dest='opt_confirmed', action='store_true',
                         help='If set, observation will be submitted. If omitted, nothing will be submitted.')
-
+    parser.add_argument('--selfguide', action='store_true',
+                        help='If set, selfguide.')
     parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
     args = parser.parse_args()
@@ -150,24 +159,30 @@ def parseCommandLine():
         try:
             args.start = dt.datetime.strptime(args.start, "%Y%m%d %H:%M")
         except ValueError:
-            _log.error("Invalid start time argument: ", args.start)
-            exit(1)
+            _log.error(f"Invalid start time argument: {args.start}")
+            sys.exit(1)
 
-    if ('auto' in args.targetname):
+    if 'auto' in args.targetname:
         # automatically find the best target
         args.targetname = common.get_auto_target(common.goodXTalkTargets, args.site, args.start, moonseparation=40)
         if args.targetname is None:
             _log.error("Could not find a suitable auto target. Exiting.")
-            exit(1)
+            sys.exit(1)
+
 
     try:
-        _log.debug("Resolving target name")
-        args.radec = SkyCoord.from_name(args.targetname, parse=True)
+        if 'moon' in args.targetname:
+            long, lat = common.lco_site_lonlat[args.site]
+            alt = common.lco_site_alt[args.site]
+            args.radec = astropy.coordinates.get_moon(time = astropy.time.Time(args.start), location = astropy.coordinates.EarthLocation.from_geodetic(lat=lat, lon=long, height=alt))
+        else:
+            _log.debug("Resolving target name")
+            args.radec = SkyCoord.from_name(args.targetname, parse=True)
     except:
-        print("Resolving target name failed, giving up")
-        exit(1)
+        _log.exception("Resolving target name failed, giving up")
+        sys.exit(1)
 
-    print("Resolved target %s at coordinates %s %s" % (args.targetname, args.radec.ra, args.radec.dec))
+    print(f"Resolved target >{args.targetname}< at coordinates {args.radec.ra} {args.radec.dec}")
 
     if not (args.exp_cnt or args.filltime):
         print("No exposure mode chosen, defaulting to EXPOSE")
@@ -176,28 +191,29 @@ def parseCommandLine():
     return args
 
 
-def ammend_request_for_direct_submission(cdk, args):
+def ammend_request_for_direct_submission(cdk_request, args):
     """ Need to fill in some extra fields for a direct submission"""
-    SLEWTIME = 300  # Driven by rotator which is excuiciatingly slow.
+    SLEWTIME = 120  # Driven by rotator which is excuiciatingly slow.
     READOUTTIME = 6
-    # Calculate the4 end tim efor this reuquest
-    endtime = args.start + dt.timedelta(seconds=SLEWTIME)
+    # Calculate the end time for this request
+    end_time = args.start + dt.timedelta(seconds=SLEWTIME)
+
     if args.filltime:
-        endtime += dt.timedelta(seconds=args.filltime)
+        end_time += dt.timedelta(seconds=args.filltime)
     if args.exp_cnt:
-        endtime += dt.timedelta(seconds=args.exp_cnt * (float(args.exp_time) + READOUTTIME))
+        end_time += dt.timedelta(seconds=args.exp_cnt * (float(args.exp_time) + READOUTTIME))
 
     data = {
         'name': args.title,
-        'proposal': 'LCOEngineering',
+        'proposal': 'DeltaRho Commissioning',
         'site': args.site,
         'enclosure': 'clma',
         'telescope': '0m4c',
         'start': args.start.isoformat(),
-        'end': endtime.isoformat(),
+        'end': end_time.isoformat(),
         'request': {
             'acceptability_threshold': 90,
-            'configurations': cdk['requests'][0]['configurations']
+            'configurations': cdk_request['requests'][0]['configurations']
         }
 
     }
@@ -207,17 +223,17 @@ def ammend_request_for_direct_submission(cdk, args):
 def main():
     args = parseCommandLine()
 
-    cdk = createRequest(args)
+    cdk = create_request(args)
 
-    if args.scheduler:
-        _log.info("Submitting to scheduler")
-        _log.debug(json.dumps(cdk, indent=2))
-        common.send_request_to_portal(cdk, args.opt_confirmed)
-    else:
-        cdk = ammend_request_for_direct_submission(cdk, args)
-        _log.info(f"Attempting direct submission {cdk['start']} {cdk['end']}")
-        _log.debug(json.dumps(cdk, indent=2))
-        common.submit_observation(cdk, args.opt_confirmed)
+    # if args.scheduler:
+    #     _log.info("Submitting to scheduler")
+    #     _log.debug(json.dumps(cdk, indent=2))
+    #     common.send_request_to_portal(cdk, args.opt_confirmed)
+    # else:
+    cdk = ammend_request_for_direct_submission(cdk, args)
+    _log.info(f"Attempting direct submission {cdk['start']} {cdk['end']}")
+    _log.debug(json.dumps(cdk, indent=2))
+    common.submit_request_group(cdk, args.opt_confirmed)
 
 
 if __name__ == '__main__':

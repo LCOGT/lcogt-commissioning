@@ -193,7 +193,7 @@ def main():
         directrequest = convert_request_for_direct_submission(requstgroup,args)
         _logger.info(f"Attempting direct submission {directrequest['start']} {directrequest['end']}")
         _logger.debug(json.dumps(directrequest, indent=2))
-        common.submit_observation(directrequest, args.opt_confirmed)
+        common.submit_request_group(directrequest, args.opt_confirmed)
     exit(0)
 
 

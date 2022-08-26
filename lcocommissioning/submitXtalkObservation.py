@@ -1,9 +1,7 @@
 import argparse
-import json
 import logging
-import ephem
-import math
-import requests
+import sys
+
 from astropy import units as u
 from astropy.coordinates import SkyCoord, Angle
 import datetime as dt
@@ -45,7 +43,7 @@ def create_request_for_star_scheduler(context):
     requestgroup = {"name": context.title,
                     "proposal": context.proposal,
                     "ipp_value": context.ipp,
-                    "operator": "SINGLE" ,
+                    "operator": "SINGLE",
                     "observation_type": "NORMAL",
                     "requests": []
                     }
@@ -58,7 +56,7 @@ def create_request_for_star_scheduler(context):
                'windows': [{"start": str(absolutestart), "end": str(windowend)}, ],
                'location': location}
 
-    print (offsets)
+    print(offsets)
     for quadrant in offsets:
 
         offsetPointing = getRADecForQuadrant(context.radec, quadrant, context.offsetRA, context.offsetDec)
@@ -97,8 +95,7 @@ def create_request_for_star_scheduler(context):
                     }
                 })
 
-
-            request['configurations'].append (configuration)
+            request['configurations'].append(configuration)
     requestgroup['requests'].append(request)
 
     common.send_request_to_portal(requestgroup, context.opt_confirmed)
@@ -178,7 +175,7 @@ def createRequestsForStar_pond(context):
 
             observation['request']['configurations'][0]['instrument_configs'].append(instrument_config)
 
-        common.submit_observation(observation, context.opt_confirmed)
+        common.submit_request_group(observation, context.opt_confirmed)
 
 
 def parseCommandLine():
@@ -189,7 +186,7 @@ def parseCommandLine():
 
     parser.add_argument('--site', required=True, choices=common.lco_1meter_sites,
                         help="To which site to submit")
-    parser.add_argument('--dome', required=True, choices=['doma', 'domb', 'domc', 'aqwa','aqwb', 'None'],
+    parser.add_argument('--dome', required=True, choices=['doma', 'domb', 'domc', 'aqwa', 'aqwb', 'None'],
                         help="To which enclosure to submit")
     parser.add_argument('--telescope', default='1m0a')
     parser.add_argument('--instrument', required=True,
@@ -197,7 +194,8 @@ def parseCommandLine():
                         help="To which instrument to submit")
 
     parser.add_argument('--insttype', type=str, default='1M0-SCICAM-SINISTRO')
-    parser.add_argument('--readmode', choices=common.archon_readout_modes.append('default'), default=common.archon_readout_modes[0])
+    parser.add_argument('--readmode', choices=common.archon_readout_modes.append('default'),
+                        default=common.archon_readout_modes[0])
     parser.add_argument('--targetname', default='auto', type=str,
                         help='Name of star for X talk measurement. Will be resolved via simbad. If resolve failes, '
                              'program will exit.\n If name is auto, which is te default, a viable target will be choosen for you.')
@@ -209,11 +207,12 @@ def parseCommandLine():
                         help='Do not dither the exposure')
     parser.add_argument('--ditherthrow', default=120, type=float,
                         help="Throw for dithering in arcsec, default is 120''")
-    parser.add_argument('--ditherx', action='store_true', help="dithering is in + pattern inste4ad of x pattern. Do not use for xtalk observations.")
+    parser.add_argument('--ditherx', action='store_true',
+                        help="dithering is in + pattern inste4ad of x pattern. Do not use for xtalk observations.")
     parser.add_argument('--defocus', type=float, default=6.0, help="Amount to defocus star.")
     parser.add_argument('--exp-times', nargs="*", type=float, default=[2, 4, 6, 12], help="List of exposure times")
     parser.add_argument('--exp-cnt', type=int, default=1, help="How often to reapeat each exposure")
-    parser.add_argument('--binning', type=int, default = None)
+    parser.add_argument('--binning', type=int, default=None)
     parser.add_argument('--ipp', type=float, default=1.0, help="ipp value")
     parser.add_argument('--filter', type=str, default='rp', help="Filter")
     parser.add_argument('--offsetRA', default=0, help="Extra pointing offset to apply R.A.")
@@ -239,21 +238,21 @@ def parseCommandLine():
         try:
             args.start = dt.datetime.strptime(args.start, "%Y%m%d %H:%M")
         except ValueError:
-            _log.error("Invalid start time argument: ", args.start)
-            exit(1)
+            _log.error("Invalid start time argument: %s", args.start)
+            sys.exit(1)
 
     if ('auto' in args.targetname):
         # automatically find the best target
-        args.targetname = common.get_auto_target(common.goodXTalkTargets, args.site, args.start, moonseparation=40)
+        args.targetname = common.get_auto_target(common.goodXTalkTargets, args.site, args.start, moonseparation=60)
         if args.targetname is None:
-            exit(1)
+            sys.exit(1)
 
     try:
         _log.debug("Resolving target name")
         args.radec = SkyCoord.from_name(args.targetname, parse=True)
     except:
         print("Resolving target name failed, giving up")
-        exit(1)
+        sys.exit(1)
 
     print("Resolved target %s at corodinates %s %s" % (args.targetname, args.radec.ra, args.radec.dec))
 
@@ -263,7 +262,7 @@ def parseCommandLine():
                                     2: [args.ditherthrow, -args.ditherthrow],
                                     3: [-args.ditherthrow, -args.ditherthrow]}
     if args.ditherx:
-        sinistro_1m_quadrant_offsets = {0: [-args.ditherthrow,0],
+        sinistro_1m_quadrant_offsets = {0: [-args.ditherthrow, 0],
                                         1: [args.ditherthrow, 0],
                                         2: [0, args.ditherthrow],
                                         3: [0, -args.ditherthrow]}
@@ -272,10 +271,11 @@ def parseCommandLine():
 
 def main():
     args = parseCommandLine()
-    if  args.direct:
+    if args.direct:
         createRequestsForStar_pond(args)
     else:
         create_request_for_star_scheduler(args)
+
 
 if __name__ == '__main__':
     main()

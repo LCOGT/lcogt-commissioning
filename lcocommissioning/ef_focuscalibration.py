@@ -189,23 +189,19 @@ def main():
         faimages = [i for i in args.files if ("fa" in os.path.basename(i))]
     if args.requestid:
         inputlist = get_auto_focus_frames(args.requestid)
-        efimages = [i['id'] for i in inputlist if ("ef" in i['basename'])]
-        faimages = [i['id'] for i in inputlist if ("fa" in i['basename'])]
+        efimages = [i['id'] for i in inputlist if (("ef" in i['basename']) and ("x00" in i['basename']))]
+        faimages = [i['id'] for i in inputlist if (("fa" in i['basename']) and ("x00" in i['basename']))]
 
     print (efimages)
     print (faimages)
-
 
     focuslist = []
     fwhmlist = []
     thetalist = []
     elllist = []
 
-
-
     _log.debug("EF images:", efimages)
     _log.debug("FA images:", faimages)
-
 
     for image in efimages:
         focus, fwhm, theta, ell = getImageData(image, minarea=10, deblend=0.5, archive = args.requestid is not None)

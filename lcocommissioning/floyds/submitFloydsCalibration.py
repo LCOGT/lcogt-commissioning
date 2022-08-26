@@ -50,7 +50,7 @@ def makeDirectFlatFieldsubmission(args):
         }
     }
     _logger.info (f"Start time is {start}")
-    common.submit_observation(observation, args.opt_confirmed)
+    common.submit_request_group(observation, args.opt_confirmed)
 
 
 
