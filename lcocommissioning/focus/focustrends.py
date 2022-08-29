@@ -1,4 +1,7 @@
-import datetime
+''' Utility to crawl end of focus sequence images and use their focus
+    values to analyze focus compensation terms.'''
+
+import datetime as dt
 import logging
 import argparse
 import math
@@ -8,7 +11,6 @@ from astropy.table import Table
 import numpy as np
 import matplotlib.pyplot as plt
 import astropy.time as astt
-import datetime as dt
 
 plt.rcParams["figure.figsize"] = (20, 34)
 plt.style.use('ggplot')
@@ -35,6 +37,9 @@ wellintonighttime = {
 
 
 def robustfit(x, y, sigma=3, iterations=3, label=None):
+    ''' Do a sigma clipping linear fit.
+    TODO: Consider moving this over to an astropy routine that already does this
+    '''
     _x = x
     _y = y
     if len(_x) < 3:
@@ -65,8 +70,10 @@ def get_focusStackData(args):
                     'AZIMUTH', 'REFHUMID', 'DATE-OBS', 'DAY-OBS', 'ORIGNAME',
                     'WMSTEMP', 'FILTER']
 
-    query = f'SITEID:{site} AND ENCID:{enc} AND TELID:{tel} AND OBJECT:auto_focus AND FOCOBOFF:0 AND RLEVEL:91 AND OBSTYPE:EXPOSE AND _exists_:L1FWHM'
+    query = f'SITEID:{site} AND ENCID:{enc} AND TELID:{tel} AND OBJECT:auto_focus' \
+            f' AND FOCOBOFF:0 AND RLEVEL:91 AND OBSTYPE:EXPOSE AND _exists_:L1FWHM'
     print(f"Query String: {query}")
+
     # due to cameras moving around, and mirrors being replaced, autofocus values are
     # informative only over a limited date range.
     bestaftertime = args.after
@@ -98,7 +105,8 @@ def get_focusStackData(args):
     # reformatting boilerplate stuff
     dayobsidx = sourcecolumn.index('DAY-OBS')
     for ii in range(len(t)):
-        t[ii, dayobsidx] = "-".join([t[ii, dayobsidx][0:4], t[ii, dayobsidx][4:6], t[ii, dayobsidx][6:8]])
+        t[ii, dayobsidx] = "-".join([t[ii, dayobsidx][0:4], t[ii, dayobsidx][4:6],
+                                     t[ii, dayobsidx][6:8]])
 
     try:
         dtypes = [float for ii in range(len(sourcecolumn))]
@@ -141,7 +149,7 @@ def get_focusStackData(args):
     good = (t['DATE-OBS'] > bestaftertime)
     good = good & (np.abs(t['ACTFOCUS']) < limit) &  (t['FOCOBOFF'] == 0)
     t = t[good] if np.sum(good) > 0 else None
-    log.info(f"Number of sanitozed records: {len(t)}")
+    log.info(f"Number of sanitized records: {len(t)}")
     return t
 
 
@@ -152,6 +160,7 @@ def set_ylim(data, yrange):
 
 
 def analysecamera(args, t=None, ):
+    ''' Do a full thermal / compression analysi for a given telescope'''
     site = args.site
     enc = args.dome
     tel = args.tel
@@ -174,10 +183,6 @@ def analysecamera(args, t=None, ):
     highzd = t['ZD'] < 90
 
     t['intothenight'] = t['DATE-OBS'] - (t['DAY-OBS'] + wellintonighttime[site])
-
-    hoursintothenight = np.asarray([t['intothenight'][ii].total_seconds() / 3600. for ii in range(len(t))]).astype(
-        float)
-    lateintonight = (hoursintothenight > 0) & (hoursintothenight < 14)
 
     # 1. actual focus vs FOCUS temperature
     # We woudl expect some trends here since the focus stack includes
@@ -310,10 +315,10 @@ def getargs():
     parser.add_argument('--site', default='ogg', type=str)
     parser.add_argument('--dome', default='clma', type=str)
     parser.add_argument('--tel', default='0m4c', type=str)
-    parser.add_argument('--after', type=datetime.datetime.fromisoformat)
+    parser.add_argument('--after', type=dt.datetime.fromisoformat)
 
-    parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
-                        help='Set the debug level')
+    parser.add_argument('--loglevel', dest='log_level', default='INFO',
+                        choices=['DEBUG', 'INFO', 'WARN'], help='Set the debug level')
 
     args = parser.parse_args()
 
