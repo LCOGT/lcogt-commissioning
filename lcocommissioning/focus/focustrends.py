@@ -11,6 +11,8 @@ from astropy.table import Table
 import numpy as np
 import matplotlib.pyplot as plt
 import astropy.time as astt
+from scipy.optimize import curve_fit
+import scipy
 
 plt.rcParams["figure.figsize"] = (20, 34)
 plt.style.use('ggplot')
@@ -56,6 +58,20 @@ def robustfit(x, y, sigma=3, iterations=3, label=None):
     plt.plot(xp, p(xp), label=p if label is not None else None)
     return p
 
+def calulate_compensation (zdinput, tempinput, fitresult):
+    return fitresult [0] + fitresult[1] * zdinput + fitresult[2] * tempinput
+def simultaneousfit (temp, coszd, focus):
+    def fn (x,a, cterm, tterm):
+        return a + cterm * x[0] + tterm * x[1]
+
+    x = [coszd,temp]
+
+    popt, pcov, = curve_fit(fn,x,focus)
+    errors = np.sqrt (np.diag(pcov))
+    np.set_printoptions(formatter={'float_kind':'{:6.4f}'.format})
+
+    log.info (f'Multilinear fit result: {popt} +/-  {errors}')
+    return popt, errors
 
 def get_focusStackData(args):
     """Get focus-relevant fits header keywords for end of focus exposures,
@@ -124,7 +140,7 @@ def get_focusStackData(args):
     if '1m0' in tel:
         t['FOCAFOFF'] = t['FOCAFOFF'] / 11.24
     if '0m4' in tel:
-        t['FOCAFOFF'] = t['FOCAFOFF'] / 17
+        t['FOCAFOFF'] = t['FOCAFOFF'] / 1.
     if '2m0' in tel:
         t['FOCAFOFF'] = t['FOCAFOFF'] / 12.05
 
@@ -142,7 +158,7 @@ def get_focusStackData(args):
     # some rejection of bad values
     limit = 10
     if '2m0' in tel:
-        limit = 32
+        limit = 320
 
     t.sort('DATE-OBS')
 
@@ -167,7 +183,7 @@ def analysecamera(args, t=None, ):
 
     focustermrange = 0.3
     if '0m4' in tel:
-        focustermrange = 0.5
+        focustermrange = 0.1
     if '2m0' in tel:
         focustermrange = 0.2
     focusvaluerange = 0.75
@@ -187,20 +203,28 @@ def analysecamera(args, t=None, ):
     # 1. actual focus vs FOCUS temperature
     # We woudl expect some trends here since the focus stack includes
 
+
+    coszd = np.cos(t['ZD'] * math.pi / 180)
+    temp = t['FOCTEMP']
+    simfitresult, simfiterrors = simultaneousfit(temp, coszd, t['ACTFOCUS'])
+
+    fitted_focus = calulate_compensation(coszd, temp,  simfitresult)
+    residual_focus = t['ACTFOCUS'] -fitted_focus
+
     # correction for temperature
     plt.clf()
     plt.figure(figsize=(12, 20))
     plt.subplot(5, 2, 1)
-    xdata = t['FOCTEMP']
+    xdata = temp
     ydata = t['ACTFOCUS']
-    plt.plot(xdata[lowzd], ydata[lowzd], '.', label='ZD < 30')
-    plt.plot(xdata[highzd], ydata[highzd], '.', label='ZD > 30')
+    plt.plot(xdata, ydata, '.', label="Measurements")
+    xdata = np.arange(-5, 35, 0.05)
+    ydata = simfitresult[0] + simfitresult[2] * xdata + np.mean (coszd) * simfitresult[1]
+    plt.plot (xdata, ydata, '-', label=f"Temperature term {simfitresult[2]:6.4f} +/- {simfiterrors[2]:6.4f}")
     plt.xlabel('FOCTEMP [deg C]')
     plt.ylabel('FOCUS [mm]')
     plt.xlim([-6, 35])
     set_ylim(t['ACTFOCUS'], focusvaluerange)
-    focustempfit = robustfit(xdata, ydata, label=True)
-    t['ACTFOCUS_TCORR'] = t['ACTFOCUS'] - focustempfit(t['FOCTEMP'])
     plt.legend()
     plt.title("Temp vs absolute focus postion")
 
@@ -214,16 +238,15 @@ def analysecamera(args, t=None, ):
     #                 * (Math.cos(zd * Math.PI / 180.0) - Math.cos(this.refZD * Math.PI / 180.0));
     #     }
     plt.subplot(5, 2, 2)
-    coszd = np.cos(t['ZD'] * math.pi / 180)
-    ydata = t['ACTFOCUS_TCORR']
+    ydata = t['ACTFOCUS']
     plt.plot(coszd, ydata, '.')
     plt.xlabel('cos (ZD)')
     plt.ylabel('FOCUS [mm], T corrected')
     plt.xlim([0, 1.05])
-    set_ylim(t['ACTFOCUS_TCORR'], focusvaluerange)
-    zdfit = robustfit(coszd, ydata, label=True)
-    t['ACTFOCUS_ZDCORR'] = t['ACTFOCUS'] - zdfit(coszd)
-    t['ACTFOCUS_TEMP_ZP_COR'] = t['ACTFOCUS'] - zdfit(coszd) - focustempfit(t['FOCTEMP'])
+    set_ylim(t['ACTFOCUS'], focusvaluerange)
+    xdata = np.arange(0,4.1, 0.05)
+    ydata = simfitresult[0] + simfitresult[1] * xdata + np.mean (temp) * simfitresult[2]
+    plt.plot (xdata, ydata, '-', label=f"Compression term {simfitresult[1]:6.4f} +/- {simfiterrors[1]:6.4f}")
     plt.legend()
     plt.title("Zenith distance vs abs focus position")
 
@@ -234,7 +257,7 @@ def analysecamera(args, t=None, ):
     # Temperature Residual corrections
     plt.subplot(5, 2, 3)
     plt.title("Residual after temeprature and ZD correction")
-    plt.plot(t['FOCTEMP'], t['ACTFOCUS_TEMP_ZP_COR'], '.')
+    plt.plot(temp, residual_focus, '.')
     plt.xlabel('FOCTEMP [deg C]')
     plt.ylabel('ZD & Temp corrected Focus')
     plt.xlim([-6, 35])
@@ -243,7 +266,7 @@ def analysecamera(args, t=None, ):
     # Compression
     plt.subplot(5, 2, 4)
     plt.title("Residual after temeprature and ZD correction")
-    plt.plot(coszd, t['ACTFOCUS_TEMP_ZP_COR'], '.')
+    plt.plot(coszd, residual_focus,  '.')
     plt.xlabel('cos(ZD)')
     plt.ylabel('ZD & Temp corrected Focus')
     plt.xlim([0, 1.05])
@@ -266,6 +289,8 @@ def analysecamera(args, t=None, ):
     plt.xlabel('Cos ZD')
     plt.ylabel('Auto focus corrections')
     plt.xlim([0, 1.05])
+    set_ylim(t['FOCAFOFF'], focusvaluerange)
+
     plt.plot(xdata, ydata, '.')
 
     plt.subplot(5, 2, 7)
@@ -275,6 +300,7 @@ def analysecamera(args, t=None, ):
     plt.xlabel('Temperature')
     plt.ylabel('Auto focus corrections')
     plt.xlim([-6, 35])
+    set_ylim(t['FOCAFOFF'], focusvaluerange)
 
     plt.plot(xdata, ydata, '.')
 
@@ -283,7 +309,7 @@ def analysecamera(args, t=None, ):
     # Lok at some inttersting residuals
     plt.subplot(5, 2, 9)
     xdata = t['ALTITUDE']
-    ydata = t['ACTFOCUS_TEMP_ZP_COR']
+    ydata = residual_focus
 
     plt.xlabel('ALTITUDE [deg]')
     plt.ylabel('Residual after temeprature and ZD correction')
@@ -293,7 +319,7 @@ def analysecamera(args, t=None, ):
 
     plt.subplot(5, 2, 10)
     xdata = t['AZIMUTH']
-    ydata = t['ACTFOCUS_TEMP_ZP_COR']
+    ydata = residual_focus
 
     plt.xlabel('AZ [deg]')
     plt.ylabel('Residual after temeprature and ZD correction')
@@ -304,7 +330,7 @@ def analysecamera(args, t=None, ):
     plt.suptitle("{} {} {} \n".format(site, enc, tel), fontsize=24, y=1.05)
 
     plt.tight_layout(pad=1)
-    plt.savefig(f"focusstack_{site}_{enc}_{tel}.png")
+    plt.savefig(f"focusstack_{site}_{enc}_{tel}.pdf")
     return t
 
 
