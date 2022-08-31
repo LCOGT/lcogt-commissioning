@@ -1,18 +1,24 @@
 ''' Utility to crawl end of focus sequence images and use their focus
-    values to analyze focus compensation terms.'''
+    values to analyze focus compensation terms.
+    the basic assumption is that at the end of the auto_focus sequence, an
+    image is taken at the best possible curent fous for the current telescope's
+    temperature and zenith distance.
+    '''
 
-import datetime as dt
-import logging
 import argparse
-import math
-import requests
+import datetime as dt
 import json
-from astropy.table import Table
-import numpy as np
-import matplotlib.pyplot as plt
+import logging
+import math
+
 import astropy.time as astt
+import matplotlib.pyplot as plt
+import numpy as np
+import requests
+from astropy.table import Table
 from scipy.optimize import curve_fit
-import scipy
+
+logging.getLogger('matplotlib').setLevel(logging.FATAL)
 
 plt.rcParams["figure.figsize"] = (20, 34)
 plt.style.use('ggplot')
@@ -58,20 +64,38 @@ def robustfit(x, y, sigma=3, iterations=3, label=None):
     plt.plot(xp, p(xp), label=p if label is not None else None)
     return p
 
-def calulate_compensation (zdinput, tempinput, fitresult):
-    return fitresult [0] + fitresult[1] * zdinput + fitresult[2] * tempinput
-def simultaneousfit (temp, coszd, focus):
-    def fn (x,a, cterm, tterm):
+
+def calulate_compensation(zdinput, tempinput, fitresult):
+    ''' Convenience method to use a multi-linear fit result and apply it to data. '''
+    return fitresult[0] + fitresult[1] * zdinput + fitresult[2] * tempinput
+
+
+def simultaneousfit(temp, coszd, focus):
+    ''' Do  A MULTI-LINEAR FIT TO SIMULTANEOUSLY FIT THE TEMP AND ZD DEPENDENCE
+    OF THE focus position. '''
+    def fn(x, a, cterm, tterm):
         return a + cterm * x[0] + tterm * x[1]
 
-    x = [coszd,temp]
+    np.set_printoptions(formatter={'float_kind': '{:6.4f}'.format})
 
-    popt, pcov, = curve_fit(fn,x,focus)
-    errors = np.sqrt (np.diag(pcov))
-    np.set_printoptions(formatter={'float_kind':'{:6.4f}'.format})
+    good_coszd = coszd
+    good_temp = temp
+    good_focus = focus
 
-    log.info (f'Multilinear fit result: {popt} +/-  {errors}')
+    for iter in range (3):
+        # 3 sigma clipping of fit result to remove outliers
+        popt, pcov, = curve_fit(fn, [good_coszd, good_temp], good_focus)
+        errors = np.sqrt(np.diag(pcov))
+        log.info(f'Multilinear fit result, N={len(good_focus)}: {popt} +/-  {errors}')
+
+        residual = good_focus - calulate_compensation(good_coszd, good_temp, popt)
+        goodvalues = np.abs(residual) < 3 * np.std (residual)
+        good_coszd = good_coszd [goodvalues]
+        good_temp = good_temp [goodvalues]
+        good_focus = good_focus[goodvalues]
+
     return popt, errors
+
 
 def get_focusStackData(args):
     """Get focus-relevant fits header keywords for end of focus exposures,
@@ -88,7 +112,7 @@ def get_focusStackData(args):
 
     query = f'SITEID:{site} AND ENCID:{enc} AND TELID:{tel} AND OBJECT:auto_focus' \
             f' AND FOCOBOFF:0 AND RLEVEL:91 AND OBSTYPE:EXPOSE AND _exists_:L1FWHM'
-    print(f"Query String: {query}")
+    log.debug(f"Query String: {query}")
 
     # due to cameras moving around, and mirrors being replaced, autofocus values are
     # informative only over a limited date range.
@@ -116,7 +140,6 @@ def get_focusStackData(args):
     if len(t) == 0:
         log.warning("Warning: empty return for {} {} {}".format(site, enc, tel))
         return None
-
 
     # reformatting boilerplate stuff
     dayobsidx = sourcecolumn.index('DAY-OBS')
@@ -163,7 +186,7 @@ def get_focusStackData(args):
     t.sort('DATE-OBS')
 
     good = (t['DATE-OBS'] > bestaftertime)
-    good = good & (np.abs(t['ACTFOCUS']) < limit) &  (t['FOCOBOFF'] == 0)
+    good = good & (np.abs(t['ACTFOCUS']) < limit) & (t['FOCOBOFF'] == 0)
     t = t[good] if np.sum(good) > 0 else None
     log.info(f"Number of sanitized records: {len(t)}")
     return t
@@ -195,23 +218,16 @@ def analysecamera(args, t=None, ):
     if t is None:
         t = get_focusStackData(args)
 
-    lowzd = t['ZD'] < 90
-    highzd = t['ZD'] < 90
-
-    t['intothenight'] = t['DATE-OBS'] - (t['DAY-OBS'] + wellintonighttime[site])
-
-    # 1. actual focus vs FOCUS temperature
-    # We woudl expect some trends here since the focus stack includes
-
-
+    # Multi-linear fit to find dependency on temeprature and zenith distance.
     coszd = np.cos(t['ZD'] * math.pi / 180)
     temp = t['FOCTEMP']
     simfitresult, simfiterrors = simultaneousfit(temp, coszd, t['ACTFOCUS'])
+    fitted_focus = calulate_compensation(coszd, temp, simfitresult)
+    residual_focus = t['ACTFOCUS'] - fitted_focus
 
-    fitted_focus = calulate_compensation(coszd, temp,  simfitresult)
-    residual_focus = t['ACTFOCUS'] -fitted_focus
+    # Now let's get some diagnostic plots.
 
-    # correction for temperature
+    ### Temperature
     plt.clf()
     plt.figure(figsize=(12, 20))
     plt.subplot(5, 2, 1)
@@ -219,8 +235,8 @@ def analysecamera(args, t=None, ):
     ydata = t['ACTFOCUS']
     plt.plot(xdata, ydata, '.', label="Measurements")
     xdata = np.arange(-5, 35, 0.05)
-    ydata = simfitresult[0] + simfitresult[2] * xdata + np.mean (coszd) * simfitresult[1]
-    plt.plot (xdata, ydata, '-', label=f"Temperature term {simfitresult[2]:6.4f} +/- {simfiterrors[2]:6.4f}")
+    ydata = simfitresult[0] + simfitresult[2] * xdata + np.mean(coszd) * simfitresult[1]
+    plt.plot(xdata, ydata, '-', label=f"Temperature term {simfitresult[2]:6.4f} +/- {simfiterrors[2]:6.4f}")
     plt.xlabel('FOCTEMP [deg C]')
     plt.ylabel('FOCUS [mm]')
     plt.xlim([-6, 35])
@@ -228,15 +244,7 @@ def analysecamera(args, t=None, ):
     plt.legend()
     plt.title("Temp vs absolute focus postion")
 
-    # 2. Actual focus vs ZD.
-    # We would expect some trends here since the focus stack includes
-    # correction for ZD. We work on the temperature - detrended data.
-    # code form LCO TCS:
-    # private double getZDCorrection(double zd)
-    #     {
-    #         return magnification * zdCoef
-    #                 * (Math.cos(zd * Math.PI / 180.0) - Math.cos(this.refZD * Math.PI / 180.0));
-    #     }
+    ### ZD
     plt.subplot(5, 2, 2)
     ydata = t['ACTFOCUS']
     plt.plot(coszd, ydata, '.')
@@ -244,53 +252,51 @@ def analysecamera(args, t=None, ):
     plt.ylabel('FOCUS [mm], T corrected')
     plt.xlim([0, 1.05])
     set_ylim(t['ACTFOCUS'], focusvaluerange)
-    xdata = np.arange(0,4.1, 0.05)
-    ydata = simfitresult[0] + simfitresult[1] * xdata + np.mean (temp) * simfitresult[2]
-    plt.plot (xdata, ydata, '-', label=f"Compression term {simfitresult[1]:6.4f} +/- {simfiterrors[1]:6.4f}")
+    xdata = np.arange(0, 4.1, 0.05)
+    ydata = simfitresult[0] + simfitresult[1] * xdata + np.mean(temp) * simfitresult[2]
+    plt.plot(xdata, ydata, '-', label=f"Compression term {simfitresult[1]:6.4f} +/- {simfiterrors[1]:6.4f}")
     plt.legend()
     plt.title("Zenith distance vs abs focus position")
 
-    # From now on we plot values vs. the autofocus correction.
-    # This should be flat relations if the focus model properly accounted for
-    # a variable.
 
-    # Temperature Residual corrections
+    # Temperature Residual after multilinear fit corrections
     plt.subplot(5, 2, 3)
     plt.title("Residual after temeprature and ZD correction")
     plt.plot(temp, residual_focus, '.')
     plt.xlabel('FOCTEMP [deg C]')
     plt.ylabel('ZD & Temp corrected Focus')
     plt.xlim([-6, 35])
-    plt.ylim([-focustermrange / 5, focustermrange / 5])
+    plt.ylim([-focustermrange /2, focustermrange /2])
 
-    # Compression
+    # Compression Residual after multilinear fit corrections
     plt.subplot(5, 2, 4)
     plt.title("Residual after temeprature and ZD correction")
-    plt.plot(coszd, residual_focus,  '.')
+    plt.plot(coszd, residual_focus, '.')
     plt.xlabel('cos(ZD)')
     plt.ylabel('ZD & Temp corrected Focus')
     plt.xlim([0, 1.05])
-    plt.ylim([-focustermrange / 5, focustermrange / 5])
+    plt.ylim([-focustermrange /2, focustermrange/2 ])
 
     plt.subplot(5, 1, 3)
-    # Time line plot - consolidated data
+    # Time line plot - history of autofocus corrections
     plt.plot(t['DATE-OBS'], t['FOCAFOFF'], '.', label="AUTOFOCUS Correction")
     plt.xlabel('DATE-OBS')
     plt.ylabel('AUTO FOCUS TERM [mm]')
     plt.title("History of AF corrections")
     plt.setp(plt.gca().xaxis.get_minorticklabels(), rotation=25)
     plt.setp(plt.gca().xaxis.get_majorticklabels(), rotation=25)
-    set_ylim(t['FOCAFOFF'], focustermrange)
+    set_ylim(t['FOCAFOFF'], 2*focusvaluerange)
 
-    # We changed stuff - let's see how we did!
+    # no wlook how hard autofocus has to work to compenssate for temp & ZD
+    # compensation should be noise around constant offset value for good
+    # compensation.
     plt.subplot(5, 2, 8)
     xdata = coszd
     ydata = t['FOCAFOFF']
     plt.xlabel('Cos ZD')
     plt.ylabel('Auto focus corrections')
     plt.xlim([0, 1.05])
-    set_ylim(t['FOCAFOFF'], focusvaluerange)
-
+    set_ylim(t['FOCAFOFF'], 2*focusvaluerange)
     plt.plot(xdata, ydata, '.')
 
     plt.subplot(5, 2, 7)
@@ -300,7 +306,7 @@ def analysecamera(args, t=None, ):
     plt.xlabel('Temperature')
     plt.ylabel('Auto focus corrections')
     plt.xlim([-6, 35])
-    set_ylim(t['FOCAFOFF'], focusvaluerange)
+    set_ylim(t['FOCAFOFF'], 2*focusvaluerange)
 
     plt.plot(xdata, ydata, '.')
 
@@ -308,14 +314,14 @@ def analysecamera(args, t=None, ):
 
     # Lok at some inttersting residuals
     plt.subplot(5, 2, 9)
-    xdata = t['ALTITUDE']
+    xdata = t['REFHUMID']
     ydata = residual_focus
 
-    plt.xlabel('ALTITUDE [deg]')
+    plt.xlabel('Humidity')
     plt.ylabel('Residual after temeprature and ZD correction')
     plt.plot(xdata, ydata, '.')
-    set_ylim(t['FOCAFOFF_CORRECTED'], focustermrange)
-    plt.ylim([-focustermrange / 5, focustermrange / 5])
+    set_ylim(residual_focus, focusvaluerange)
+    #plt.ylim([-focustermrange / 5, focustermrange / 5])
 
     plt.subplot(5, 2, 10)
     xdata = t['AZIMUTH']
@@ -324,8 +330,8 @@ def analysecamera(args, t=None, ):
     plt.xlabel('AZ [deg]')
     plt.ylabel('Residual after temeprature and ZD correction')
     plt.plot(xdata, ydata, '.')
-    set_ylim(t['FOCAFOFF_CORRECTED'], focustermrange)
-    plt.ylim([-focustermrange / 5, focustermrange / 5])
+    set_ylim(residual_focus, focustermrange)
+    #plt.ylim([-focustermrange / 5, focustermrange / 5])
 
     plt.suptitle("{} {} {} \n".format(site, enc, tel), fontsize=24, y=1.05)
 
