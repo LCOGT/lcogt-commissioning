@@ -1,8 +1,12 @@
 ''' Utility to crawl end of focus sequence images and use their focus
     values to analyze focus compensation terms.
     the basic assumption is that at the end of the auto_focus sequence, an
-    image is taken at the best possible curent fous for the current telescope's
+    image is taken at the best possible current focus for the current telescope's
     temperature and zenith distance.
+
+
+
+
     '''
 
 import argparse
@@ -13,6 +17,9 @@ import math
 
 import astropy.time as astt
 import matplotlib.pyplot as plt
+
+from mpl_toolkits.mplot3d import Axes3D
+
 import numpy as np
 import requests
 from astropy.table import Table
@@ -257,6 +264,10 @@ def analysecamera(args, t=None, ):
     plt.plot(xdata, ydata, '-', label=f"Compression term {simfitresult[1]:6.4f} +/- {simfiterrors[1]:6.4f}")
     plt.legend()
     plt.title("Zenith distance vs abs focus position")
+
+    # fig = plt.subplot(5, 3, 3, projection='3d')
+    # ydata = t['ACTFOCUS']
+    # fig.plot (temp, coszd,  ydata, '.')
 
 
     # Temperature Residual after multilinear fit corrections
