@@ -358,7 +358,7 @@ def getargs():
     parser.add_argument('--site', default='ogg', type=str)
     parser.add_argument('--dome', default='clma', type=str)
     parser.add_argument('--tel', default='0m4c', type=str)
-    parser.add_argument('--after', type=dt.datetime.fromisoformat)
+    parser.add_argument('--after', type=dt.datetime.fromisoformat, help="Consider data only after the given date, in ISO format (e.g., 2022-09-01 00:00:00")
 
     parser.add_argument('--loglevel', dest='log_level', default='INFO',
                         choices=['DEBUG', 'INFO', 'WARN'], help='Set the debug level')
