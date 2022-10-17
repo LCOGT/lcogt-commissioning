@@ -15,7 +15,7 @@ def create_cdk_request_configuration(args):
 
     configuration = {
         'type': None,
-        'instrument_type': '0m4-SCICAM-QHY600',
+        'instrument_type': '0M4-SCICAM-QHY600',
         'guiding_config': {'mode': 'OFF'}  if args.noselfguide else {'mode': 'ON', 'optional': True},
         'acquisition_config': {},
         'instrument_configs': [{
@@ -116,7 +116,7 @@ def parseCommandLine():
     parser.add_argument('--start', default=None,
                         help="Time to start observation. If not given, defaults to \"NOW\". Specify as YYYYMMDD HH:MM")
 
-    parser.add_argument('--schedule-window', default=2, type=float,
+    parser.add_argument('--schedule-window', default=8, type=float,
                         help="How long after start should request be schedulable?")
 
     # parser.add_argument('--dither', action='store_true', help='Dither the exposure in a 5 point pattern.')
@@ -140,8 +140,8 @@ def parseCommandLine():
     repeatgroup.add_argument('--filltime', type=float, help="How long to repeat exposures (seconds)")
 
     parser.add_argument('--readmode', type=str, default=None, )
-    # parser.add_argument('--scheduler', action='store_true',
-    #                     help='If set, submit to scheduler instead of trying a direct submission.')
+    parser.add_argument('--direct', action='store_true',
+                         help='If set, submit directly instead of via scheduler.')
     parser.add_argument('--CONFIRM', dest='opt_confirmed', action='store_true',
                         help='If set, observation will be submitted. If omitted, nothing will be submitted.')
     parser.add_argument('--noselfguide', action='store_true',
@@ -185,7 +185,7 @@ def parseCommandLine():
     print(f"Resolved target >{args.targetname}< at coordinates {args.radec.ra} {args.radec.dec}")
 
     if not (args.exp_cnt or args.filltime):
-        print("No exposure mode chosen, defaulting to EXPOSE")
+        print("No exposure mode chosen, defaulting to one single EXPOSE")
         args.exp_cnt = 1
 
     return args
@@ -230,11 +230,14 @@ def main():
     #     _log.debug(json.dumps(cdk, indent=2))
     #     common.send_request_to_portal(cdk, args.opt_confirmed)
     # else:
-    cdk = ammend_request_for_direct_submission(cdk, args)
-    _log.info(f"Attempting direct submission {cdk['start']} {cdk['end']}")
-    _log.debug(json.dumps(cdk, indent=2))
-    common.submit_request_group(cdk, args.opt_confirmed)
-
+    if args.direct:
+        cdk = ammend_request_for_direct_submission(cdk, args)
+        _log.info(f"Modifying for direct submission {cdk['start']} {cdk['end']}")
+        _log.debug(json.dumps(cdk, indent=2))
+        common.submit_request_group(cdk, args.opt_confirmed)
+    else:
+        _log.debug(json.dumps(cdk, indent=2))
+        common.send_request_to_portal(cdk, args.opt_confirmed)
 
 if __name__ == '__main__':
     main()
