@@ -10,6 +10,7 @@
     '''
 
 import argparse
+import datetime
 import datetime as dt
 import json
 import logging
@@ -189,11 +190,17 @@ def get_focusStackData(args):
     limit = 10
     if '2m0' in tel:
         limit = 320
+    if '1m0' in tel:
+        limit = 5
+
 
     t.sort('DATE-OBS')
 
     good = (t['DATE-OBS'] > bestaftertime)
     good = good & (np.abs(t['ACTFOCUS']) < limit) & (t['FOCOBOFF'] == 0)
+
+    good = good & (t['FOCTEMP'] != 0.0)
+
     t = t[good] if np.sum(good) > 0 else None
     log.info(f"Number of sanitized records: {len(t)}")
     return t
@@ -367,7 +374,8 @@ def getargs():
 
     logging.basicConfig(level=getattr(logging, args.log_level.upper()),
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
-
+    if args.after is None:
+        args.after = datetime.datetime.fromisoformat("2022-09-01")
     return args
 
 

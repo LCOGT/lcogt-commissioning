@@ -156,7 +156,7 @@ def parseCommandLine():
             exit(1)
 
     if args.targetname is None:
-        args.targetname = common.get_auto_target(common.goodNRESFluxTargets, site=args.site, starttime=args.start)
+        args.targetname = common.get_auto_target(common.goodNRESFluxTargets, sitecode=args.site, starttime=args.start)
         _logger.info(f"Auto selecting target {args.targetname}")
 
     if args.targetname is None:
