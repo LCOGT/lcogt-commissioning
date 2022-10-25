@@ -380,7 +380,7 @@ class archonexposure:
         archon.readoutSingleFrame(filename=f"archon-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%S')}.b00.fits")
 
 
-    def dark (self, darktime=0, archon):
+    def dark (self, archon, darktime=0, ):
         archon.cleanAndIntegrate()
         self.setPreExpHeader()
         self.instrumentstatus['EXPTIME'] = float(darktime)
