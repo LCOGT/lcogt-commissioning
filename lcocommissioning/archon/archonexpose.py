@@ -287,8 +287,9 @@ def parseCommandLine( ):
 
     return args
 
-if __name__ == '__main__':
 
+
+def main():
 
     args = parseCommandLine()
 
@@ -326,3 +327,7 @@ if __name__ == '__main__':
     archon.pof()
     archon.close()
 
+
+
+if __name__ == '__main__':
+    main()
