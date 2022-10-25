@@ -22,7 +22,7 @@ class Archon(object):
         self.msgbuf = b''
         self.status_filename = status_filename
         self.update_rate = update_rate
-        
+
     def open(self, ip='10.0.0.2', port=4242):
         self.controller = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.controller.connect((ip, port))
@@ -44,7 +44,7 @@ class Archon(object):
             raise CommandFailure('Archon recv failed')
         self.msgref = (self.msgref + 1) % 256
         return reply[3:]
-    
+
     def binrecv(self):
         binlen = self.BURST_LEN + 4
         while len(self.msgbuf) < binlen:
@@ -55,7 +55,7 @@ class Archon(object):
             raise CommandFailure('Archon binrecv failed')
         self.msgref = (self.msgref + 1) % 256
         return reply[4:]
-    
+
     def command(self, c):
         cmd = str.encode('>%02X%s\n' % (self.msgref, c))
         #print(cmd)
@@ -73,7 +73,7 @@ class Archon(object):
 
     def read_configuration_line(self, line_number):
         return self.command('RCONFIG{:04X}'.format(line_number)).decode()
-    
+
     def set_configuration_line(self, line_number, k, v):
         self.command('WCONFIG{:04X}{:s}={:s}'.format(line_number, k, v))
         s = self.read_configuration_line(line_number)
@@ -116,7 +116,8 @@ class Archon(object):
         framew = int(framestatus['BUF{:d}WIDTH'.format(newestbuf + 1)])
         frameh = int(framestatus['BUF{:d}HEIGHT'.format(newestbuf + 1)])
         samplemode = int(framestatus['BUF{:d}SAMPLE'.format(newestbuf + 1)])
-        return (newestframe, newestbuf, framew, frameh, samplemode)
+        timestamp = int(framestatus['BUF{:d}TIMESTAMP'.format(newestbuf + 1)],16)
+        return (newestframe, newestbuf, framew, frameh, samplemode, timestamp)
 
     def load_configuration(self, filename):
         lines = []
@@ -152,7 +153,7 @@ class Archon(object):
         print('camera configuration complete.')
         self.cfg = lines
         return lines
- 
+
     def get_configuration(self):
         lines = []
         while True:
@@ -163,13 +164,13 @@ class Archon(object):
                 lines.append(line.split('=', 1))
         self.cfg = lines
         return lines
-    
+
     def load_parameters(self):
         return self.command('LOADPARAMS').decode()
-        
+
     def load_parameter(self, p):
         """Load a single parameter.
-        
+
         e.g.:
           ccd = Archon()
           ccd.open()
@@ -177,13 +178,13 @@ class Archon(object):
           ccd.load_parameter('Exposures')
         """
         return self.command('LOADPARAM {:s}'.format(p))
-    
+
     def expose_frame(self, int_s, no_int_s, fn_prefix):
         """Expose a frame, all times in floating point seconds
-        
+
         Light time = int_s s
         Dark time = int_s + no_int_s s
-        
+
         Assumes ContinuousExposures=0 and no exposure currently running.
         Use print_relevant_parameters and newest to check
         """
@@ -267,22 +268,22 @@ class Archon(object):
             else:
                 i += 1
         return i, None, None
-        
+
     def print_exposure_parameters(self, cfg):
         for p in ['IntMS', 'NoIntMS', 'ContinuousExposures', 'Exposures']:
             print(self.find_parameter_in_configuration(cfg, p))
 
-                  
+
 if __name__ == '__main__':
-    
+
     # Connect to Archon
     ccd = Archon(2.0, 'statusfile.txt')
     ccd.open()
     cfg = ccd.get_configuration()
     ccd.print_exposure_parameters(cfg)
-    
+
     # Test script here
     # but usually a separate script is run importing this module
-    
+
     # close Archon
     ccd.close()
