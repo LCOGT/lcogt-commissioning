@@ -34,6 +34,7 @@ setuptools.setup(
                             'submit_cdk_observation = lcocommissioning.cdk.submit_cdk_observation:main',
                             'get_sbigframe = lcocommissioning.sbig.get_sbig_frame:main',
                             'get_qhyframe = lcocommissioning.cmostest.getqhyccdframe:main',
+                            'get_archonframe = lcocommissioning.archon.archonexpose:main'
                             ],
 
     },
