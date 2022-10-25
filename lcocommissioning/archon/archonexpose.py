@@ -1,6 +1,6 @@
 import sys
 from time import sleep
-import archon_v02_plus
+import lcocommissioning.archon.archon_v02_plus
 import numpy as np
 from astropy.io import fits
 import logging
