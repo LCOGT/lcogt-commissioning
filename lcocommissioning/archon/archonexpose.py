@@ -4,38 +4,19 @@ from time import sleep
 
 import datetime
 
-import archon_v02_plus
+import lcocommissioning.archon.archon_v02_plus
 import numpy as np
 from astropy.io import fits
 import logging
 import argparse
 import astropy.time
 import time
+import lcocommissioning.common.lco_ccdlab
 
 log = logging.getLogger(__name__)
 
 
-import vxi11
 
-class LCOLab:
-
-    def __init__(self):
-        self.ins = vxi11.Instrument('172.16.4.6')
-        log.info ("VXI11 interface: %s" % (self.ins.ask("*IDN?")))
-
-    def expose(self, exptime, block=True):
-        log.info ("Lab exposing for % 5.2f s" % (exptime))
-        self.ins.write ("puls:per %f" % (exptime+1))
-
-        self.ins.write ("puls:widt %f" % (exptime))
-
-        self.ins.trigger()
-        if block:
-            sleep (exptime)
-        log.info ("Done exposing")
-
-    def close(self):
-        self.ins.close()
 
 
 import requests
@@ -82,7 +63,7 @@ class archonexposure:
 
         if offline is not True:
 
-            self.archon = archon_v02_plus.Archon()
+            self.archon = lcocommissioning.archon.archon_v02_plus.Archon()
             self.instrumentstatus = {}
 
             log.info ("Connecting to Archon at ip " + host)
@@ -92,7 +73,7 @@ class archonexposure:
                     log.info ("Loading config file: " + configfile)
                     cfg = self.archon.load_configuration(configfile)
                     self.pon()
-                except archon_v02_plus.CommandFailure as ex:
+                except lcocommissioning.archon.archon_v02_plus.CommandFailure as ex:
                     log.error (ex.message)
                     logmsg = self.archon.command('FETCHLOG').decode()
                     while logmsg != '(null)':
@@ -397,7 +378,7 @@ class archonexposure:
 
 
 
-        ins = LCOTelescope()
+        ins = lcocommissioning.common.lco_ccdlab.LED_Illuminator()
         self.setPreExpHeader()
         self.instrumentstatus['EXPTIME'] = float(exptime)
         self.instrumentstatus['OBSTYPE'] = 'FLAT'
