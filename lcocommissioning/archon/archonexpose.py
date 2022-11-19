@@ -372,7 +372,7 @@ class archonexposure:
 
         archon.readoutSingleFrame(filename=f"archon-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%S')}.d00.fits")
 
-    def flat(self, archon, exptime=1):
+    def flat(self, archon, exptime=1, args=None):
 
         print ("flat field exposure %f seconds" % (exptime))
 
@@ -384,7 +384,7 @@ class archonexposure:
         self.instrumentstatus['OBSTYPE'] = 'FLAT'
 
         archon.cleanAndIntegrate()
-        ins.expose(exptime)
+        ins.expose(exptime, voltage=None if args is None else args.led)
 
 
         archon.readoutSingleFrame(filename=f"archon-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%S')}.f00.fits")
@@ -456,6 +456,7 @@ def parseCommandLine( ):
     parser.add_argument('--nexp', type=int, default = 1)
     parser.add_argument('--exptimems', type=int, default=0)
     parser.add_argument('--nvideo', type=int, default=20)
+    parser.add_argument('--led', type=float, default=None)
 
     parser.add_argument('--site',   choices=['bpl', 'lsc', 'elp', 'cpt', 'coj',], default=None)
     parser.add_argument('--dome',   choices=['doma', 'domb', 'domc'], default=None)
@@ -506,7 +507,7 @@ def main():
 
     if args.flat:
         for ii in range(args.nexp):
-            archon.flat(archon, exptime=args.exptime)
+            archon.flat(archon, exptime=args.exptime, args=args)
     if args.bias:
         for ii in range(args.nexp):
             archon.bias(archon, )
