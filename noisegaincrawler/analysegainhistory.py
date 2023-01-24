@@ -28,7 +28,7 @@ fareadmodes = [['full_frame', None], ['central_2k_2x2', ]]
 
 epreadmodes = [['MUSCAT_SLOW',], ['MUSCAT_FAST', ] ]
 
-sqreadmodes = [['default',]]
+sqreadmodes = [['full_frame', 'default', 'central30x20', 'central30x30'], ]
 
 def parseCommandLine():
     parser = argparse.ArgumentParser(
