@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="lcocommissioning",
-    version="2.1.2",
+    version="2.1.3",
     author="Daniel Harbeck",
     author_email="dharbeck@lco.global",
     description="Tool to characterize CCD detectors and other commissioning tasks for the LCO observatory.",
