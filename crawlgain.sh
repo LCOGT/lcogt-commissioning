@@ -35,6 +35,7 @@ time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="kb" --rea
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_SLOW"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_FAST"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="sq" --readmode="default"
+time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="sq" --readmode="central30x30"
 
 time analysegainhistory --database="${DATABASE}"
 
