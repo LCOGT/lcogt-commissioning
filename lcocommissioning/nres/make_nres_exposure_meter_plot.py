@@ -31,20 +31,27 @@ def process_fitsobj (hdul):
     object = hdul['SPECTRUM'].header['OBJECT']
     exptime = hdul['SPECTRUM'].header['EXPTIME']
 
+    # get mid-time of exposure according to shutter
     dateobs = Time(hdul['SPECTRUM'].header['DATE-OBS'], format='fits').to_datetime()+datetime.timedelta(seconds=exptime/2.)
 
+    # get the active science fiber
     fibers = objects.split ('&')
     actfiber = 'FIB0COUNTS' if fibers[0] == 'none' else 'FIB2COUNTS'
 
     data = hdul[EXPOSURE_METER].data
     data = astropy.table.Table(data)
     mjd_start = data['MJD_START']
-    utctime  = [Time(mjd_start[x], format='mjd').to_datetime(None) for x in range (len(mjd_start))]
+
+    # get mid-times of exposure meter measurements
+    utctime  = [Time(mjd_start[x], format='mjd').to_datetime(None) + datetime.timedelta(seconds=data['EXP_TIME'][0]/2)
+                for x in range (len(mjd_start))]
 
     calibcounts = data['FIB1COUNTS']
     sciencecounts = data[actfiber]
 
-    weighted_mjd = np.sum ( sciencecounts * (mjd_start-mjd_start[0])) / np.sum (sciencecounts) + mjd_start[0]
+    # get flux-weighted mid time of exposure. These are large numbers, avoid some numerical overflow.
+    total_flux = np.sum (sciencecounts)
+    weighted_mjd = np.sum ( sciencecounts * (mjd_start-mjd_start[0])) / total_flux + mjd_start[0]
     weighted_dateobs = Time(weighted_mjd, format='mjd').to_datetime(None)
 
 
@@ -52,12 +59,12 @@ def process_fitsobj (hdul):
     ax = plt.subplot(111)
     plt.plot (utctime, calibcounts, label="Calibration Fiber")
     plt.plot (utctime, sciencecounts, label="Science Fiber")
-    plt.title (f'{imagename}\nExposure meter {object}')
+    plt.title (f'{imagename}\nExposure meter {object}\nTotal Exp Meter Flux: {total_flux:.2E}')
     plt.xlabel(f"Time [UTC], exptime={exptime} s")
     plt.ylabel ("Flux count  in fiber aperture [ADU]")
 
-    plt.axvline (dateobs, color='black', label=f"DATE-OBS\n{dateobs}")
-    plt.axvline (weighted_dateobs, color='red', label=f"flux-weighted DATE-OBS\n{weighted_dateobs}")
+    plt.axvline (dateobs, color='black', label=f"mid-time\n{dateobs}")
+    plt.axvline (weighted_dateobs, color='red', label=f"flux-weighted mid-time\n{weighted_dateobs}")
 
     plt.gcf().autofmt_xdate()
     plt.setp(plt.gca().xaxis.get_minorticklabels(), rotation=30)
@@ -76,7 +83,8 @@ def process_fitsobj (hdul):
           fancybox=True, shadow=True, ncol=2)
     plt.savefig(f'{imagename}.exposuremeter.png',  dpi=150, bbox_inches='tight', )
 
-
+    log.info (f'{imagename} Texp: {exptime} EM Texp: {data["EXP_TIME"][0]} Total Flux: {total_flux: .2E} '
+              f'time interval {(utctime[-1] - utctime[0]).seconds / (len (utctime)-1): 5.2f}')
     plt.close()
     hdul.close()
     return fig
