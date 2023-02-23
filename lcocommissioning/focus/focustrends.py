@@ -279,7 +279,7 @@ def analysecamera(args, t=None, ):
 
     # Temperature Residual after multilinear fit corrections
     plt.subplot(5, 2, 3)
-    plt.title("Residual after temeprature and ZD correction")
+    plt.title("Residual after temperature and ZD correction")
     plt.plot(temp, residual_focus, '.')
     plt.xlabel('FOCTEMP [deg C]')
     plt.ylabel('ZD & Temp corrected Focus')
@@ -288,7 +288,7 @@ def analysecamera(args, t=None, ):
 
     # Compression Residual after multilinear fit corrections
     plt.subplot(5, 2, 4)
-    plt.title("Residual after temeprature and ZD correction")
+    plt.title("Residual after temperature and ZD correction")
     plt.plot(coszd, residual_focus, '.')
     plt.xlabel('cos(ZD)')
     plt.ylabel('ZD & Temp corrected Focus')
@@ -336,7 +336,7 @@ def analysecamera(args, t=None, ):
     ydata = residual_focus
 
     plt.xlabel('Humidity')
-    plt.ylabel('Residual after temeprature and ZD correction')
+    plt.ylabel('Residual after temperature and ZD correction')
     plt.plot(xdata, ydata, '.')
     set_ylim(residual_focus, focusvaluerange)
     #plt.ylim([-focustermrange / 5, focustermrange / 5])
@@ -346,7 +346,7 @@ def analysecamera(args, t=None, ):
     ydata = residual_focus
 
     plt.xlabel('AZ [deg]')
-    plt.ylabel('Residual after temeprature and ZD correction')
+    plt.ylabel('Residual after temperature and ZD correction')
     plt.plot(xdata, ydata, '.')
     set_ylim(residual_focus, focustermrange)
     #plt.ylim([-focustermrange / 5, focustermrange / 5])
@@ -360,7 +360,7 @@ def analysecamera(args, t=None, ):
 
 def getargs():
     parser = argparse.ArgumentParser(
-        description='Analyst focus dependency on temeprature and stuff')
+        description='Analyse focus dependency on temperature and stuff')
 
     parser.add_argument('--site', default='ogg', type=str)
     parser.add_argument('--dome', default='clma', type=str)
