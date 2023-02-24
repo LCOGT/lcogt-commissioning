@@ -6,6 +6,7 @@ from scipy.stats import norm
 from scipy.optimize import curve_fit
 from scipy.optimize import minimize
 import datetime
+from sklearn.mixture import GaussianMixture
 
 class Telegraph(rv_continuous):
     "negative exponential"
@@ -72,11 +73,30 @@ def fitandplot (data, label):
 
     plt.hist ( data, bins=bins1, density = True,   label=f"data {label}")
 
+
+
+    # gaussian model:
+    clf = GaussianMixture(n_components=3, covariance_type="full")
+    clf.fit (data.reshape (-1,1))
+
+    m1 = clf.means_[0][0]
+    m2 = clf.means_[1][0]
+    m3 = clf.means_[2][0]
+    s1 = np.sqrt(clf.covariances_[0][0][0])
+    s2 = np.sqrt(clf.covariances_[1][0][0])
+    s3 = np.sqrt(clf.covariances_[2][0][0])
+    w1 = clf.weights_[0]
+    w2 = clf.weights_[1]
+    w3 = clf.weights_[2]
+    print ("GMM:", m1,m2,m3,"\n", s1,s2,s3,"\n", w1,w2,w3)
+
+    popt = np.asarray([w1,(w2+w3)/2, m1, (s1+s2+s3)/3, np.abs(m3-m1)])
+    print (popt)
+
     if popt is not None:
         xspace = np.linspace(np.min(data), np.max(data), 100)
         plt.plot (xspace, fit_function(xspace, *popt), label=f"Fit: {popt[0]: 4.2f} {popt[1]: 4.2f} {popt[2]: 7.1f} "
-                                                             f"{popt[3]:> 4.1f} {popt[4]:> 8.1f}")
-
+                                                         f"{popt[3]:> 4.1f} {popt[4]:> 8.1f}")
 
 plt.figure()
 data = readdistribution('exampledata/mindistr.txt')

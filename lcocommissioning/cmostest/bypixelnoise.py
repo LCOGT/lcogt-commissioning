@@ -14,7 +14,8 @@ import scipy.stats
 
 def create_memmap (fitsfile):
     fimage = fits.open(fitsfile)
-    data = np.copy(np.asarray(fimage[0].data[100:150,100:150]))
+    data = np.copy(np.asarray(fimage[1].data[100:250,100:250]))
+    data = data - np.mean (data)
     del fimage[0].data
     fimage.close()
     return data
@@ -87,7 +88,7 @@ def main():
 
     maxsinglepixel = imagedata[:,maxx,maxy]
     _ = plt.hist(maxsinglepixel.flatten(),  bins=50, density = True, label=f"maximum noise {np.max(stdimage)} @ {maxx}/{maxy}")
-    np.savetxt ("maxistr.txt" , maxsinglepixel)
+    np.savetxt ("maxdistr.txt" , maxsinglepixel)
 
     plt.title ("Distribution of Single pixel values")
     plt.xlabel("Per pixel value [ADU]")
