@@ -18,8 +18,9 @@ class LED_Illuminator:
         self.ins.write ("puls:mode TRIG")
         self.ins.write (f"burst:ncycles 1")
         self.ins.write ("puls:state ON")
-        self.ins.write ("puls:per %fs" % (exptime+overhead+1))
-        self.ins.write ("puls:widt %fs" % (exptime+overhead))
+        self.ins.write (f"PULSe:DCYC 100.0" )
+        self.ins.write ("PULSe:per %fs" % (exptime+overhead+1))
+        self.ins.write ("PULSe:widt %fs" % (exptime+overhead))
         self.ins.write ("PULSe:DELay 0s")
         self.ins.write ("burst:DELay 0s")
 
