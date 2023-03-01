@@ -16,8 +16,9 @@ class LED_Illuminator:
         Sets the function generator into pulse mode'''
         _logger.debug ("Lab exposing for % 5.2f s" % (exptime))
 
-        #self.ins.write ("*RST")
+        self.ins.write ("*RST")
         self.ins.write ("SOURce1:FUNCtion:Shape PULSe")
+        self.ins.write ("TRIGger:Source Ext")
         self.ins.write ("VOLTage:LEVel:IMMediate:LOW 0V")
         self.ins.write ("SOURce1:burst:state ON")
         self.ins.write ("SOURce1:puls:mode TRIG")
@@ -32,6 +33,7 @@ class LED_Illuminator:
             voltage = 5.
         _logger.debug (f"Setting LED voltage to {voltage}")
         self.ins.write(f"voltage:level:imm:high {voltage} V")
+        self.ins.write ("OUTPut1:STATe ON")
 
         self.ins.trigger()
         if block:
@@ -47,24 +49,26 @@ class LED_Illuminator:
         if ncycles == 0:
             return
 
-        #self.ins.write ("*RST")
-        self.ins.write ("SOURce1:FUNCtion:Shape PULSE")
-        self.ins.write ("VOLTage:LEVel:IMMediate:LOW 0V")
+        self.ins.write ("*RST")
+        self.ins.write ("SOURce1:FUNCtion:Shape PULSe")
+        self.ins.write ("SOURce1:VOLTage:LEVel:IMMediate:LOW 0V")
+        self.ins.write ("TRIGger:Source Ext")
 
-        self.ins.write ("burst:state ON")
-        self.ins.write ("burst:mode TRIG")
-        self.ins.write (f"burst:ncycles {ncycles}")
-        self.ins.write (f"freq:fixed {frequency}Hz")
-        self.ins.write (f"PULSe:DCYC 50.0" )
-        self.ins.write (f"burst:DELay {overhead}s")
-        self.ins.write (f"pulse:DELay {overhead}s")
+
+        self.ins.write ("SOURCE1:burst:mode TRIG")
+        self.ins.write ("SOURCE1:burst:state ON")
+        self.ins.write (f"SOURCE1:freq:fixed {frequency}Hz")
+        self.ins.write (f"SOURCE1:burst:ncycles {ncycles}")
+        self.ins.write (f"SOURCE1:PULSe:DCYC 50.0" )
+        self.ins.write (f"SOURCE1:burst:DELay {overhead}s")
+        self.ins.write (f"SOURCE1:pulse:DELay {overhead}s")
 
         # self.ins.write (f"PULSe:DCYCs 100" )
         if not ((voltage is not None) and (voltage >=0.) and (voltage <= 5.)):
             voltage = 5.
         _logger.debug (f"Setting LED voltage to {voltage}")
         self.ins.write(f"voltage:level:imm:high {voltage} V")
-
+        self.ins.write ("OUTPut1:STATe ON")
 
         self.ins.trigger()
         if block:
