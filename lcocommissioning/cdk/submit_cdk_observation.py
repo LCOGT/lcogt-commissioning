@@ -21,7 +21,7 @@ def create_cdk_request_configuration(args):
         'instrument_configs': [{
             'exposure_count': 1 if args.exp_cnt is None else args.exp_cnt,
             'exposure_time': args.exp_time,
-            'mode': 'default' if args.readmode is None else args.readmode,
+            'mode': 'full_frame' if args.readmode is None else args.readmode,
             'optical_elements': {
                 'filter': args.filter,
             },
@@ -72,9 +72,9 @@ def create_request(args):
     absolutestart = args.start
     windowend = args.start + dt.timedelta(hours=args.schedule_window)
 
-    location = {'telescope': '0m4c',
+    location = {'telescope': args.telescope,
                 'telescope_class': '0m4',
-                'enclosure': 'clma',
+                'enclosure': args.dome,
                 'site': args.site, }
 
     request = {'configurations': [],
@@ -104,14 +104,17 @@ def create_request(args):
 
 def parseCommandLine():
     parser = argparse.ArgumentParser(
-        description='CDK17 @ LCO engineering commissioning submission tool')
+        description='Delta Rho @ LCO engineering commissioning submission tool')
 
     parser.add_argument('--targetname', default='auto', type=str,
                         help='Name of object to observe; will beresolved via simbad. Can be coordinates in the form of Jhhmmss+ddmmss')
-    parser.add_argument('--title', default="CDK17 commissioning", help="Descriptive title for observation request")
+    parser.add_argument('--title', default="Delta Rho commissioning", help="Descriptive title for observation request")
 
-    parser.add_argument('--site', default='ogg', choices=common.lco_2meter_sites,
+    parser.add_argument('--site', default='elp', choices=['ogg', 'elp'],
                         help="To which site to submit")
+
+    parser.add_argument('--dome', default='aqwa', choices=['aqwa', 'aqwb', 'clma'])
+    parser.add_argument('--telescope', default='0m4a', choices=['0m4a','0m4b','0m4c'])
 
     parser.add_argument('--start', default=None,
                         help="Time to start observation. If not given, defaults to \"NOW\". Specify as YYYYMMDD HH:MM")
@@ -123,7 +126,7 @@ def parseCommandLine():
 
     parser.add_argument('--defocus', type=float, default=0.0, help="Amount to defocus star.")
 
-    parser.add_argument('--filter', default='rp', choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zs', 'U', 'B', 'V'],
+    parser.add_argument('--filter', default='rp', choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zs', 'B', 'V', 'H-alpha', 'OII', 'SII', 'Astrodon-Exo'],
                         help="Select optical element filter")
 
     parser.add_argument('--exp-time', type=float, default=10,
@@ -139,7 +142,7 @@ def parseCommandLine():
     repeatgroup.add_argument('--exp-cnt', type=int, help="How often to repeat each exposure")
     repeatgroup.add_argument('--filltime', type=float, help="How long to repeat exposures (seconds)")
 
-    parser.add_argument('--readmode', type=str, default=None, )
+    parser.add_argument('--readmode', type=str, default='full_frame', )
     parser.add_argument('--direct', action='store_true',
                          help='If set, submit directly instead of via scheduler.')
     parser.add_argument('--CONFIRM', dest='opt_confirmed', action='store_true',
