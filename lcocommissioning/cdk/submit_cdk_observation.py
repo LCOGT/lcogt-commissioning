@@ -126,7 +126,7 @@ def parseCommandLine():
 
     parser.add_argument('--defocus', type=float, default=0.0, help="Amount to defocus star.")
 
-    parser.add_argument('--filter', default='rp', choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zs', 'B', 'V', 'H-alpha', 'OII', 'SII', 'Astrodon-Exo'],
+    parser.add_argument('--filter', default='rp', choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zs', 'B', 'V', 'H-alpha', 'OIII', 'SII', 'Astrodon-Exo'],
                         help="Select optical element filter")
 
     parser.add_argument('--exp-time', type=float, default=10,
@@ -186,6 +186,7 @@ def parseCommandLine():
         sys.exit(1)
 
     print(f"Resolved target >{args.targetname}< at coordinates {args.radec.ra} {args.radec.dec}")
+    print (f"Submitting to {args.site} {args.dome} {args.telescope}")
 
     if not (args.exp_cnt or args.filltime):
         print("No exposure mode chosen, defaulting to one single EXPOSE")
