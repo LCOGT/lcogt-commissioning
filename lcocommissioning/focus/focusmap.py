@@ -35,6 +35,7 @@ def plotdistribution(imagecatalog, name=None):
     plt.colorbar()
     plt.xlabel ("x center")
     plt.ylabel ("y center")
+    plt.title ("Ellipticity")
     plt.savefig (f'{name}-ellipticity2d.png')
 
 
