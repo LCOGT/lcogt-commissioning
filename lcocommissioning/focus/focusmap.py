@@ -18,13 +18,16 @@ from lcocommissioning.common.SourceCatalogProvider import SEPSourceCatalogProvid
 
 def plotdistribution(imagecatalog, name=None):
 
+    name=os.path.basename(name)
 
-    medianfwhm = np.median (imagecatalog['fwhm'])
-    std = np.std (imagecatalog['fwhm'])
-    medianfwhm = np.median (imagecatalog['fwhm'][ np.abs (imagecatalog['fwhm'] - medianfwhm) < std])
+    goodsn = np.sqrt (imagecatalog['flux']) > 50
+
+    medianfwhm = np.median (imagecatalog['fwhm'][goodsn])
+    std = np.std (imagecatalog['fwhm'][goodsn])
+    medianfwhm = np.median (imagecatalog['fwhm'][goodsn & ( np.abs (imagecatalog['fwhm'] - medianfwhm) < std)])
     print (f"Median fwhm is {medianfwhm} +/- {std}")
     good =  np.abs (imagecatalog['fwhm'] - medianfwhm) < std*2
-
+    good = good & goodsn
 
     fig, ax = plt.subplots()
     #ax.set_box_aspect(1)
@@ -32,7 +35,7 @@ def plotdistribution(imagecatalog, name=None):
     plt.colorbar()
     plt.xlabel ("x center")
     plt.ylabel ("y center")
-    plt.savefig ('ellipticity2d.png')
+    plt.savefig (f'{name}-ellipticity2d.png')
 
 
 
@@ -44,7 +47,18 @@ def plotdistribution(imagecatalog, name=None):
 
     plt.xlabel ("x center")
     plt.ylabel ("y center")
-    plt.savefig ('fwhm2d.png')
+    plt.savefig (f'{name}-fwhm2d.png')
+
+
+    fig, ax = plt.subplots()
+    ax.set_box_aspect(1)
+    plt.scatter (x=imagecatalog['x'][good], y=imagecatalog['y'][good], c=imagecatalog['theta'][good],)
+    plt.colorbar()
+    plt.title (f"Theta {name}")
+
+    plt.xlabel ("x center")
+    plt.ylabel ("y center")
+    plt.savefig (f'{name}-theta2d.png')
 
 
     fig = plt.figure()
@@ -63,7 +77,7 @@ def plotdistribution(imagecatalog, name=None):
     plt.xlabel ("y position")
     plt.ylabel ("ellipticity")
     plt.ylim([0,0.2])
-    plt.savefig ('ellipticity1d.png')
+    plt.savefig (f'{name}-ellipticity1d.png')
 
 
     fig = plt.figure()
@@ -73,8 +87,6 @@ def plotdistribution(imagecatalog, name=None):
     plt.xlabel ("x position")
     plt.ylabel ("fwhm [pixel]")
 
-
-
     plt.ylim([medianfwhm-2*std,medianfwhm+2*std])
     plt.subplot (2,1,1)
     plt.plot (imagecatalog['y'][good], imagecatalog['fwhm'][good], '.')
@@ -82,7 +94,7 @@ def plotdistribution(imagecatalog, name=None):
     plt.ylabel ("fwhm [pixel]")
     plt.ylim([medianfwhm-std,medianfwhm+std])
     plt.title (f"FWHM {name}")
-    plt.savefig ('fwhm.png')
+    plt.savefig (f'{name}-fwhm.png')
 
 
 def main():
