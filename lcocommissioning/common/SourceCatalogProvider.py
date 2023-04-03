@@ -168,7 +168,26 @@ L1FWHM = "L1FWHM"
 FOCDMD = "FOCDMD"
 
 
-def getImageFWHM(imagename, minarea=20, deblend=0.5):
+def getboundariesForSection(sectionid, dimX, dimY):
+    '''Get bounddaries for a 3x3 grid on 2d coordiantes'''
+    ### Quadrants:
+    ###   6 7 8
+    ###   3 4 5
+    ###   0 1 2
+
+    bx = np.linspace (0,dimX-1, 4)
+    by = np.linspace (0,dimY-1, 4)
+
+    minx = bx [sectionid % 3]
+    maxx = bx [sectionid % 3 +1]
+    miny = by [sectionid // 3]
+    maxy = by [sectionid // 3 +1]
+
+    return minx,maxx,miny,maxy
+
+
+
+def getImageFWHM(imagename, minarea=20, deblend=0.5, sections=False):
     """ Measure the FWHM of an image, tuned to get a reasonable FWHM also for defocussed images.
     """
 
@@ -184,41 +203,42 @@ def getImageFWHM(imagename, minarea=20, deblend=0.5):
     for ii in range(len(hdul)):
         if isinstance(hdul[ii], ImageHDU) or isinstance(hdul[ii], CompImageHDU):
             cat, wcs = catalog.get_source_catalog(imagename, ext=ii, minarea=minarea, deblend=deblend)
-            fwhmcat = np.append(fwhmcat, cat['fwhm'])
+            fwhms = cat['fwhm']
+            fwhmcat = np.append(fwhmcat, fwhms)
+
+
+
+    if not sections:
+        medianfwhm = fit_fwhm(fwhmcat)
+    else:
+        medianfwhm = {}
+        for sectionID in range (0,9):
+            minx,maxx,miny,maxy = getboundariesForSection(sectionID, hdul[ii].data.shape[1], hdul[ii].data.shape[0] )
+            selectarea =  (cat['x'] > minx)
+            selectarea = selectarea & (cat['x'] <= maxx)
+            selectarea = selectarea & (cat['y'] > miny)
+            selectarea = selectarea & (cat['y'] <= maxy)
+            fwhms = cat['fwhm'][selectarea]
+            medianfwhm[sectionID] = fit_fwhm(fwhms)
 
     hdul.close()
+    return deltaFocus, medianfwhm
 
-    # comprehension of the object catalog....
-    good = fwhmcat > 0
+
+def fit_fwhm(fwhmcat):
+    good = fwhmcat > 2
     meanfwhm = np.mean(fwhmcat[good])
-
     for iter in range(4):
         medianfwhm = np.median(fwhmcat[good])
 
         fwhmstd = np.std(fwhmcat[good])
-        good = abs(fwhmcat - medianfwhm) < 2 * fwhmstd
+        good = (abs(fwhmcat - medianfwhm) < 2 * fwhmstd) & (fwhmcat > 2)
         if np.sum(good) > 10:
             medianfwhm = np.median(fwhmcat[good])
         else:
-            log.warning("Not enough sources left in array. aborting")
+            log.debug("Not enough sources left in array. aborting")
             continue
-
-    log.debug("{}  FOCCMD {: 5.3f} FWHM (mean med) ({: 5.2f} {: 5.2f}) \pm {:5.2f} pixel".format(imagename, deltaFocus,
-                                                                                             meanfwhm, medianfwhm,
-                                                                                             fwhmstd))
-
-    # # plotting for the human
-    # plt.figure()
-    # bins = np.linspace(0, 10, 10)
-    # plt.hist ([fwhmcat,fwhmcat[good]], bins,     label=["all", "good"])
-    # plt.axvline(x=medianfwhm, label="FWHM median")
-    # plt.axvline(x=meanfwhm, label="FWHM median")
-    # plt.legend()
-    # plt.tight_layout()
-    # #plt.show()
-    # plt.close()
-
-    return deltaFocus, medianfwhm
+    return medianfwhm
 
 
 import os
