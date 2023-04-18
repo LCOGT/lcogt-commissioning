@@ -114,18 +114,20 @@ def get_focusStackData(args):
     tel = args.tel
 
     sourcecolumn = ['FOCTEMP', 'ALTITUDE', 'FOCTELZP', 'FOCTOFF', 'FOCZOFF',
-                    'FOCAFOFF', 'FOCINOFF', 'FOCFLOFF', 'L1FWHM', 'FOCOBOFF',
+                    'FOCAFOFF', 'FOCINOFF', 'FOCFLOFF', 'FOCOBOFF',
                     'AZIMUTH', 'REFHUMID', 'DATE-OBS', 'DAY-OBS', 'ORIGNAME',
                     'WMSTEMP', 'FILTER']
-
-    query = f'SITEID:{site} AND ENCID:{enc} AND TELID:{tel} AND OBJECT:auto_focus' \
-            f' AND FOCOBOFF:0 AND RLEVEL:91 AND OBSTYPE:EXPOSE AND _exists_:L1FWHM'
-    log.debug(f"Query String: {query}")
 
     # due to cameras moving around, and mirrors being replaced, autofocus values are
     # informative only over a limited date range.
     bestaftertime = args.after
     log.info(f"Selecting after date: {bestaftertime}")
+
+    query = f'SITEID:{site} AND ENCID:{enc} AND TELID:{tel} AND OBJECT:auto_focus' \
+            f' AND FOCOBOFF:0 AND RLEVEL:0 AND OBSTYPE:EXPOSE' \
+            f' AND DATE-OBS:[{bestaftertime.strftime("%Y-%m-%dT%H:%M:%S")} TO *]'
+
+
 
     body = {
         "size": 10000,
