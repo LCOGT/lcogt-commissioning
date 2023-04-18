@@ -49,11 +49,11 @@ class LCOTelescope:
         log.info ("Shutter close")
         self.expose (-1, False)
 
-
     def deFocus (self, defocusMMfocalplane):
-
         pass
 
+    def close(self):
+        pass
 
 class archonexposure:
 
@@ -71,7 +71,7 @@ class archonexposure:
             if configfile:
                 try:
                     log.info ("Loading config file: " + configfile)
-                    cfg = self.archon.load_configuration(configfile)
+                    self.archon.load_configuration(configfile)
                     self.pon()
                 except lcocommissioning.archon.archon_v02_plus.CommandFailure as ex:
                     log.error (ex.message)
@@ -199,7 +199,7 @@ class archonexposure:
 
 
 
-        lastframe, buf, framew, frameh, samplemode, lasttimestamp = self.archon.newest();
+        lastframe, buf, framew, frameh, samplemode, lasttimestamp = self.archon.newest()
         frame = lastframe
         # Start readout loop
         log.info ("Set video exposure time to %d ms" % exptimems)
@@ -397,7 +397,7 @@ class archonexposure:
 
         for ii in range ( int(-nSteps /2),int(nSteps/2)+1,1):
             defocus = focusstep * ii
-            ins.defocus (defocus)
+            ins.deFocus (defocus)
             print ("focus step %d  -> % 5.2f " % (ii, defocus))
 
             ins.expose(expTime)
@@ -414,7 +414,7 @@ class archonexposure:
 
         pass
 
-    def ptcSequence (self, archon, texpSat=96, pixelsPerShift=32, nshifts=4, pixelsPerDetector=4096):
+    def ptc_sequence (self, archon, texpSat=96, pixelsPerShift=32, nshifts=4, pixelsPerDetector=4096):
 
 
         nSteps = int (pixelsPerDetector / pixelsPerShift/ nshifts)
@@ -481,18 +481,14 @@ def parseCommandLine( ):
 
 def main():
     args = parseCommandLine()
-
-
     telescope = None
+
     if (args.site is not None) and (args.dome is not None):
         log.info ("Setting up telescope")
         telescope = LCOTelescope(dome=args.dome, site=args.site)
 
-
-
     archon = archonexposure(args.archonip, args.configfile, )
     archon.readinstrumentStatus()
-
     archon.callFlush(1)
 
     if args.continuous:
