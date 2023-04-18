@@ -80,7 +80,7 @@ listofchachedcoordiantes = {
     'HR4468': [174.1704723071, -9.8022475661]
 }
 
-default_constraints = {"max_airmass": 1.3,
+default_constraints = {"max_airmass": 2,
                        "min_lunar_distance": 30.0, }
 
 

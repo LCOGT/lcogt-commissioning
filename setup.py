@@ -19,6 +19,7 @@ setuptools.setup(
     ],
     entry_points = {
         'console_scripts': ['submitNRESObservation = lcocommissioning.nres.submitNRESObservation:main',
+                            'plot_nres_spec = lcocommissioning.nres.plot_nres_1d:main',
                             'noisegainmef = lcocommissioning.noisegainrawmef:main',
                             'submitXtalkObservation = lcocommissioning.submitXtalkObservation:main',
                             'analysegainhistory = noisegaincrawler.analysegainhistory:main',

@@ -7,20 +7,7 @@ from scipy.optimize import curve_fit
 from scipy.optimize import minimize
 import datetime
 from sklearn.mixture import GaussianMixture
-
-class Telegraph(rv_continuous):
-    "negative exponential"
-    def __init__(self):
-        self.x0 = 420
-        self.sigma = 5
-        self.delta = 20
-
-    def _pdf(self, x, x0, sigma):
-
-        return norm (loc=self.x0, scale=self.sigma)
-
-    def _argcheck(self, x0, sigma):
-        return Truescipy.optimize
+import torch
 
 
 def myexp (x, A, x0,sigma):

@@ -51,7 +51,7 @@ def createRequestsForStar_scheduler(context):
                           'target': target,
 
                           'acquisition_config': {
-                              'mode': 'WCS'
+                              'mode': 'BRIGHTEST'
                           },
                           'guiding_config': {
                               'mode': 'ON',

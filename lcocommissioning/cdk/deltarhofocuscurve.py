@@ -106,7 +106,6 @@ def anaylse_deltarho_tilt(bestfits):
     plt.xlabel ("distance focal plane [mm]")
     plt.ylabel ("defocus [mm]")
     plt.legend()
-    plt.savefig ("deltarho.png")
 # Full frame readout is 9576*6388, 3.75um pixels
     # |  |  |  |  throw in x from center is (9576/3)*3.76um = 12.00192 mm
 
