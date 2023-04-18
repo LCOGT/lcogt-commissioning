@@ -6,8 +6,9 @@ from scipy.stats import norm
 from scipy.optimize import curve_fit
 from scipy.optimize import minimize
 import datetime
-from sklearn.mixture import GaussianMixture
 import torch
+from pycave.bayes import GaussianMixture
+
 
 
 def myexp (x, A, x0,sigma):
@@ -87,6 +88,18 @@ def fitandplot (data, label):
 
 plt.figure()
 data = readdistribution('exampledata/mindistr.txt')
+X=torch.cat ([torch.from_numpy (data),])
+print (X)
+estimator_1 = GaussianMixture( num_components=1)
+estimator_2 = GaussianMixture (num_components=3)
+estimator_1.fit(X)
+
+# Once the estimator is fitted, it provides various properties. One of them is
+# the `model_` property which yields the PyTorch module with the fitted parameters.
+print("Centroids are:")
+print(estimator_1.model_.centroids)
+
+exit(0)
 fitandplot(data, "Best case")
 findditributionparamters(data)
 data = readdistribution('exampledata/maxdistr.txt')
