@@ -155,7 +155,7 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
     return sortedlistofFiles
 
 
-def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, maxlinearity = 50000):
+def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, maxlinearity = 30000):
     _logger.debug("Plotting gain vs level")
     plt.figure()
     for ext in alllevels:
