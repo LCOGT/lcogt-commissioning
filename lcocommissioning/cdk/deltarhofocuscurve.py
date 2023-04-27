@@ -94,8 +94,8 @@ def anaylse_deltarho_tilt(bestfits):
 
 
     print (f"Focal plane tilts are along x axis: {angle_x:7.5f} rad, along y axis: {angle_y:7.5f} rad")
-    print (f"Shim throw x {screwthrowx_from_center:5.2f} shim delta X: {correction_x:7.5f}")
-    print (f"Shim throw y {screwthrowy_from_center:5.2f} shim delta Y: {correction_y:7.5f}")
+    print (f"Shim throw x {screwthrowx_from_center:5.2f} mm shim delta X: {correction_x:7.5f} mm ")
+    print (f"Shim throw y {screwthrowy_from_center:5.2f} mm shim delta Y: {correction_y:7.5f} mm")
     # plot focal plane
     xx=[-throwx/2,throwx/2]
     xy = [-delta_focus_x/2,delta_focus_x/2]
