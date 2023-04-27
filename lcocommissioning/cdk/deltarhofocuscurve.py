@@ -74,8 +74,9 @@ def overplot_fit(func, paramset, ax):
 def anaylse_deltarho_tilt(bestfits):
 
     # Get rid of focus zeropint, not relevant for us
+    focuszeropoint = bestfits[4]
     for ii in bestfits.keys():
-        bestfits[ii] = bestfits[ii] - bestfits[4]
+        bestfits[ii] = bestfits[ii] - focuszeropoint
 
     detectorsizeX = 36
     detectorsizeY = 24
