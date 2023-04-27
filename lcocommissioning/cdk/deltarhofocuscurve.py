@@ -188,7 +188,7 @@ def main():
             plt.plot(focuslist, fwhmlist, 'o')
             plt.xlim([-0.1, 0.1])
             plt.ylim([0, 6])
-            plt.title("Focus {:5.3f} ".format(bestfocus) if math.isfinite(
+            plt.title(f"{section} {bestfocus:5.3f}" if math.isfinite(
                       bestfocus_error) else "Fit failed")
     plt.savefig("{}".format("focus_0.png"), bbox_inches='tight')
     with open('deltarho_focus' + '.pickle', 'wb') as f:
