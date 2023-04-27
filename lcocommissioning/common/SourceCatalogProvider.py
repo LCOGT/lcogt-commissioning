@@ -214,6 +214,7 @@ def getImageFWHM(imagename, minarea=20, deblend=0.5, sections=False):
         medianfwhm = {}
         for sectionID in range (0,9):
             minx,maxx,miny,maxy = getboundariesForSection(sectionID, hdul[ii].data.shape[1], hdul[ii].data.shape[0] )
+            print (f"Section {sectionID} {minx} < X < {maxx} ;  {miny} < Y < {maxy}")
             selectarea =  (cat['x'] > minx)
             selectarea = selectarea & (cat['x'] <= maxx)
             selectarea = selectarea & (cat['y'] > miny)
