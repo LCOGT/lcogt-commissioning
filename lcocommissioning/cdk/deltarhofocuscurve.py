@@ -75,12 +75,13 @@ def anaylse_deltarho_tilt(bestfits):
     for ii in bestfits.keys():
         bestfits[ii] = bestfits[ii] - bestfits[4]
 
-    throwx = 2 * 12.00192 # mm
-    throwy = 2 * 8.00629 # mm
+    throwx = 2/3 * 36 # mm
+    throwy = 2/3 * 24 # mm
 
     delta_focus_x = (bestfits[0] + bestfits[3] + bestfits[6])/3 - (bestfits[2]+bestfits[5]+[bestfits[8]])/3
     delta_focus_y = (bestfits[0] + bestfits[1] + bestfits[1])/3 - (bestfits[2]+bestfits[7]+[bestfits[8]])/3
-    angle_x = math.atan(delta_focus_x/throwx)
+
+    angle_x = math.atan(delta_focus_x/throwx) # in radians
     angle_y = math.atan(delta_focus_y/throwy)
 
     screwthrowx_from_center = 60 #mm
@@ -90,7 +91,11 @@ def anaylse_deltarho_tilt(bestfits):
     correction_y = math.tan(angle_y) * screwthrowy_from_center
     screwpitch = 0.01 # (mm/rev)
 
-    print (f"Focal plane tilts are along x axis: {angle_x} deg, along y axis: {angle_y} deg")
+
+
+    print (f"Focal plane tilts are along x axis: {angle_x:7.5f} rad, along y axis: {angle_y:7.5f} rad")
+    print (f"Shim throw x {screwthrowx_from_center:5.2f} shim delta X: {correction_x:7.5f}")
+    print (f"Shim throw y {screwthrowy_from_center:5.2f} shim delta Y: {correction_y:7.5f}")
     # plot focal plane
     xx=[-throwx/2,throwx/2]
     xy = [-delta_focus_x/2,delta_focus_x/2]
@@ -132,7 +137,7 @@ def main():
         focus, fwhm = getImageFWHM(image, minarea=5, sections=True)
         focusdict[image] = focus
         fwhmdict[image] = fwhm
-        print (fwhmdict)
+        print (fwhmdict[image])
 
     bestfits = {}
     plt.figure()
@@ -144,8 +149,9 @@ def main():
             fwhmlist.append (fwhmdict[image][section])
         focuslist = np.asarray(focuslist)
         fwhmlist = np.asarray(fwhmlist)
-        print ("{}\n{}".format (np.round(focuslist,3), np.round (fwhmlist,3)))
+        print ("Focus input: {}\nFWHM: {}".format (np.round(focuslist,3), np.round (fwhmlist,3)))
 
+        print (f"Fitting FWHM in Section {section}")
         exponential_p, exponential_rms = focus_curve_fit(focuslist, fwhmlist, sqrtfit)
 
         # we will need this a few times - meaningful references here
