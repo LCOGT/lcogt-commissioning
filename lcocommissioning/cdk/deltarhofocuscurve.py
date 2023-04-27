@@ -103,12 +103,13 @@ def anaylse_deltarho_tilt(bestfits):
 
 
 
-    print (f"Focal plane offsets X: {delta_focus_x:7.5f} mm Y: {delta_focus_y:7.5f} mm")
-    print (f"Focal plane tilts are along x axis: {angle_x:7.5f} rad, along y axis: {angle_y:7.5f} rad")
-    print (f"Shim throw x {shimtrow_x:5.2f} mm shim delta X: {correction_x:7.5f} mm ")
-    print (f"Shim throw y {shimthrow_y:5.2f} mm shim delta Y: {correction_y:7.5f} mm")
+    Narrative ='\n'.join ( (
+        f"Focal plane offsets\n X: {delta_focus_x:7.4f} mm\n Y: {delta_focus_y:7.4f} mm\n",
+        f"Focal plane tilts are along\n  x axis: {angle_x: 7.5f} rad\n  y axis: {angle_y: 7.5f} rad\n",
+        f"Shim throw x {shimtrow_x: 5.2f} mm\n -> delta X: {correction_x: 6.4f} mm\n ",
+        f"Shim throw y {shimthrow_y: 5.2f} mm\n -> delta Y: {correction_y: 6.4f} mm"))
     # plot focal plane
-
+    print (Narrative)
 
 
     xx=[-throwx/2,throwx/2]
@@ -138,8 +139,11 @@ def anaylse_deltarho_tilt(bestfits):
     plt.xlabel ("distance focal plane CCD X [mm]")
     plt.xlabel ("distance focal plane CCD Y [mm]")
 
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 
-
+# place a text box in upper left in axes coords
+    ax.text(1.05, 0.99, Narrative, transform=ax.transAxes, fontsize=8,
+        horizontalalignment='left', verticalalignment='top', bbox=props)
 
     plt.gca().set_aspect('equal')
 
@@ -235,6 +239,7 @@ def analyse_tilts(filename):
         bestfits = pickle.load(f)
     plt.figure()
     anaylse_deltarho_tilt(bestfits)
+    plt.tight_layout()
     plt.savefig('deltarhofocus.pdf')
 
 
