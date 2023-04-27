@@ -78,25 +78,30 @@ def anaylse_deltarho_tilt(bestfits):
     throwx = 2/3 * 36 # mm
     throwy = 2/3 * 24 # mm
 
+    # Sector ids: x increases right, y increases up. Not as plotted!!!
+    # 6 7 8
+    # 3 4 5
+    # 0 1 2
+
     delta_focus_x = (bestfits[0] + bestfits[3] + bestfits[6]) / 3 - (bestfits[2]+bestfits[5]+bestfits[8]) / 3.
     delta_focus_y = (bestfits[0] + bestfits[1] + bestfits[2]) / 3 - (bestfits[6]+bestfits[7]+bestfits[8]) / 3.
 
     angle_x = math.atan(delta_focus_x/throwx) # in radians
     angle_y = math.atan(delta_focus_y/throwy)
 
-    screwthrowx_from_center = 60 #mm
-    screwthrowy_from_center = 60 #mm
+    shimtrow_x = 137.8 #mm
+    shimtrowh_y = 220.5 #mm
 
-    correction_x = math.tan(angle_x) * screwthrowx_from_center
-    correction_y = math.tan(angle_y) * screwthrowy_from_center
+    correction_x = math.tan(angle_x) * shimtrow_x
+    correction_y = math.tan(angle_y) * shimtrowh_y
     screwpitch = 0.01 # (mm/rev)
 
 
 
     print (f"Focal plane offsets X: {delta_focus_x:7.5f} mm Y: {delta_focus_y:7.5f} mm")
     print (f"Focal plane tilts are along x axis: {angle_x:7.5f} rad, along y axis: {angle_y:7.5f} rad")
-    print (f"Shim throw x {screwthrowx_from_center:5.2f} mm shim delta X: {correction_x:7.5f} mm ")
-    print (f"Shim throw y {screwthrowy_from_center:5.2f} mm shim delta Y: {correction_y:7.5f} mm")
+    print (f"Shim throw x {shimtrow_x:5.2f} mm shim delta X: {correction_x:7.5f} mm ")
+    print (f"Shim throw y {shimtrowh_y:5.2f} mm shim delta Y: {correction_y:7.5f} mm")
     # plot focal plane
     xx=[-throwx/2,throwx/2]
     xy = [-delta_focus_x/2,delta_focus_x/2]
@@ -105,8 +110,8 @@ def anaylse_deltarho_tilt(bestfits):
     plt.plot (xx,xy,label="x-direction,")
     plt.plot (yx,yy,label="y-direction,")
 
-    plt.plot ([0,screwthrowx_from_center], [0,correction_x], label=f'cor_x={correction_x:5.4f}mm {correction_x/screwpitch:5.4} revs')
-    plt.plot ([0,screwthrowy_from_center], [0,correction_y], label=f'cor_y={correction_y:5.4f}mm {correction_y/screwpitch:5.4} revs')
+    plt.plot ([0,shimtrow_x], [0,correction_x], label=f'cor_x={correction_x:5.4f}mm {correction_x/screwpitch:5.4} revs')
+    plt.plot ([0,shimtrowh_y], [0,correction_y], label=f'cor_y={correction_y:5.4f}mm {correction_y/screwpitch:5.4} revs')
 
 
     plt.xlabel ("distance focal plane [mm]")
