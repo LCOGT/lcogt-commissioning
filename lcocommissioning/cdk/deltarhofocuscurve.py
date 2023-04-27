@@ -132,8 +132,6 @@ def anaylse_deltarho_tilt(bestfits):
     ax.add_patch (patches.Circle (ll))
     ax.add_patch (patches.Circle (lr))
 
-    plt.text ()
-
     ax.set_xlim((-shimtrow_x/2*1.2, shimtrow_x/2*1.2))
     ax.set_ylim((-shimthrow_y/2*1.2, shimthrow_y/2*1.2))
 
