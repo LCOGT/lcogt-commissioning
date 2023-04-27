@@ -78,8 +78,8 @@ def anaylse_deltarho_tilt(bestfits):
     throwx = 2/3 * 36 # mm
     throwy = 2/3 * 24 # mm
 
-    delta_focus_x = (bestfits[0] + bestfits[3] + bestfits[6])/3 - (bestfits[2]+bestfits[5]+bestfits[8])/3.
-    delta_focus_y = (bestfits[0] + bestfits[1] + bestfits[1])/3 - (bestfits[2]+bestfits[7]+bestfits[8])/3.
+    delta_focus_x = (bestfits[0] + bestfits[3] + bestfits[6]) / 3 - (bestfits[2]+bestfits[5]+bestfits[8]) / 3.
+    delta_focus_y = (bestfits[0] + bestfits[1] + bestfits[2]) / 3 - (bestfits[6]+bestfits[7]+bestfits[8]) / 3.
 
     angle_x = math.atan(delta_focus_x/throwx) # in radians
     angle_y = math.atan(delta_focus_y/throwy)
