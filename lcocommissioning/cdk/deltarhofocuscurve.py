@@ -104,10 +104,13 @@ def anaylse_deltarho_tilt(bestfits):
 
 
     Narrative ='\n'.join ( (
-        f"Focal plane offsets\n X: {delta_focus_x:7.4f} mm\n Y: {delta_focus_y:7.4f} mm\n",
+        f"Focal plane offsets\n X: {delta_focus_x:7.4f} mm left - right\n Y: {delta_focus_y:7.4f} mm bottom - top\n",
         f"Focal plane tilts are along\n  x axis: {angle_x: 7.5f} rad\n  y axis: {angle_y: 7.5f} rad\n",
-        f"Shim throw x {shimtrow_x: 5.2f} mm\n -> delta X: {correction_x: 6.4f} mm\n ",
-        f"Shim throw y {shimthrow_y: 5.2f} mm\n -> delta Y: {correction_y: 6.4f} mm"))
+        f"Shim throw x {shimtrow_x: 5.2f} mm\n -> delta X: {correction_x: 6.4f} mm ",
+        f' ??? -> add to {"left of image" if delta_focus_x < 0 else "right of image"}\n',
+        f"Shim throw y {shimthrow_y: 5.2f} mm\n -> delta Y: {correction_y: 6.4f} mm",
+        f' ??? -> add to {"bottom of image" if delta_focus_y < 0 else "top of image"}',
+    ))
     # plot focal plane
     print (Narrative)
 
