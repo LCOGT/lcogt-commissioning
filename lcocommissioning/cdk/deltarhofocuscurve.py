@@ -78,11 +78,11 @@ def anaylse_deltarho_tilt(bestfits):
     for ii in bestfits.keys():
         bestfits[ii] = bestfits[ii] - focuszeropoint
 
-    detectorsizeX = 36
-    detectorsizeY = 24
+    detectorsizeX = 36.
+    detectorsizeY = 24.
 
-    throwx = 2/3 * detectorsizeX # mm
-    throwy = 2/3 * detectorsizeY # mm
+    throwx = 2./3 * detectorsizeX # mm
+    throwy = 2./3 * detectorsizeY # mm
 
     # Sector ids: x increases right, y increases up. Not as plotted!!!
     # 6 7 8
@@ -100,9 +100,6 @@ def anaylse_deltarho_tilt(bestfits):
 
     correction_x = math.tan(angle_x) * shimtrow_x
     correction_y = math.tan(angle_y) * shimthrow_y
-    screwpitch = 0.01 # (mm/rev)
-
-
 
     Narrative ='\n'.join ( (
         f"Focal plane offsets\n X: {delta_focus_x:7.4f} mm left - right\n Y: {delta_focus_y:7.4f} mm bottom - top\n",
