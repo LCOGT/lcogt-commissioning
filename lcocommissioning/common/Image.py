@@ -152,7 +152,7 @@ class Image(object):
         if overkeyword is None:
             return 0
 
-        if 'UNKNOWN' in hdu.header.get(biassecheader):
+        if  hdu.header.get(biassecheader) in ('UNKNOWN', 'N/A'):
             _log.error(f"Bias Section is undefined for extension {hdu}")
             return 0
 
