@@ -110,7 +110,7 @@ def parseCommandLine():
                         help='Name of object to observe; will beresolved via simbad. Can be coordinates in the form of Jhhmmss+ddmmss')
     parser.add_argument('--title', default="Delta Rho commissioning", help="Descriptive title for observation request")
 
-    parser.add_argument('--site', default='elp', choices=['ogg', 'elp'],
+    parser.add_argument('--site', default='elp', choices=['ogg', 'elp', 'cpt'],
                         help="To which site to submit")
 
     parser.add_argument('--dome', default='aqwa', choices=['aqwa', 'aqwb', 'clma'])
