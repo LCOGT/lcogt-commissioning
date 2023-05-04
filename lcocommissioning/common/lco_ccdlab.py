@@ -39,7 +39,7 @@ class LED_Illuminator:
         if block:
             _logger.info("Blocking during exposure time")
             time.sleep (exptime)
-        _logger.debug ("Done exposing")
+        _logger.debug ("Done setting up exposing. ")
 
 
     def expose_burst (self, exptime,  frequency=100, ncycles = 10, voltage=None, block=True, overhead=5):
