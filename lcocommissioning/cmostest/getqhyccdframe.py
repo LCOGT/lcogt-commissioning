@@ -305,9 +305,11 @@ def parseCommandLine():
     actions.add_argument("--settemp", type=float, help="Set CCD target temperature")
     actions.add_argument("--gettemp", action="store_true", help="get CCD target temperature")
     actions.add_argument("--testled", action="store_true", help="testled")
-    actions.add_argument("--prewarmled", action="store_true", help="testled")
+
     actions.add_argument("--chamberpump", type=bool, help="cycle detector chaber decissitant")
 
+
+    parser.add_argument("--prewarmled", action="store_true", help="testled")
     parser.add_argument('--expcnt', type=int, dest="expcnt", default=1)
     parser.add_argument('--exptime', type=float, nargs='*', default=[0, ])
     parser.add_argument('--gain', type=int, default=5)
