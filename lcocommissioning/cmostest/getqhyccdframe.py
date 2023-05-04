@@ -169,20 +169,23 @@ class QHYCCD:
                                    c_double((exptime * 1000. * 1000.)))  # unit: us
         _logger.info(f"Starting exposure {exptime} seconds")
 
+
+        start_expose = datetime.datetime.utcnow()
         ret = self.qhyccd.ExpQHYCCDSingleFrame(self.cam)
         if ret != ERR.QHYCCD_SUCCESS:
-            _logger.error(f"Feilure while exposing image {ret}")
+            _logger.error(f"Failure while exposing image {ret}")
         _logger.debug(f"Starting readout")
-        start_readout = datetime.datetime.utcnow()
+
         binned_w = c_uint(int(self.roi_w.value / self.wbin.value))
         binned_h = c_uint(int(self.roi_h.value / self.hbin.value))
         self.imgdata = (ctypes.c_uint16 * binned_w.value * binned_h.value)()
 
-        start_expose = datetime.datetime.utcnow()
+        start_readout = datetime.datetime.utcnow()
+
         ret = self.qhyccd.GetQHYCCDSingleFrame(self.cam, byref(binned_w), byref(binned_h), byref(self.bpp),
                                                byref(self.channels), self.imgdata)
         if ret != ERR.QHYCCD_SUCCESS:
-            _logger.error(f"failure while downloading iamge data {ret}")
+            _logger.error(f"failure while downloading image data {ret}")
         _logger.debug(f"Starting fits write to {filename}")
         start_fitswrite = datetime.datetime.utcnow()
         x = np.asarray(self.imgdata)
