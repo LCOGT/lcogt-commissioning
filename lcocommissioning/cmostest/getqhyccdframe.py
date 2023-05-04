@@ -264,6 +264,10 @@ def main():
             actexptime = exptime
             if args.flat and lab is not None:
 
+                if args.prewarmled and (exptime < 60):
+                    _logger.info ("Prewarming LED. Stand by")
+                    lab.expose(exptime=60, overhead=0, block=True)
+
                 if args.nburstcycles is None:
                     # This is a conventional exposure where we ensure the LED is on befor we open the shutter and stays on until shutter closes.
                     _logger.info ("Starting conventional shutter-defined exposure")
@@ -301,6 +305,7 @@ def parseCommandLine():
     actions.add_argument("--settemp", type=float, help="Set CCD target temperature")
     actions.add_argument("--gettemp", action="store_true", help="get CCD target temperature")
     actions.add_argument("--testled", action="store_true", help="testled")
+    actions.add_argument("--prewarmled", action="store_true", help="testled")
     actions.add_argument("--chamberpump", type=bool, help="cycle detector chaber decissitant")
 
     parser.add_argument('--expcnt', type=int, dest="expcnt", default=1)
