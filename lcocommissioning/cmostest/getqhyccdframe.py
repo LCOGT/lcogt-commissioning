@@ -278,6 +278,7 @@ def main():
                     th =threading.Thread ( target=lab.expose_burst, kwargs={'exptime':exptime, 'ncycles':args.nburstcycles, 'overhead':7, 'voltage':args.ledvoltage, 'block':False})
                     actexptime= exptime+5.5
                     th.start()
+                    time.sleep (0.25)
 
             qhyccd.getframe(actexptime, imagename, args=args)
 
