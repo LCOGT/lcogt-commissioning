@@ -247,18 +247,20 @@ def main():
         suffix = 'd00'
     if args.flat:
         suffix = 'f00'
-        lab = LED_Illuminator()
+        lab = None if args.noled else LED_Illuminator()
 
     for exptime in args.exptime:
         _logger.info(f"taking exposures for exptime {exptime}")
         for ii in range(args.expcnt):
             imagename = f"{args.outputpath}/qhytest-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%S')}.{suffix}.fits"
+            actexptime = exptime
             if args.flat and lab is not None:
+
                 if args.nburstcycles is None:
                     # This is a conventional exposure where we ensure the LED is on befor we open the shutter and stays on until shutter closes.
                     _logger.info ("Starting conventional shutter-defined exposure")
                     lab.expose(exptime=exptime, overhead=1, block=False)
-                    actexptime = exptime
+
                 else:
                     # Here we open the shutter, and then turn the LED on for a determined amount of time. it takes a few seconds from requesting an exposure
                     # until the shutter actually opens. Hence we are putting the LED con command into a background thread that starts its working day with sleeping.
@@ -301,6 +303,8 @@ def parseCommandLine():
     parser.add_argument('--readmode', type=int, default=0)
     parser.add_argument('--ledvoltage', type=float, default=5.0)
     parser.add_argument('--nburstcycles', type=int, default=None)
+    actions.add_argument("--noled", action="store_true", help="do not use the lab led for illumination")
+
 
     parser.add_argument('--outputpath', type=str, default="data", help="outputpath")
     parser.add_argument('--loglevel', dest='log_level', default='DEBUG', choices=['DEBUG', 'INFO', 'WARN'],
