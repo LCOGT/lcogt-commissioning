@@ -190,7 +190,8 @@ class QHYCCD:
         prihdr['EXPTIME'] = exptime
         prihdr['FILTER'] = 'None'
         prihdr['AIRMASS'] = 1.0
-        prihdr['DATE-OBS'] = start_readout.strftime('%Y-%m-%dT%H:%M:%S')
+        dateobs = start_readout + datetime.timedelta(seconds=exptime)
+        prihdr['DATE-OBS'] = dateobs.strftime('%Y-%m-%dT%H:%M:%S')
         prihdr['GAIN'] = self.gain.value
         prihdr['CCDSUM'] = f"[{self.wbin.value} {self.hbin.value}]"
         prihdr['READMODE'] = self.readmode.value
@@ -257,16 +258,17 @@ def main():
                     # This is a conventional exposure where we ensure the LED is on befor we open the shutter and stays on until shutter closes.
                     _logger.info ("Starting conventional shutter-defined exposure")
                     lab.expose(exptime=exptime, overhead=1, block=False)
-
+                    actexptime = exptime
                 else:
                     # Here we open the shutter, and then turn the LED on for a determined amount of time. it takes a few seconds from requesting an exposure
                     # until the shutter actually opens. Hence we are putting the LED con command into a background thread that starts its working day with sleeping.
 
                     _logger.info (f"Starting frequency generator defined exposure for {args.nburstcycles} cycles.")
                     th =threading.Thread ( target=lab.expose_burst, kwargs={'exptime':exptime, 'ncycles':args.nburstcycles, 'overhead':7, 'voltage':args.ledvoltage, 'block':False})
+                    actexptime= exptime+5.5
                     th.start()
 
-            qhyccd.getframe(exptime, imagename, args=args)
+            qhyccd.getframe(actexptime, imagename, args=args)
 
             if args.flat:
                 time.sleep(1)
