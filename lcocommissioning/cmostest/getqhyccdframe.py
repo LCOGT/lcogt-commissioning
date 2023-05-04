@@ -169,7 +169,7 @@ class QHYCCD:
                                    c_double((exptime * 1000. * 1000.)))  # unit: us
         _logger.info(f"Starting exposure {exptime} seconds")
 
-        ret = self.qhyccd.ExpQHYCCDSingleFrameexp(self.cam)
+        ret = self.qhyccd.ExpQHYCCDSingleFrame(self.cam)
         if ret != ERR.QHYCCD_SUCCESS:
             _logger.error(f"Feilure while exposing image {ret}")
         _logger.debug(f"Starting readout")
