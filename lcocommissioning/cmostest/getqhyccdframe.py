@@ -267,7 +267,8 @@ def main():
                 if args.nburstcycles is None:
                     # This is a conventional exposure where we ensure the LED is on befor we open the shutter and stays on until shutter closes.
                     _logger.info ("Starting conventional shutter-defined exposure")
-                    lab.expose(exptime=exptime, overhead=1, block=False)
+                    lab.expose(exptime=exptime, overhead=2, block=False)
+                    time.sleep (0.25)
 
                 else:
                     # Here we open the shutter, and then turn the LED on for a determined amount of time. it takes a few seconds from requesting an exposure
@@ -279,9 +280,6 @@ def main():
                     th.start()
 
             qhyccd.getframe(actexptime, imagename, args=args)
-
-            if args.flat:
-                time.sleep(1)
 
     qhyccd.close()
     if args.flat:
