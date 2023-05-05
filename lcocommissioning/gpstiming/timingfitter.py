@@ -1,4 +1,4 @@
-from astropy.io import ascii
+from astropy.io import ascii, fits
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize
@@ -48,28 +48,61 @@ def readMeasurementData (fname):
     return data
 
 
+def readsimplefile(filename):
+    data = readMeasurementData(filename)
 
-data = readMeasurementData(sys.argv[1])
+    fractime = data['col2'].data
+    mean = data['col3'].data
+    std = data['col4'].data
 
-fractime = data['col2'].data
-mean = data['col3'].data
-std = data['col4'].data
+    #fractime,mean, std = getTestdata(testdeltaT=0.3,n=30)
 
-#fractime,mean, std = getTestdata(testdeltaT=0.3,n=30)
+    paramset, pcov = do_gpsfitting(fractime,mean, std=std)
+    perr = np.sqrt(np.diag(pcov))
 
-paramset, pcov = do_gpsfitting(fractime,mean, std=std)
-perr = np.sqrt(np.diag(pcov))
+    print (f"paramters: {paramset}\nErrors: {perr}")
+    plt.figure()
 
-print (f"paramters: {paramset}\nErrors: {perr}")
-plt.figure()
+    x = np.arange(0,1,0.01)
 
-x = np.arange(0,1,0.01)
+    plt.errorbar (fractime, mean,yerr=std, fmt='.', label="data")
+    plt.plot (x,rampfunction(x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
+    plt.legend()
+    plt.savefig ("gpscorrelation.pdf")
+    plt.close()
 
-plt.errorbar (fractime, mean,yerr=std, fmt='.', label="data")
-plt.plot (x,rampfunction(x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
-plt.legend()
-plt.savefig ("gpscorrelation.pdf")
-plt.close()
+
+
+def processfits(fitsname):
+    f = fits.open (fitsname)
+    dimX = f[0].header['NAXIS1']
+    dimY = f[0].header['NAXIS2']
+    dimZ = f[0].header['NAXIS3']
+    dt = np.zeros((dimY,dimX))
+    dt_err = np.zeros((dimY,dimX))
+
+    fracsec = f[2].data['fracsec']
+    for xx in range (dimX):
+        for yy in range (dimY):
+            mean = f[0].data[:,yy,xx]
+            std  = f[1].data[:,yy,xx]
+            paramset, pcov = do_gpsfitting(fracsec,mean, std=std)
+            perr = np.sqrt(np.diag(pcov))
+
+            dt[yy,xx] = paramset[0]
+            dt_err[yy,xx] = perr[0]
+
+    plt.figure()
+    plt.imshow(dt)
+    plt.colorbar()
+    plt.savefig ('gps.png')
+
+processfits(sys.argv[1])
+
+
+
+
+
 
 
 
