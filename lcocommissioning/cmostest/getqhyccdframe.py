@@ -199,7 +199,7 @@ class QHYCCD:
         prihdr['FILTER'] = 'None'
         prihdr['AIRMASS'] = 1.0
         dateobs = start_readout + datetime.timedelta(seconds=exptime)
-        prihdr['DATE-OBS'] = dateobs.strftime('%Y-%m-%dT%H:%M:%S')
+        prihdr['DATE-OBS'] = dateobs.strftime('%Y-%m-%dT%H:%M:%S.%f')
         prihdr['GAIN'] = self.gain.value
         prihdr['CCDSUM'] = f"[{self.wbin.value} {self.hbin.value}]"
         prihdr['READMODE'] = self.readmode.value
