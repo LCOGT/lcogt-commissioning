@@ -47,6 +47,7 @@ class QHYCCD:
 
         numreadmodes = c_uint32()
         self.qhyccd.GetQHYCCDNumberOfReadModes(self.cam, byref(numreadmodes))
+        print (f"BPP:{self.bpp}")
         print(f"Number of readmodes: {numreadmodes.value}")
 
         for readmode in range(numreadmodes.value):
@@ -167,21 +168,28 @@ class QHYCCD:
         self.qhyccd.SetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_EXPOSURE,
                                    c_double((exptime * 1000. * 1000.)))  # unit: us
         _logger.info(f"Starting exposure {exptime} seconds")
+
+
         start_expose = datetime.datetime.utcnow()
         ret = self.qhyccd.ExpQHYCCDSingleFrame(self.cam)
-
+        if ret != ERR.QHYCCD_SUCCESS:
+            _logger.error(f"Failure while exposing image {ret}")
         _logger.debug(f"Starting readout")
-        start_readout = datetime.datetime.utcnow()
+
         binned_w = c_uint(int(self.roi_w.value / self.wbin.value))
         binned_h = c_uint(int(self.roi_h.value / self.hbin.value))
         self.imgdata = (ctypes.c_uint16 * binned_w.value * binned_h.value)()
+
+        start_readout = datetime.datetime.utcnow()
+
         ret = self.qhyccd.GetQHYCCDSingleFrame(self.cam, byref(binned_w), byref(binned_h), byref(self.bpp),
                                                byref(self.channels), self.imgdata)
         if ret != ERR.QHYCCD_SUCCESS:
-            _logger.error(f"failure while downloading iamge data {ret}")
+            _logger.error(f"failure while downloading image data {ret}")
         _logger.debug(f"Starting fits write to {filename}")
         start_fitswrite = datetime.datetime.utcnow()
         x = np.asarray(self.imgdata)
+        print (f"mean of image: {np.mean(x)}")
         object = None
         if args is not None:
             object = f"led {args.ledvoltage} nburst {args.nburstcycles}"
@@ -190,7 +198,8 @@ class QHYCCD:
         prihdr['EXPTIME'] = exptime
         prihdr['FILTER'] = 'None'
         prihdr['AIRMASS'] = 1.0
-        prihdr['DATE-OBS'] = start_readout.strftime('%Y-%m-%dT%H:%M:%S')
+        dateobs = start_readout + datetime.timedelta(seconds=exptime)
+        prihdr['DATE-OBS'] = dateobs.strftime('%Y-%m-%dT%H:%M:%S.%f')
         prihdr['GAIN'] = self.gain.value
         prihdr['CCDSUM'] = f"[{self.wbin.value} {self.hbin.value}]"
         prihdr['READMODE'] = self.readmode.value
@@ -246,30 +255,36 @@ def main():
         suffix = 'd00'
     if args.flat:
         suffix = 'f00'
-        lab = LED_Illuminator()
+        lab = None if args.noled else LED_Illuminator()
 
     for exptime in args.exptime:
-        _logger.info(f"takeing exposures for exptie {exptime}")
+        _logger.info(f"taking exposures for exptime {exptime}")
         for ii in range(args.expcnt):
             imagename = f"{args.outputpath}/qhytest-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%S')}.{suffix}.fits"
+            actexptime = exptime
             if args.flat and lab is not None:
+
+                if args.prewarmled and (exptime < 60):
+                    _logger.info ("Prewarming LED. Stand by")
+                    lab.expose(exptime=60, overhead=0, block=True)
+
                 if args.nburstcycles is None:
                     # This is a conventional exposure where we ensure the LED is on befor we open the shutter and stays on until shutter closes.
                     _logger.info ("Starting conventional shutter-defined exposure")
-                    lab.expose(exptime=exptime, overhead=1, block=False)
+                    lab.expose(exptime=exptime, overhead=2, block=False)
+                    time.sleep (0.25)
 
                 else:
                     # Here we open the shutter, and then turn the LED on for a determined amount of time. it takes a few seconds from requesting an exposure
                     # until the shutter actually opens. Hence we are putting the LED con command into a background thread that starts its working day with sleeping.
 
-                    _logger.info (f"Starting frequencey generator defined exposure for {args.nburstcycles} cycles.")
+                    _logger.info (f"Starting frequency generator defined exposure for {args.nburstcycles} cycles.")
                     th =threading.Thread ( target=lab.expose_burst, kwargs={'exptime':exptime, 'ncycles':args.nburstcycles, 'overhead':7, 'voltage':args.ledvoltage, 'block':False})
+                    actexptime= exptime+5.5
                     th.start()
+                    time.sleep (0.25)
 
-            qhyccd.getframe(exptime, imagename, args=args)
-
-            if args.flat:
-                time.sleep(1)
+            qhyccd.getframe(actexptime, imagename, args=args)
 
     qhyccd.close()
     if args.flat:
@@ -290,8 +305,11 @@ def parseCommandLine():
     actions.add_argument("--settemp", type=float, help="Set CCD target temperature")
     actions.add_argument("--gettemp", action="store_true", help="get CCD target temperature")
     actions.add_argument("--testled", action="store_true", help="testled")
+
     actions.add_argument("--chamberpump", type=bool, help="cycle detector chaber decissitant")
 
+
+    parser.add_argument("--prewarmled", action="store_true", help="testled")
     parser.add_argument('--expcnt', type=int, dest="expcnt", default=1)
     parser.add_argument('--exptime', type=float, nargs='*', default=[0, ])
     parser.add_argument('--gain', type=int, default=5)
@@ -299,6 +317,8 @@ def parseCommandLine():
     parser.add_argument('--readmode', type=int, default=0)
     parser.add_argument('--ledvoltage', type=float, default=5.0)
     parser.add_argument('--nburstcycles', type=int, default=None)
+    actions.add_argument("--noled", action="store_true", help="do not use the lab led for illumination")
+
 
     parser.add_argument('--outputpath', type=str, default="data", help="outputpath")
     parser.add_argument('--loglevel', dest='log_level', default='DEBUG', choices=['DEBUG', 'INFO', 'WARN'],

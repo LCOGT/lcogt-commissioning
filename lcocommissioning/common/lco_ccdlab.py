@@ -7,7 +7,7 @@ _logger = logging.getLogger(__name__)
 
 class LED_Illuminator:
 
-    def __init__(self, address = '10.6.249.99'):
+    def __init__(self, address = 'functiongenerator.wtf.lco.gtn'):
         self.ins = vxi11.Instrument(address)
         _logger.debug ("VXI11 interface: %s" % (self.ins.ask("*IDN?")))
 
@@ -39,7 +39,7 @@ class LED_Illuminator:
         if block:
             _logger.info("Blocking during exposure time")
             time.sleep (exptime)
-        _logger.debug ("Done exposing")
+        _logger.debug ("Done setting up exposing. ")
 
 
     def expose_burst (self, exptime,  frequency=100, ncycles = 10, voltage=None, block=True, overhead=5):
