@@ -41,7 +41,7 @@ def AnalyseFitsObject(FitsObject,where, width=None, ext=0):
     mean,median, std = stats.sigma_clipped_stats(roi, sigma=3.0, maxiters=5, axis=None)
     fracsecond = datetimeobj.microsecond/1000000.
 
-    return (fracsecond, mean[0],std)
+    return (fracsecond, mean, std)
 
 
 

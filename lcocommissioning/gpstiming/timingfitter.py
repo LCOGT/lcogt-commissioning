@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize
 from scipy import signal
+import sys
 
 
 
@@ -48,13 +49,13 @@ def readMeasurementData (fname):
 
 
 
-data = readMeasurementData("test.data")
+data = readMeasurementData(sys.argv[1])
 
 fractime = data['col2'].data
 mean = data['col3'].data
-#std = data['col4'].data
+std = data['col4'].data
 
-fractime,mean, std = getTestdata(testdeltaT=0.3,n=30)
+#fractime,mean, std = getTestdata(testdeltaT=0.3,n=30)
 
 paramset, pcov = do_gpsfitting(fractime,mean, std=std)
 perr = np.sqrt(np.diag(pcov))
