@@ -124,7 +124,7 @@ def get_focusStackData(args):
     log.info(f"Selecting after date: {bestaftertime}")
 
     query = f'SITEID:{site} AND ENCID:{enc} AND TELID:{tel} AND OBJECT:auto_focus' \
-            f' AND FOCOBOFF:0 AND RLEVEL:0 AND OBSTYPE:EXPOSE' \
+            f' AND FOCOBOFF:0 AND RLEVEL:0 AND OBSTYPE:EXPOSE AND FILTER:rp '\
             f' AND DATE-OBS:[{bestaftertime.strftime("%Y-%m-%dT%H:%M:%S")} TO *]'
 
 

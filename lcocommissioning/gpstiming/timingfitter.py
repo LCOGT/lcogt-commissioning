@@ -67,8 +67,11 @@ x = np.arange(0,1,0.01)
 
 plt.errorbar (fractime, mean,yerr=std, fmt='.', label="data")
 plt.plot (x,rampfunction(x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
+plt.title(sys.argv[1])
+plt.xlabel("Fractional DATE-OBS [s]")
+plt.ylabel("Avg flux")
 plt.legend()
-plt.savefig ("gpscorrelation.pdf")
+plt.savefig (f"gpscorrelation-{sys.argv[1]}.pdf")
 plt.close()
 
 
