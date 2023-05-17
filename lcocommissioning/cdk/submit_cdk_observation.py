@@ -211,8 +211,8 @@ def ammend_request_for_direct_submission(cdk_request, args):
         'name': args.title,
         'proposal': 'DeltaRho Commissioning',
         'site': args.site,
-        'enclosure': 'clma',
-        'telescope': '0m4c',
+        'enclosure': args.dome,
+        'telescope': args.telescope,
         'start': args.start.isoformat(),
         'end': end_time.isoformat(),
         'request': {
