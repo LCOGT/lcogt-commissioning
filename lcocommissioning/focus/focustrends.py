@@ -227,7 +227,7 @@ def analysecamera(args, t=None, ):
         focustermrange = 0.2
     focusvaluerange = 0.75
     if '0m4' in tel:
-        focusvaluerange = 0.1
+        focusvaluerange = 0.3
     if '2m0' in tel:
         focusvaluerange = 3
 
