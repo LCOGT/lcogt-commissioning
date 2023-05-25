@@ -21,11 +21,33 @@ def rampfunction (fractStartTime, dt05, amplitude, bias):
     retval =  amplitude * np.abs(signal.sawtooth(2 * np.pi * frequency * fractStartTime + deltaphase)) + bias
     return retval
 
+def maketestplots ():
+    plt.figure()
 
+    for dt in np.arange (0,1,0.25):
+        fs = np.arange (0,1,0.01)
+        y = rampfunction(fs,dt,1,1)
+        plt.plot (fs,y,label=f"{dt}")
+    plt.legend ()
+    plt.savefig ('gpexamples.png')
 
-def do_gpsfitting (fractime, lightlevel, std=None):
-    bounds = [[-0.5, 0,-1000],[+0.5,10000,100000]]
+#maketestplots()
+#exit(0)
+
+def do_gpsfitting (fractime, lightlevel, std=None, outpng = None):
+    bounds = [[0, 0,-1000],[+1,10000,100000]]
     (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime, lightlevel, bounds=bounds, sigma=std)
+    perr = np.sqrt(np.diag(istat))
+    if outpng is not None:
+        plt.figure()
+
+        x = np.arange(0,1,0.01)
+
+        plt.errorbar (fractime, lightlevel,yerr=std, fmt='.', label="data")
+        plt.plot (x,rampfunction(x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
+        plt.legend()
+        plt.savefig (outpng)
+        plt.close()
 
     return (paramset,istat)
 
@@ -78,6 +100,7 @@ def processfits(fitsname):
     dimX = f[0].header['NAXIS1']
     dimY = f[0].header['NAXIS2']
     dimZ = f[0].header['NAXIS3']
+    BLK = f[0].header['BLK']
     dt = np.zeros((dimY,dimX))
     dt_err = np.zeros((dimY,dimX))
 
@@ -86,6 +109,7 @@ def processfits(fitsname):
         for yy in range (dimY):
             mean = f[0].data[:,yy,xx]
             std  = f[1].data[:,yy,xx]
+            outpng=f"gpsfit_{xx}_{yy}.png"
             paramset, pcov = do_gpsfitting(fracsec,mean, std=std)
             perr = np.sqrt(np.diag(pcov))
 
@@ -97,20 +121,22 @@ def processfits(fitsname):
     plt.colorbar()
     plt.savefig ('gps.png')
 
+    plt.figure()
+    row = np.arange(dimY) * BLK
+    time_offset = np.average(dt, axis=1)
+    plt.plot (row, time_offset,'.')
+    plt.xlabel('row number')
+    plt.ylabel('dt [s] absolute - timestamp')
+    c = np.polyfit(row,time_offset,1)
+    plt.plot (row,(np.poly1d(c))(row),'-', label=f"{c[0]:5.4e}*row+{c[1]:5.4}")
+    print (c)
+    plt.legend()
+    plt.savefig ("gps_row_time.png")
+
+
+
 processfits(sys.argv[1])
 
-
-
-
-
-plt.errorbar (fractime, mean,yerr=std, fmt='.', label="data")
-plt.plot (x,rampfunction(x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
-plt.title(sys.argv[1])
-plt.xlabel("Fractional DATE-OBS [s]")
-plt.ylabel("Avg flux")
-plt.legend()
-plt.savefig (f"gpscorrelation-{sys.argv[1]}.pdf")
-plt.close()
-
+#readsimplefile(sys.argv[1])
 
 
