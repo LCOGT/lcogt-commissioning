@@ -28,7 +28,7 @@ fareadmodes = [['full_frame', None], ['central_2k_2x2', ]]
 
 epreadmodes = [['MUSCAT_SLOW',], ['MUSCAT_FAST', ] ]
 
-sqreadmodes = [['full_frame', 'default', 'central30x20', 'central30x30'], ]
+sqreadmodes = [['full_frame', 'default', 'central30x30'], ]
 
 def parseCommandLine():
     parser = argparse.ArgumentParser(
@@ -343,7 +343,7 @@ def plot_ptc(camera, dataset, extensions, outputdir, readmode=None):
     return filename
 
 
-goodfilters = ['up', 'gp', 'rp', 'ip', 'zp', 'zs', 'U', 'B', 'V', 'R', 'I']
+goodfilters = ['up', 'gp', 'rp', 'ip', 'zp', 'zs', 'U', 'B', 'V', 'R', 'I', 'H-alpha']
 
 
 def main():
