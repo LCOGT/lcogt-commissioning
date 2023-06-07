@@ -124,8 +124,8 @@ def get_focusStackData(args):
     log.info(f"Selecting after date: {bestaftertime}")
 
     query = f'SITEID:{site} AND ENCID:{enc} AND TELID:{tel} AND OBJECT:auto_focus' \
-            f' AND FOCOBOFF:0 AND RLEVEL:0 AND OBSTYPE:EXPOSE' \
-            f' AND DATE-OBS:[{bestaftertime.strftime("%Y-%m-%dT%H:%M:%S")} TO *]'
+            f' AND FOCOBOFF:0 AND RLEVEL:0 AND OBSTYPE:EXPOSE AND FILTER:rp '\
+            f' AND DATE-OBS:[{bestaftertime.strftime("%Y-%m-%dT%H:%M:%S")} TO {args.before.strftime("%Y-%m-%dT%H:%M:%S")}]'
 
 
 
@@ -368,12 +368,12 @@ def getargs():
     parser.add_argument('--dome', default='clma', type=str)
     parser.add_argument('--tel', default='0m4c', type=str)
     parser.add_argument('--after', type=dt.datetime.fromisoformat, help="Consider data only after the given date, in ISO format (e.g., 2022-09-01 00:00:00")
+    parser.add_argument('--before',  type=dt.datetime.fromisoformat, default=dt.datetime.utcnow().isoformat())
 
     parser.add_argument('--loglevel', dest='log_level', default='INFO',
                         choices=['DEBUG', 'INFO', 'WARN'], help='Set the debug level')
 
     args = parser.parse_args()
-
     logging.basicConfig(level=getattr(logging, args.log_level.upper()),
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
     if args.after is None:
