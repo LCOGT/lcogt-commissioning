@@ -97,6 +97,8 @@ def readsimplefile(filename):
 
 def processfits(fitsname):
     f = fits.open (fitsname)
+    binning = f[0].header['BLK']
+
     dimX = f[0].header['NAXIS1']
     dimY = f[0].header['NAXIS2']
     dimZ = f[0].header['NAXIS3']
@@ -119,7 +121,25 @@ def processfits(fitsname):
     plt.figure()
     plt.imshow(dt)
     plt.colorbar()
-    plt.savefig ('gps.png')
+    plt.savefig ('gpsmap.png')
+
+    plt.figure()
+    meandt = np.mean (dt,axis=1)
+
+    row = np.arange (dimY)
+    row = row *binning
+
+    fit =np.polyfit (row, meandt, 1)
+    fit = np.poly1d (fit)
+    plt.plot (row, meandt,'.')
+    plt.plot (row, fit(row), label=fit)
+    plt.legend()
+    plt.xlabel ("Row number")
+    plt.ylabel ("Delayed of start of exposure")
+
+
+
+    plt.savefig('gpstime-perrow')
 
     plt.figure()
     row = np.arange(dimY) * BLK

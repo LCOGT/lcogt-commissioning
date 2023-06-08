@@ -11,7 +11,7 @@ DB_PORT="${DB_PORT:-5432}"
 DB_NAME="${DB_NAME:-lcogt-commissioning}"
 DB_USER="${DB_USER:-lcogt-commissioning}"
 DB_PASS="${DB_PASS:-undefined}"
-NDAYS="${NDAYS:-3}"
+NDAYS="${NDAYS:-20}"
 
 # SQLAlchemy database connection string
 DATABASE="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
