@@ -83,7 +83,8 @@ def create_request(args):
 
     cdkconfiguration = create_cdk_request_configuration(args)
 
-    target = {
+    if not args.transientmode:
+        target = {
         "type": "ICRS",
         "name": "{} {}".format(args.title, args.targetname),
         "epoch": "2000.0000000",
@@ -92,7 +93,22 @@ def create_request(args):
         "dec": "%10f" % args.radec.dec.degree,
         'proper_motion_ra': args.pm[0],
         'proper_motion_dec': args.pm[1],
-    }
+        }
+    else:
+        nh = args.site.upper() in'ELPOGGTFNTLVNGQ'
+        print ('hemisphere',nh)
+        target = {
+            "type": "SATELLITE",
+            "name": "{} {}".format(args.title, args.targetname),
+            'altitude': 5. if nh else -5.,
+            'azimuth' :180. if nh else -180.,
+            'diff_altitude_rate': 0,
+            'diff_azimuth_rate':0,
+            'diff_epoch': 0,
+            'diff_altitude_acceleration': 0,
+            'diff_azimuth_acceleration': 0
+
+        }
 
     cdkconfiguration['target'] = target
     cdkconfiguration['constraints'] = common.default_constraints
@@ -106,8 +122,12 @@ def parseCommandLine():
     parser = argparse.ArgumentParser(
         description='Delta Rho @ LCO engineering commissioning submission tool')
 
-    parser.add_argument('--targetname', default='auto', type=str,
+    tgargetgroup  = parser.add_mutually_exclusive_group()
+    tgargetgroup.add_argument('--targetname', default='auto', type=str,
                         help='Name of object to observe; will beresolved via simbad. Can be coordinates in the form of Jhhmmss+ddmmss')
+    tgargetgroup.add_argument('--transientmode', action='store_true',
+
+                              help='If set, observe at meridian only in drifting sky mode.')
     parser.add_argument('--title', default="Delta Rho commissioning", help="Descriptive title for observation request")
 
     parser.add_argument('--site', default='elp', choices=['ogg', 'elp', 'cpt'],
@@ -165,27 +185,29 @@ def parseCommandLine():
             _log.error(f"Invalid start time argument: {args.start}")
             sys.exit(1)
 
-    if 'auto' in args.targetname:
+    if not args.transientmode and ('auto' in args.targetname):
         # automatically find the best target
         args.targetname = common.get_auto_target(common.goodXTalkTargets, args.site, args.start, moonseparation=40)
         if args.targetname is None:
             _log.error("Could not find a suitable auto target. Exiting.")
             sys.exit(1)
+        try:
+            if ('moon' in args.targetname):
+                long, lat = common.lco_site_lonlat[args.site]
+                alt = common.lco_site_alt[args.site]
+                args.radec = astropy.coordinates.get_moon(time = astropy.time.Time(args.start), location = astropy.coordinates.EarthLocation.from_geodetic(lat=lat, lon=long, height=alt))
+            elif args.targetname:
+                _log.debug("Resolving target name")
+                args.radec = SkyCoord.from_name(args.targetname, parse=True)
+
+            print(f"Resolved target >{args.targetname}< at coordinates {args.radec.ra} {args.radec.dec}")
+        except:
+            _log.exception("Resolving target name failed, giving up")
+            sys.exit(1)
+    else:
+        args.targetname = "Meridian Sky Drift"
 
 
-    try:
-        if 'moon' in args.targetname:
-            long, lat = common.lco_site_lonlat[args.site]
-            alt = common.lco_site_alt[args.site]
-            args.radec = astropy.coordinates.get_moon(time = astropy.time.Time(args.start), location = astropy.coordinates.EarthLocation.from_geodetic(lat=lat, lon=long, height=alt))
-        else:
-            _log.debug("Resolving target name")
-            args.radec = SkyCoord.from_name(args.targetname, parse=True)
-    except:
-        _log.exception("Resolving target name failed, giving up")
-        sys.exit(1)
-
-    print(f"Resolved target >{args.targetname}< at coordinates {args.radec.ra} {args.radec.dec}")
     print (f"Submitting to {args.site} {args.dome} {args.telescope}")
 
     if not (args.exp_cnt or args.filltime):
