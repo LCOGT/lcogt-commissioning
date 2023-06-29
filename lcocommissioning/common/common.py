@@ -145,11 +145,11 @@ def get_auto_target(targetlist, sitecode, starttime, moonseparation=29, minalt=4
     return None
 
 
-def send_request_to_portal(requestgroup, dosubmit=False):
+def send_request_to_portal(requestgroup, dosubmit=False, url="https://observe.lco.global"):
     _log.debug(json.dumps(requestgroup, indent=4))
 
     response = requests.post(
-        'https://observe.lco.global/api/requestgroups/validate/',
+        f'{url}/api/requestgroups/validate/',
         headers={'Authorization': 'Token {}'.format(VALHALLA_API_TOKEN)},
         json=requestgroup  # Make sure you use json!
     )
@@ -160,7 +160,7 @@ def send_request_to_portal(requestgroup, dosubmit=False):
         return
 
     response = requests.post(
-        'https://observe.lco.global/api/requestgroups/',
+        f'{url}/api/requestgroups/',
         headers={'Authorization': 'Token {}'.format(VALHALLA_API_TOKEN)},
         json=requestgroup  # Make sure you use json!
     )
@@ -174,7 +174,7 @@ def send_request_to_portal(requestgroup, dosubmit=False):
     requestgroup_dict = response.json()  # The API will return the newly submitted requestgroup as json
 
     # Print out the url on the portal where we can view the submitted request
-    print('View the observing request: https://observe.lco.global/requestgroups/{}/'.format(requestgroup_dict['id']))
+    print(f'View the observing request: {url}/requestgroups/{requestgroup_dict["id"]}/')
 
 
 def send_to_scheduler(user_request, dosubmit=False):
