@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import logging
 
@@ -15,16 +16,17 @@ logging.getLogger('opensearch').setLevel(logging.WARNING)
 logging.getLogger('connectionpool').setLevel(logging.WARNING)
 
 
-def query_opensearch(opensearch_url='https://opensearch.lco.global', index='fitsheaders', site='cpt',enc='aqwa',instrument='sq38', telid='*'):
+def query_opensearch(opensearch_url='https://opensearch.lco.global', index='fitsheaders', site='cpt',enc='aqwa',instrument='sq38', telid='*', dateobs="2022-01-00", ndays=1):
     client = OpenSearch(opensearch_url)
 
     sourcecolumn = ['ALTITUDE', 'L1FWHM', 'L1ELLIP', 'AZIMUTH', 'DATE-OBS', 'ORIGNAME', 'FILTER',
                     'WINDSPEE', 'WINDDIR', 'INSTRUME', 'EXPTIME', 'L1ELLIPA',
                     'RA', 'DEC', 'LST', ]
-
+    dateformat = '%Y%m%d'
 
     #ogg 0m4b preload change 2023-06-20
-    query = f'INSTRUME:{instrument} AND SITEID:{site} AND ENCID:{enc} AND L1FWHM:* AND L1ELLIP:* AND TELID:{telid} AND DATE-OBS:["2023-06-20T00:00" TO *]'
+    query = f'INSTRUME:{instrument} AND SITEID:{site} AND ENCID:{enc} AND L1FWHM:* AND L1ELLIP:* AND TELID:{telid} AND' \
+            f' DATE-OBS:["{dateobs.isoformat()}" TO "{ (dateobs+datetime.timedelta(days=ndays)).isoformat ()}"]'
     print (query)
     body = {
         'size': 10000,
@@ -63,7 +65,7 @@ def query_opensearch(opensearch_url='https://opensearch.lco.global', index='fits
     return t
 
 
-def plotthings(data,site,enc,instrumet,telid):
+def plotthings(data, site, enc, instrument, telid, dateobs, ndays):
     plt.clf()
     plt.plot(t['DATE-OBS'], t['L1ELLIP'], '.')
     plt.ylim([0, 1])
@@ -75,9 +77,9 @@ def plotthings(data,site,enc,instrumet,telid):
     plt.ylabel("Ellipticity")
     plt.colorbar(label='Wind Direction [\deg]')
     plt.ylim([0, 1])
-    plt.title (f'{site}-{enc}-{telid}--{instrumet}')
+    plt.title (f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}')
 
-    plt.savefig(f'{site}-{enc}-{telid}--{instrumet}-windspee_el.png',bbox_inches='tight')
+    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-windspee_el.png', bbox_inches='tight')
 
     plt.clf()
 
@@ -87,8 +89,8 @@ def plotthings(data,site,enc,instrumet,telid):
     plt.ylabel("Ellipticity")
     plt.colorbar(label='Windspeed')
     plt.ylim([0, 1])
-    plt.title (f'{site}-{enc}-{telid}--{instrumet}')
-    plt.savefig(f'{site}-{enc}-{telid}--{instrumet}-winddir_el.png',bbox_inches='tight')
+    plt.title (f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}')
+    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-winddir_el.png', bbox_inches='tight')
 
     plt.clf()
     plt.plot(t['EXPTIME'], t['L1ELLIP'], '.')
@@ -104,13 +106,13 @@ def plotthings(data,site,enc,instrumet,telid):
     plt.ylabel("Ellipticity")
     plt.ylim([0, 1])
 
-    plt.savefig(f'{site}-{enc}-{telid}--{instrumet}-ellipa_el.png')
+    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-ellipa_el.png')
 
     plt.clf()
     plt.plot(t['DATE-OBS'], t['L1ELLIPA'], '.')
     plt.xlabel("DateOBS")
     plt.ylabel("Orientation of Ellipticity")
-    plt.savefig(f'{site}-{enc}-{telid}--{instrumet}-dateobs-ellipa.png')
+    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-dateobs-ellipa.png')
 
     # plt.clf()
     # xy = np.vstack([t['DEC'], t['L1ELLIP']])
@@ -130,16 +132,33 @@ def plotthings(data,site,enc,instrumet,telid):
     plt.ylabel("Ellipticity")
     plt.ylim([0, 1])
     plt.xlim([-6, 6])
-    plt.savefig(f'{site}-{enc}-{telid}--{instrumet}-ha-el.png')
+    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-ha-el.png')
 
     plt.clf()
     plt.plot(t['AZIMUTH'], t['L1ELLIP'], '.')
     plt.xlabel("AZ")
     plt.ylabel("Ellipticity")
     plt.ylim([0, 1])
-    plt.savefig(f'{site}-{enc}-{telid}--{instrumet}-az-el.png')
+    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-az-el.png')
 
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--site', default='ogg', choices=['ogg', 'elp', 'cpt'],
+                    help="To which site to submit")
+
+parser.add_argument('--dome', default='clma', choices=['aqwa', 'aqwb', 'clma'])
+parser.add_argument('--telescope', default='0m4c', choices=['0m4a','0m4b','0m4c'])
+parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
+                    help='Set the debug level')
+parser.add_argument('--date', type=lambda d: datetime.datetime.strptime(d, '%Y%m%d'), default=datetime.date.today(),
+                    help="Date-OBS to start. If not given, defaults to \"NOW\". Specify as YYYYMMDD")
+parser.add_argument('--ndays', type = int, default=1)
+
+args = parser.parse_args()
+
+logging.basicConfig(level=getattr(logging, args.log_level.upper()),
+                    format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
 
 site = 'ogg'
 enc='clma'
@@ -147,6 +166,6 @@ instrument='*'
 telescope='0m4b'
     
 
-t = query_opensearch(enc=enc,site=site,instrument=instrument,telid = telescope)
+t = query_opensearch(enc=args.dome,site=args.site,instrument=instrument,telid = args.telescope, dateobs=args.date, ndays = args.ndays)
 
-plotthings(t,enc=enc,site=site,instrumet=instrument, telid=telescope)
+plotthings(t,enc=args.dome,site=args.site,instrument=instrument, telid = args.telescope, dateobs=args.date, ndays = args.ndays)
