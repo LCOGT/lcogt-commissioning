@@ -100,8 +100,8 @@ def create_request(args):
         target = {
             "type": "SATELLITE",
             "name": "{} {}".format(args.title, args.targetname),
-            'altitude': 5. if nh else -5.,
-            'azimuth' :180. if nh else -180.,
+            'altitude': 65.,
+            'azimuth' :180. if nh else 0.,
             'diff_altitude_rate': 0.,
             'diff_pitch_rate': 0.,
             'diff_pitch_acceleration': 0,
@@ -268,7 +268,7 @@ def main():
         common.submit_request_group(cdk, args.opt_confirmed)
     else:
         _log.debug(json.dumps(cdk, indent=2))
-        common.send_request_to_portal(cdk, args.opt_confirmed, url="http://observation-portal-dev.lco.gtn")
+        common.send_request_to_portal(cdk, args.opt_confirmed, )
 
 if __name__ == '__main__':
     main()
