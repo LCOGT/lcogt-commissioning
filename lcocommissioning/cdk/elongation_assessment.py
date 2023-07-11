@@ -65,7 +65,7 @@ def query_opensearch(opensearch_url='https://opensearch.lco.global', index='fits
     return t
 
 
-def plotthings(data, site, enc, instrument, telid, dateobs, ndays):
+def plotthings(t, site, enc, instrument, telid, dateobs, ndays):
     plt.clf()
     plt.plot(t['DATE-OBS'], t['L1ELLIP'], '.')
     plt.ylim([0, 1])
@@ -142,30 +142,28 @@ def plotthings(data, site, enc, instrument, telid, dateobs, ndays):
     plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-az-el.png')
 
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--site', default='ogg', choices=['ogg', 'elp', 'cpt'],
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--site', default='ogg', choices=['ogg', 'elp', 'cpt'],
                     help="To which site to submit")
 
-parser.add_argument('--dome', default='clma', choices=['aqwa', 'aqwb', 'clma'])
-parser.add_argument('--telescope', default='0m4c', choices=['0m4a','0m4b','0m4c'])
-parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
+    parser.add_argument('--dome', default='clma', choices=['aqwa', 'aqwb', 'clma'])
+    parser.add_argument('--telescope', default='0m4c', choices=['0m4a','0m4b','0m4c'])
+    parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                     help='Set the debug level')
-parser.add_argument('--date', type=lambda d: datetime.datetime.strptime(d, '%Y%m%d'), default=datetime.date.today(),
+    parser.add_argument('--date', type=lambda d: datetime.datetime.strptime(d, '%Y%m%d'), default=datetime.date.today(),
                     help="Date-OBS to start. If not given, defaults to \"NOW\". Specify as YYYYMMDD")
-parser.add_argument('--ndays', type = int, default=1)
+    parser.add_argument('--ndays', type = int, default=1)
+    args = parser.parse_args()
 
-args = parser.parse_args()
-
-logging.basicConfig(level=getattr(logging, args.log_level.upper()),
+    logging.basicConfig(level=getattr(logging, args.log_level.upper()),
                     format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
 
-site = 'ogg'
-enc='clma'
-instrument='*'
-telescope='0m4b'
-    
+    instrument='*'
+    t = query_opensearch(enc=args.dome,site=args.site,instrument=instrument,telid = args.telescope, dateobs=args.date, ndays = args.ndays)
+    plotthings(t,enc=args.dome,site=args.site,instrument=instrument, telid = args.telescope, dateobs=args.date, ndays = args.ndays)
 
-t = query_opensearch(enc=args.dome,site=args.site,instrument=instrument,telid = args.telescope, dateobs=args.date, ndays = args.ndays)
 
-plotthings(t,enc=args.dome,site=args.site,instrument=instrument, telid = args.telescope, dateobs=args.date, ndays = args.ndays)
+
+if __name__ == '__main__':
+    main()
