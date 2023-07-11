@@ -72,23 +72,26 @@ def plotthings(t, site, enc, instrument, telid, dateobs, ndays):
     plt.savefig('date_el.png')
 
     plt.clf()
-    plt.scatter(t['WINDSPEE'], t['L1ELLIP'], c=t['WINDDIR'], s=2)
+    plt.scatter(t['WINDSPEE'], t['L1ELLIP'], c=t['WINDDIR'], vmin=0,vmax=360, s=2)
     plt.xlabel("Wind Speed")
     plt.ylabel("Ellipticity")
     plt.colorbar(label='Wind Direction [\deg]')
     plt.ylim([0, 1])
+    plt.xlim ([0,50])
     plt.title (f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}')
 
     plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-windspee_el.png', bbox_inches='tight')
 
     plt.clf()
 
-    plt.scatter(t['WINDDIR'], t['L1ELLIP'], c=t['WINDSPEE'], s=2)
+    plt.scatter(t['WINDDIR'], t['L1ELLIP'], c=t['WINDSPEE'], vmin=0, vmax=50, s=2)
 
     plt.xlabel("Wind Direction")
     plt.ylabel("Ellipticity")
     plt.colorbar(label='Windspeed')
     plt.ylim([0, 1])
+    plt.xlim ([0,360])
+
     plt.title (f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}')
     plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-winddir_el.png', bbox_inches='tight')
 
