@@ -190,12 +190,13 @@ def parseCommandLine():
             _log.error(f"Invalid start time argument: {args.start}")
             sys.exit(1)
 
-    if not args.transientmode and ('auto' in args.targetname):
-        # automatically find the best target
-        args.targetname = common.get_auto_target(common.goodXTalkTargets, args.site, args.start, moonseparation=40)
-        if args.targetname is None:
-            _log.error("Could not find a suitable auto target. Exiting.")
-            sys.exit(1)
+    if not args.transientmode:
+        if  ('auto' in args.targetname):
+            # automatically find the best target
+            args.targetname = common.get_auto_target(common.goodXTalkTargets, args.site, args.start, moonseparation=40)
+            if args.targetname is None:
+                _log.error("Could not find a suitable auto target. Exiting.")
+                sys.exit(1)
         try:
             if ('moon' in args.targetname):
                 long, lat = common.lco_site_lonlat[args.site]
