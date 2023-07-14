@@ -62,7 +62,7 @@ def create_request(args):
     '''
 
     requestgroup = {"name": args.title,
-                    "proposal": "DeltaRho Commissioning",
+                    "proposal": args.proposalid,
                     "ipp_value": args.ipp,
                     "operator": "SINGLE",  # "MANY" if args.dither else "SINGLE",
                     "observation_type": "NORMAL",
@@ -134,7 +134,7 @@ def parseCommandLine():
 
                               help='If set, observe at meridian only in drifting sky mode.')
     parser.add_argument('--title', default="Delta Rho commissioning", help="Descriptive title for observation request")
-
+    parser.add_argument('--proposalid', default="DeltaRho Commissioning", help="proposal ID")
     parser.add_argument('--site', default='elp', choices=['ogg', 'elp', 'cpt'],
                         help="To which site to submit")
 
@@ -237,7 +237,7 @@ def ammend_request_for_direct_submission(cdk_request, args):
 
     data = {
         'name': args.title,
-        'proposal': 'DeltaRho Commissioning',
+        'proposal': args.proposalid,
         'site': args.site,
         'enclosure': args.dome,
         'telescope': args.telescope,

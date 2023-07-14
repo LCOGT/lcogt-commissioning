@@ -11,6 +11,8 @@ from astropy.table import Table
 from opensearchpy import OpenSearch
 from scipy.stats import gaussian_kde
 
+from lcocommissioning.common.common import dateformat, simpledateformat
+
 log = logging.getLogger(__name__)
 logging.getLogger('opensearch').setLevel(logging.WARNING)
 logging.getLogger('connectionpool').setLevel(logging.WARNING)
@@ -26,7 +28,7 @@ def query_opensearch(opensearch_url='https://opensearch.lco.global', index='fits
 
     #ogg 0m4b preload change 2023-06-20
     query = f'INSTRUME:{instrument} AND SITEID:{site} AND ENCID:{enc} AND L1FWHM:* AND L1ELLIP:* AND TELID:{telid} AND' \
-            f' DATE-OBS:["{dateobs.isoformat()}" TO "{ (dateobs+datetime.timedelta(days=ndays)).isoformat ()}"]'
+            f' FOCOBOFF:0 AND DATE-OBS:["{dateobs.isoformat()}" TO "{ (dateobs+datetime.timedelta(days=ndays)).isoformat ()}"]'
     print (query)
     body = {
         'size': 10000,
@@ -66,10 +68,6 @@ def query_opensearch(opensearch_url='https://opensearch.lco.global', index='fits
 
 
 def plotthings(t, site, enc, instrument, telid, dateobs, ndays):
-    plt.clf()
-    plt.plot(t['DATE-OBS'], t['L1ELLIP'], '.')
-    plt.ylim([0, 1])
-    plt.savefig('date_el.png')
 
     plt.clf()
     plt.scatter(t['WINDSPEE'], t['L1ELLIP'], c=t['WINDDIR'], vmin=0,vmax=360, s=2)
@@ -101,30 +99,25 @@ def plotthings(t, site, enc, instrument, telid, dateobs, ndays):
     plt.ylabel("Ellipticity")
     plt.ylim([0, 1])
 
-    plt.savefig('exptime_el.png')
+    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-exptime_el.png')
 
     plt.clf()
     plt.plot(t['L1ELLIPA'], t['L1ELLIP'], '.')
     plt.xlabel("Orientation of Ellipticity")
     plt.ylabel("Ellipticity")
     plt.ylim([0, 1])
-
+    plt.xlim ([-90,90])
+    plt.title (f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}')
     plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-ellipa_el.png')
 
     plt.clf()
-    plt.plot(t['DATE-OBS'], t['L1ELLIPA'], '.')
+    plt.plot(t['DATE-OBS'], t['L1ELLIP'], '.')
     plt.xlabel("DateOBS")
-    plt.ylabel("Orientation of Ellipticity")
+    plt.ylabel("Ellipticity")
+    simpledateformat()
+    plt.title (f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}')
     plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-dateobs-ellipa.png')
 
-    # plt.clf()
-    # xy = np.vstack([t['DEC'], t['L1ELLIP']])
-    # z = gaussian_kde(xy)(xy)
-    # plt.scatter(t['DEC'], t['L1ELLIP'], c=z, s=1)
-    # plt.xlabel("DEC")
-    # plt.ylabel("Ellipticity")
-    # plt.ylim([0, 1])
-    # plt.savefig('dec_el.png')
 
     plt.clf()
     xy = np.vstack([t['HA'], t['L1ELLIP']])
@@ -138,11 +131,12 @@ def plotthings(t, site, enc, instrument, telid, dateobs, ndays):
     plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-ha-el.png')
 
     plt.clf()
-    plt.plot(t['AZIMUTH'], t['L1ELLIP'], '.')
-    plt.xlabel("AZ")
+    plt.plot(t['ALTITUDE'], t['L1ELLIP'], '.')
+    plt.xlabel("Alt")
     plt.ylabel("Ellipticity")
     plt.ylim([0, 1])
-    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-az-el.png')
+    plt.xlim([90, 0])
+    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-alt-el.png')
 
 
 def main():
