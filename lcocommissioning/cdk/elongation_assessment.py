@@ -17,7 +17,8 @@ log = logging.getLogger(__name__)
 logging.getLogger('opensearch').setLevel(logging.WARNING)
 logging.getLogger('connectionpool').setLevel(logging.WARNING)
 
-
+import matplotlib.style as style
+style.use('bmh')
 def query_opensearch(opensearch_url='https://opensearch.lco.global', index='fitsheaders', site='cpt',enc='aqwa',instrument='sq38', telid='*', dateobs="2022-01-00", ndays=1):
     client = OpenSearch(opensearch_url)
 
@@ -114,6 +115,8 @@ def plotthings(t, site, enc, instrument, telid, dateobs, ndays):
     plt.plot(t['DATE-OBS'], t['L1ELLIP'], '.')
     plt.xlabel("DateOBS")
     plt.ylabel("Ellipticity")
+    plt.ylim([0, 1])
+
     simpledateformat()
     plt.title (f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}')
     plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-dateobs-ellipa.png')
@@ -137,6 +140,21 @@ def plotthings(t, site, enc, instrument, telid, dateobs, ndays):
     plt.ylim([0, 1])
     plt.xlim([90, 0])
     plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-alt-el.png')
+
+
+    plt.clf()
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='polar')
+    ax.scatter(t['WINDDIR']*np.pi/180, t['WINDSPEE'],  c=t['L1ELLIP'], vmin=0, vmax=1, s=2)
+    ax.set_theta_zero_location("N")
+    ax.set_theta_direction(-1)
+
+    plt.xlabel("Wind Dir")
+    plt.ylabel("Wind Strength")
+    plt.ylim([0, 50])
+    #ax.xlim([90, 0])
+    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-wind.png')
+
 
 
 def main():
