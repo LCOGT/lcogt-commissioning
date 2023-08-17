@@ -87,7 +87,7 @@ def SimpleregionAnalysis(args):
 
 
 
-def BlockAveAnalysis(args, ext=0):
+def BlockAveAnalysis(args, ext='SCI'):
     fitstemplate = fits.open (args.inputfiles[0])
     dimX = fitstemplate[ext].header['NAXIS1']
     dimY = fitstemplate[ext].header['NAXIS2']

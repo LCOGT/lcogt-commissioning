@@ -112,7 +112,7 @@ def processfits(fitsname):
             mean = f[0].data[:,yy,xx]
             std  = f[1].data[:,yy,xx]
             outpng=f"gpsfit_{xx}_{yy}.png"
-            paramset, pcov = do_gpsfitting(fracsec,mean, std=std)
+            paramset, pcov = do_gpsfitting(fracsec,mean, std=std, outpng=None)
             perr = np.sqrt(np.diag(pcov))
 
             dt[yy,xx] = paramset[0]

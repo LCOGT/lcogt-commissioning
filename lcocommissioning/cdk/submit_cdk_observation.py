@@ -125,7 +125,8 @@ def create_request(args):
 
 def parseCommandLine():
     parser = argparse.ArgumentParser(
-        description='Delta Rho @ LCO engineering commissioning submission tool')
+        description='Delta Rho @ LCO engineering commissioning submission tool',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     tgargetgroup  = parser.add_mutually_exclusive_group()
     tgargetgroup.add_argument('--targetname', default='auto', type=str,
