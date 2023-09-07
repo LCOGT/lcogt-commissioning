@@ -105,16 +105,14 @@ def parseCommandLine():
                         help='Name of object to observe; will beresolved via simbad. Can be coordinates in the form of Jhhmmss+ddmmss')
     parser.add_argument('--title', default="Muscat commissioning", help="Descriptive title for observation request")
 
-    parser.add_argument('--site', default='ogg', choices=common.lco_2meter_sites,
-                        help="To which site to submit")
+    parser.add_argument('--site', default='coj', choices=common.lco_2meter_sites,
+                        help=f"To which site to submit {common.lco_2meter_sites}")
 
     parser.add_argument('--start', default=None,
                         help="Time to start observation. If not given, defaults to \"NOW\". Specify as YYYYMMDD HH:MM")
 
     parser.add_argument('--schedule-window', default=2, type=float,
                         help="How long after start should request be schedulable?")
-
-    # parser.add_argument('--dither', action='store_true', help='Dither the exposure in a 5 point pattern.')
 
     parser.add_argument('--defocus', type=float, default=0.0, help="Amount to defocus star.")
 
@@ -133,7 +131,6 @@ def parseCommandLine():
     repeatgroup.add_argument('--exp-cnt', type=int, help="How often to repeat each exposure")
     repeatgroup.add_argument('--filltime', type=float, help="How long to repeat Muscat exposures (seconds)")
 
-    #parser.add_argument('--selfguide', type=str, default=None, choices=[None, 'g', 'r', 'i', 'z'])
     parser.add_argument('--selfguide',  action='store_true', help="Is set, facillity guider OFF and encourage Muscat self-guiding using an appropiate channel")
     parser.add_argument('--readmode', type=str, default='MUSCAT_FAST', choices=['MUSCAT_FAST', 'MUSCAT_SLOW'])
     parser.add_argument('--scheduler', action='store_true',
@@ -222,10 +219,6 @@ def main():
         _log.info(f"Attempting direct submission {muscat['start']} {muscat['end']}")
         _log.debug(json.dumps(muscat, indent=2))
         common.submit_request_group(muscat, args.opt_confirmed)
-
-
-# else:
-#     createRequestsForStar_pond(args)
 
 
 if __name__ == '__main__':
