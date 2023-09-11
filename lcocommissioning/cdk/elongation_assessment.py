@@ -159,7 +159,7 @@ def plotthings(t, site, enc, instrument, telid, dateobs, ndays):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--site', default='ogg', choices=['ogg', 'elp', 'cpt'],
+    parser.add_argument('--site', default='ogg', choices=['ogg', 'elp', 'cpt','coj'],
                     help="To which site to submit")
 
     parser.add_argument('--dome', default='clma', choices=['aqwa', 'aqwb', 'clma'])
