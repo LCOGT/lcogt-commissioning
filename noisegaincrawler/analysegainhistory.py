@@ -217,7 +217,21 @@ def plotnoisehist(camera, dataset, extensions, outputdir, starttime, readmode=No
     for ext in extensions:
         d = dataset['dateobs'][dataset['extension'] == ext]
         g = dataset['readnoise'][dataset['extension'] == ext]
-        plt.plot(d, g, '.', label="ext %s" % ext, markersize=1)
+
+
+        recentnoise = np.max(d) -  d < datetime.timedelta(days=30)
+        print ('recentnoise:',recentnoise)
+
+        dr = d[recentnoise]
+        nr = g[recentnoise]
+        dr = np.asarray([x.timestamp() for x in dr]).mean()
+        dr =datetime.datetime.fromtimestamp(dr)
+        noise = np.median(nr)
+
+        plt.plot (dr,noise,'o' , color='green')
+        plt.plot(d, g, '.', label=f"ext {ext} {noise:4.2f}e-" , markersize=1)
+
+
     if 'fa' in camera:
         plt.ylim([5, 20])
     if 'fl' in camera:
@@ -234,6 +248,7 @@ def plotnoisehist(camera, dataset, extensions, outputdir, starttime, readmode=No
     plt.xlabel('Date')
     plt.ylabel('Readnoise [e-]')
     plt.title('Readnoise vs time for %s %s' % (camera, readmode))
+
     plt.legend()
 
     with io.BytesIO() as fileobj:
@@ -288,7 +303,18 @@ def plot_gainhist(camera, dataset, extensions, outputdir, starttime, readmode=No
     for ext in extensions:
         d = dataset['dateobs'][dataset['extension'] == ext]
         g = dataset['gain'][dataset['extension'] == ext]
-        plt.plot(d, g, '.', label="ext %s" % ext, markersize=1)
+
+        recentgain = np.max(d) -  d < datetime.timedelta(days=30)
+
+        dr = d[recentgain]
+        gr = g[recentgain]
+        dr = np.asarray([x.timestamp() for x in dr]).mean()
+        dr =datetime.datetime.fromtimestamp(dr)
+        gain = np.median(gr)
+
+        plt.plot (dr,gain,'o' , color='green')
+        plt.plot(d, g, '.', label=f"ext {ext} {gain:4.2f}e-/ADU" , markersize=1)
+
     if 'fa' in camera:
         plt.ylim([2.5, 4])
         if '2x2' in readmode:
