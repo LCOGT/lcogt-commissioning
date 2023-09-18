@@ -1,3 +1,6 @@
+import argparse
+import logging
+
 from astropy.io import ascii, fits
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,7 +9,7 @@ from scipy import signal
 import sys
 
 
-
+plt.style.use("seaborn-v0_8-whitegrid")
 
 def rampfunction (fractStartTime, dt05, amplitude, bias):
     """
@@ -37,16 +40,24 @@ def maketestplots ():
 def do_gpsfitting (fractime, lightlevel, std=None, outpng = None):
     bounds = [[0, 0,-1000],[+1,10000,100000]]
     (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime, lightlevel, bounds=bounds, sigma=std)
+
+    delta = np.abs (lightlevel - rampfunction(fractime, paramset[0], amplitude = paramset[1], bias = paramset[2]))
+    good = delta < np.std (delta) * 3
+    (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime[good], lightlevel[good], bounds=bounds, sigma=std[good])
     perr = np.sqrt(np.diag(istat))
     if outpng is not None:
         plt.figure()
 
         x = np.arange(0,1,0.01)
 
-        plt.errorbar (fractime, lightlevel,yerr=std, fmt='.', label="data")
+        plt.plot (fractime, lightlevel, '.', c='grey', )
+        plt.plot (fractime[good], lightlevel[good], '.',  c='black', label="data")
+
         plt.plot (x,rampfunction(x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
         plt.legend()
-        plt.savefig (outpng)
+        plt.xlabel("Fractional UTSTART [s]")
+        plt.ylabel ("Illumination Level [ADU]")
+        plt.savefig (outpng,  bbox_inches='tight')
         plt.close()
 
     return (paramset,istat)
@@ -95,7 +106,9 @@ def readsimplefile(filename):
 
 
 
-def processfits(fitsname):
+def processfits(fitsname, makepng=False, title=""):
+    basename = fitsname[:-5]
+    print (basename)
     f = fits.open (fitsname)
     binning = f[0].header['BLK']
 
@@ -111,8 +124,9 @@ def processfits(fitsname):
         for yy in range (dimY):
             mean = f[0].data[:,yy,xx]
             std  = f[1].data[:,yy,xx]
-            outpng=f"gpsfit_{xx}_{yy}.png"
-            paramset, pcov = do_gpsfitting(fracsec,mean, std=std)
+
+            outpng=f"gpsfit_{xx}_{yy}.png" if makepng else None
+            paramset, pcov = do_gpsfitting(fracsec,mean, std=std, outpng=outpng)
             perr = np.sqrt(np.diag(pcov))
 
             dt[yy,xx] = paramset[0]
@@ -121,13 +135,13 @@ def processfits(fitsname):
     plt.figure()
     plt.imshow(dt)
     plt.colorbar()
-    plt.savefig ('gpsmap.png')
+    plt.savefig (f'{basename}_gpsmap.png')
 
     plt.figure()
     meandt = np.mean (dt,axis=1)
 
     row = np.arange (dimY)
-    row = row *binning
+    row = row *binning + binning /2.
 
     fit =np.polyfit (row, meandt, 1)
     fit = np.poly1d (fit)
@@ -135,27 +149,31 @@ def processfits(fitsname):
     plt.plot (row, fit(row), label=fit)
     plt.legend()
     plt.xlabel ("Row number")
-    plt.ylabel ("Delayed of start of exposure")
+    plt.ylabel ("Delay of start of exposure [s]")
+    plt.title (title)
+    plt.savefig(f'{basename}_gpstime-perrow', bbox_inches='tight')
 
 
 
-    plt.savefig('gpstime-perrow')
+def parseCommandLine():
+    parser = argparse.ArgumentParser(
+        description='Calculate gps timing')
+    parser.add_argument('inputfile', nargs=1)
+    parser.add_argument('--title', type=str)
+    parser.add_argument('--png', action='store_true')
 
-    plt.figure()
-    row = np.arange(dimY) * BLK
-    time_offset = np.average(dt, axis=1)
-    plt.plot (row, time_offset,'.')
-    plt.xlabel('row number')
-    plt.ylabel('dt [s] absolute - timestamp')
-    c = np.polyfit(row,time_offset,1)
-    plt.plot (row,(np.poly1d(c))(row),'-', label=f"{c[0]:5.4e}*row+{c[1]:5.4}")
-    print (c)
-    plt.legend()
-    plt.savefig ("gps_row_time.png")
+    parser.add_argument('--loglevel', dest='log_level', default='WARN', choices=['DEBUG', 'INFO', 'WARN'],
+                        help='Set the debug level')
 
+    args = parser.parse_args()
+    args.inputfile = args.inputfile[0]
+    logging.basicConfig(level=getattr(logging, args.log_level.upper()),
+                        format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
+    return args
 
-
-processfits(sys.argv[1])
+args=parseCommandLine()
+print (args.inputfile)
+processfits(args.inputfile, makepng=args.png, title=args.title)
 
 #readsimplefile(sys.argv[1])
 

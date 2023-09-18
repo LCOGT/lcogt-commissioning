@@ -2,13 +2,13 @@ import requests
 from lcocommissioning.common.common import VALHALLA_API_TOKEN
 
 data = {
-    'name': 'NRES ThAr Master test',
-    'proposal': 'ENG2017AB-001',
-    'site': 'lsc',
-    'enclosure': 'domb',
+    'name': 'NRES ThAr  test',
+    'proposal': 'LCOEngineering',
+    'site': 'tlv',
+    'enclosure': 'doma',
     'telescope': '1m0a',
-    'start': '2020-01-21T18:20:00',
-    'end': '2020-01-21T19:20:00',
+    'start': '2023-08-01T18:45:00',
+    'end': '2023-08-01T19:32:00',
     'request': {
         'acceptability_threshold': 100,
         'configurations': [
@@ -30,7 +30,7 @@ data = {
                 },
                 'constraints': {},
                 'extra_params': {
-                    'lamp': 'ThAr Master'
+                #    'lamp': 'ThAr Master'
                 },
                 'instrument_configs': [{
                     'exposure_time': 300,

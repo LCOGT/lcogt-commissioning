@@ -59,9 +59,8 @@ def parseCommandLine():
     parser = argparse.ArgumentParser(
         description='Extract mean and fractional seconds from a series of FITS input files.')
 
-    parser.add_argument('outputfile', type=str,nargs=1,help="OUtput file")
+    parser.add_argument('--out', type=str, help="Output file")
     parser.add_argument('inputfiles', type=str, nargs="+", help="FITS files to process")
-
 
     parser.add_argument('--where', type=str, default='center', choices=['center', 'top', 'bottom', 'block'], help="FITS files to process")
     parser.add_argument('--width', type=int, default=16)
@@ -77,7 +76,7 @@ def parseCommandLine():
 
 
 def SimpleregionAnalysis(args):
-    with open(args.outputfile[0], "a") as outputfile:
+    with open(args.out, "a") as outputfile:
 
         for fitsfile in args.inputfiles:
             fracsec, mean, std= AnalyseFitsFile(fitsfile, where=args.where, width=args.width)
@@ -87,7 +86,7 @@ def SimpleregionAnalysis(args):
 
 
 
-def BlockAveAnalysis(args, ext=0):
+def BlockAveAnalysis(args, ext='SCI'):
     fitstemplate = fits.open (args.inputfiles[0])
     dimX = fitstemplate[ext].header['NAXIS1']
     dimY = fitstemplate[ext].header['NAXIS2']
@@ -116,7 +115,7 @@ def BlockAveAnalysis(args, ext=0):
     hdu = fits.BinTableHDU.from_columns([fits.Column(name='fracsec', array=fracsec, format='E'),])
 
     hdul = fits.HDUList([outf, avg, hdu])
-    hdul.writeto(args.outputfile[0], overwrite=True)
+    hdul.writeto(args.out, overwrite=True)
 
 args= parseCommandLine()
 if 'block' not in args.where:
