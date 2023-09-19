@@ -147,7 +147,9 @@ def get_auto_target(targetlist, sitecode, starttime, moonseparation=29, minalt=4
 
 def send_request_to_portal(requestgroup, dosubmit=False, url="https://observe.lco.global"):
     _log.debug(json.dumps(requestgroup, indent=4))
-
+    if VALHALLA_API_TOKEN=='':
+        _log.error("Environment Variable VALHALLA_API_TOKEN is not set; please set with your credentials. ")
+        exit(1)
     response = requests.post(
         f'{url}/api/requestgroups/validate/',
         headers={'Authorization': 'Token {}'.format(VALHALLA_API_TOKEN)},
@@ -188,6 +190,9 @@ def submit_request_group(observation, dosubmit=False):
     """ Submit to LCO via an API call, direct submission"""
 
     if dosubmit:
+        if VALHALLA_API_TOKEN=='':
+            _log.error("Environment Variable VALHALLA_API_TOKEN is not set; please set with your credentials. ")
+            exit(1)
         headers = {'Authorization': 'Token {token}'.format(token=VALHALLA_API_TOKEN)}
         response = requests.post(VALHALLA_URL + '/api/schedule/', json=observation, headers=headers)
         try:
