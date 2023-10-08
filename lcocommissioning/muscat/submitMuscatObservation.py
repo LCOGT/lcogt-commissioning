@@ -33,6 +33,7 @@ def createMuscatRequestConfiguration(args):
                 'exposure_time_i': args.exp_times[2],
                 'exposure_time_z': args.exp_times[3],
                 'exposure_mode': args.exp_mode,
+                'defocus': min(5, args.defocus),
             }
         }, ]
     }
