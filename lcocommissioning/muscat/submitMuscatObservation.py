@@ -22,10 +22,10 @@ def createMuscatRequestConfiguration(args):
             'exposure_count': 1,
             'mode': 'MUSCAT_FAST' if args.readmode is None else args.readmode,
             'optical_elements': {
-                'diffuser_g_position': 'out' if not args.diffuser else 'in',
-                'diffuser_r_position': 'out' if not args.diffuser else 'in',
-                'diffuser_i_position': 'out' if not args.diffuser else 'in',
-                'diffuser_z_position': 'out' if not args.diffuser else 'in'
+                'narrowband_g_position': 'out' if not args.narrowband else 'in',
+                'narrowband_r_position': 'out' if not args.narrowband else 'in',
+                'narrowband_i_position': 'out' if not args.narrowband else 'in',
+                'narrowband_z_position': 'out' if not args.narrowband else 'in'
             },
             'extra_params': {
                 'exposure_time_g': args.exp_times[0],
@@ -33,6 +33,7 @@ def createMuscatRequestConfiguration(args):
                 'exposure_time_i': args.exp_times[2],
                 'exposure_time_z': args.exp_times[3],
                 'exposure_mode': args.exp_mode,
+                'defocus': min(5, args.defocus),
             }
         }, ]
     }
@@ -126,7 +127,7 @@ def parseCommandLine():
     parser.add_argument('--pp', default=[0., 0.], nargs=2, type=float, help="Proper motion, mas/yr")
 
     parser.add_argument('--exp-mode', default='SYNCHRONOUS', choices=['SYNCHRONOUS', 'ASYNCHRONOUS'], required=False)
-    parser.add_argument('--diffuser',  action='store_true')
+    parser.add_argument('--narrowband',  action='store_true')
     repeatgroup = parser.add_mutually_exclusive_group()
     repeatgroup.add_argument('--exp-cnt', type=int, help="How often to repeat each exposure")
     repeatgroup.add_argument('--filltime', type=float, help="How long to repeat Muscat exposures (seconds)")

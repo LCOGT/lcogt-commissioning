@@ -369,7 +369,7 @@ def plot_ptc(camera, dataset, extensions, outputdir, readmode=None):
     return filename
 
 
-goodfilters = ['up', 'gp', 'rp', 'ip', 'zp', 'zs', 'U', 'B', 'V', 'R', 'I', 'H-alpha']
+goodfilters = ['up', 'gp', 'rp', 'ip', 'zp', 'zs', 'U', 'B', 'V', 'R', 'I', 'H-alpha', 'g_narrow', 'Na_D', 'i_narrow', 'z_narrow']
 
 
 def main():
