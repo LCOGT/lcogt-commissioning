@@ -1,3 +1,4 @@
+import argparse
 import logging
 import math
 import os
@@ -9,6 +10,8 @@ from astropy.io import fits
 from astropy.io.fits import ImageHDU, CompImageHDU
 from scipy import optimize
 import re
+
+from lcocommissioning.common.lco_archive_utilities import get_frames_from_request, download_from_archive
 from lcocommissioning.common.SourceCatalogProvider import SEPSourceCatalogProvider
 
 from matplotlib import rc
@@ -91,11 +94,14 @@ def overplot_fit(func, paramset, color=None):
              label="sqrt {:5.2f}".format(paramset[3]) if func == sqrtfit else "parabola")
 
 
-def getImageData(imagename, minarea=20, deblend=0.5):
+def getImageData(imagename, minarea=20, deblend=0.5, archive=False):
     """ Measure the FWHM of an image, tuned to get a reasonable FWHM also for defocussed images.
     """
-
-    hdul = fits.open(imagename, 'readonly', ignore_missing_end=True)
+    _log.info (f"Getting image datga for image {imagename}")
+    if archive:
+        hdul = download_from_archive (imagename)
+    else:
+        hdul = fits.open(imagename, 'readonly', ignore_missing_end=True)
 
     deltaFocus = None
     pixelscale = None
@@ -105,14 +111,14 @@ def getImageData(imagename, minarea=20, deblend=0.5):
         if 'PIXSCALE' in hdul[ii].header:
             pixelscale = hdul[ii].header['PIXSCALE']
 
-    _log.info ("Delta Focus: ", deltaFocus)
+    _log.info (f"Delta Focus:  {deltaFocus}")
     catalog = SEPSourceCatalogProvider(refineWCSViaLCO=False)
     fwhmcat = np.asarray([])
     thetacat = np.asarray([])
     ellcat = np.asarray([])
     for ii in range(len(hdul)):
         if isinstance(hdul[ii], ImageHDU) or isinstance(hdul[ii], CompImageHDU):
-            cat, wcs = catalog.get_source_catalog(imagename, ext=ii, minarea=minarea, deblend=deblend)
+            cat, wcs = catalog.get_source_catalog_from_fitsobject(hdul, ext=ii, minarea=minarea, deblend=deblend)
             fwhmcat = np.append(fwhmcat, cat['fwhm'])
             thetacat = np.append(thetacat, cat['theta'])
             ellcat = np.append(thetacat, cat['ellipticity'])
@@ -146,7 +152,7 @@ def getImageData(imagename, minarea=20, deblend=0.5):
         pixelscale = 1
     medianfwhm *= pixelscale
 
-    _log.info ("{}  FOCCMD {: 5.3f} FWHM (\" : pix) ({: 5.2f} : {: 5.2f}) \pm {: 5.2f} pixel  {: 5.2f} {: 6.4f}".format(os.path.basename(imagename), deltaFocus,
+    _log.info ("{}  FOCCMD {: 5.3f} FWHM (\" : pix) ({: 5.2f} : {: 5.2f}) \pm {: 5.2f} pixel  {: 5.2f} {: 6.4f}".format(imagename, deltaFocus,
                                                                                                                         medianfwhm, medianfwhm / pixelscale,
                                                                                                                         fwhmstd, mediantheta, pixelscale))
 
@@ -173,19 +179,64 @@ def sort_input_images (inputlist):
             _log.debug (f"{image}: No camera identifier found, skipping!")
     return returndict
 
+def parseCommandLine():
+    parser = argparse.ArgumentParser(
+        description='Do a simultanesous focus fit of Muscat ep cameras f')
 
-def main():
-    logging.basicConfig(level=getattr(logging, 'INFO'),
+
+    group = parser.add_mutually_exclusive_group(required=True)
+
+    group.add_argument ('--files', type=str, nargs='+')
+    group.add_argument ('--requestid', type=int, nargs='?')
+
+    parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
+                        help='Set the debug level')
+
+    args = parser.parse_args()
+
+    logging.basicConfig(level=getattr(logging, args.log_level.upper()),
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
+    return args
 
-    inputimagedict = sort_input_images(sys.argv[1:])
+def get_auto_focus_frames(requestid):
+    candidates = get_frames_from_request(requestid)
+    # get the camera ids
+    cameraregex = '.*[12]m.*-([fea][apfk]\d\d)-.*'
+    cameras = []
+    for imageinfo in candidates['results']:
+        m = re.search (cameraregex, imageinfo['basename'])
+        if (m is not None):
+            cameras.append(m.group(1))
+    camaras = set(cameras)
+    _log.info (f"camera set detected: {camaras}")
+    focusimagedict = {}
+    for camera in cameras:
+        focusimagedict[camera]=[]
+
+
+    for imageinfo in candidates['results']:
+        if 'x00' in imageinfo['basename']:
+            m = re.search (cameraregex, imageinfo['basename'])
+            camera =   m.group(1)  if (m is not None) else None
+            if camera is not None:
+                focusimagedict[camera].append(imageinfo['id'])
+
+    return focusimagedict
+def main():
+    args = parseCommandLine()
+
+    if (args.files):
+        inputimagedict = sort_input_images(args.files)
+    if args.requestid:
+        inputimagedict = get_auto_focus_frames(args.requestid)
+
     measurementlist = {}
-
     for camera in inputimagedict:
         measurementlist[camera] = {'focuslist': [], 'fwhmlist': []}
 
         for image in inputimagedict[camera]:
-            focus, fwhm, theta, ell = getImageData(image, minarea=5, deblend=0.5)
+
+            focus, fwhm, theta, ell = getImageData(image, minarea=5, deblend=0.5,archive = args.requestid is not None)
             measurementlist[camera]['focuslist'].append (focus)
             measurementlist[camera]['fwhmlist'].append (fwhm)
 
