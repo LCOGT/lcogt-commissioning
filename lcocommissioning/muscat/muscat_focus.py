@@ -286,7 +286,7 @@ def main():
 
     plt.title(f'Muscat Focus ID {args.requestid if args.requestid is not None else ""}')
 
-    plt.savefig("{}".format(f'muscat_focus_{args.requestid if args.requestid is not None else args.files[0]}.png'), bbox_inches="tight")
+    plt.savefig("{}".format(f'muscat_focus_{args.requestid if args.requestid is not None else os.path.basename(args.files[0])}.png'), bbox_inches="tight")
     _log.info ("All done")
 
 if __name__ == '__main__':
