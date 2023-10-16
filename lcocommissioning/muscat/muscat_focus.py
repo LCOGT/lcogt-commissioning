@@ -207,7 +207,7 @@ def get_auto_focus_frames(requestid):
         m = re.search (cameraregex, imageinfo['basename'])
         if (m is not None):
             cameras.append(m.group(1))
-    camaras = set(cameras)
+    camaras = sorted (set(cameras))
     _log.info (f"camera set detected: {camaras}")
     focusimagedict = {}
     for camera in cameras:
@@ -249,43 +249,39 @@ def main():
         measurementlist[camera]['exponential_p'] = exponential_p
         measurementlist[camera]['exponential_rms'] = exponential_p
 
+    plt.style.use('ggplot')
+
 
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
     plt.xlim([-3.6, 3.6])
-    plt.ylim([0, 6])
-    ax2 = ax1.twinx()
-    ax2.set_ylabel("$\Theta$ [$^\circ$]")
-    ax2.set_xlim([-3.6, 3.6])
+    plt.ylim([0, 4])
 
     plt.xlabel("FOCUS Demand [mm foc plane]")
     plt.ylabel("FWHM ['']")
 
-
-    # if math.isfinite(bestfocus_error):
-    #     plt.axes().axvspan(bestfocus - bestfocus_error, bestfocus + bestfocus_error, alpha=0.1, color='grey')
-
-
     plothandles = []
     bestfocus_yu = 0.1
+    colors = ['g','r','b','orange']
+    coloridx = 0
     for camera in measurementlist:
-        overplot_fit(sqrtfit,  measurementlist[camera]['exponential_p'])
-        plt1, = plt.plot(measurementlist[camera]['focuslist'], measurementlist[camera]['fwhmlist'], 'o',  label=camera)
-
+        color = colors [coloridx % len(colors)]
+        coloridx = coloridx+1
         bestfocus = measurementlist[camera]['exponential_p'][1]
         bestfocus_error = measurementlist[camera]['exponential_rms'][1]
+        overplot_fit(sqrtfit,  measurementlist[camera]['exponential_p'], color=color)
+        plt1, = plt.plot(measurementlist[camera]['focuslist'], measurementlist[camera]['fwhmlist'], 'o', color=color, label=f"{camera} {bestfocus:6.2f}")
 
-        plt.errorbar ([bestfocus,], [bestfocus_yu,], xerr = [bestfocus_error,], color='blue')
+        plt.axvline (x = bestfocus, color=color)
         plothandles.append (plt1)
-        print (f"Best focus for camera {camera}: {bestfocus}")
-
+        print (f"Best focus for camera {camera}: {bestfocus:5.2f}")
 
 
     ax1.legend(handles=plothandles, loc="lower right", bbox_to_anchor=(1, -0.1),
                bbox_transform=fig.transFigure, ncol=4)
 
 
-    plt.title("Muscat Focus")
+    plt.title(f'Muscat Focus ID {args.requestid if args.requestid is not None else ""}')
 
     plt.savefig("{}".format("muscat_focus.png"), bbox_inches="tight")
     _log.info ("All done")
