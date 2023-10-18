@@ -36,7 +36,8 @@ setuptools.setup(
                             'get_sbigframe = lcocommissioning.sbig.get_sbig_frame:main',
                             'get_qhyframe = lcocommissioning.cmostest.getqhyccdframe:main',
                             'get_archonframe = lcocommissioning.archon.archonexpose:main',
-                            'elongation_assessment = lcocommissioning.cdk.elongation_assessment:main'
+                            'elongation_assessment = lcocommissioning.cdk.elongation_assessment:main',
+                            'muscat_focus =  lcocommissioning.muscat.muscat_focus:main',
                             ],
 
     },
