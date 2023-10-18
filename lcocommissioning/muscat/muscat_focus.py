@@ -16,7 +16,6 @@ from lcocommissioning.common.SourceCatalogProvider import SEPSourceCatalogProvid
 
 from matplotlib import rc
 
-rc('text', usetex=True)
 
 _log = logging.getLogger(__name__)
 
@@ -265,16 +264,20 @@ def main():
     colors = ['g','r','b','orange']
     coloridx = 0
     for camera in measurementlist:
-        color = colors [coloridx % len(colors)]
-        coloridx = coloridx+1
-        bestfocus = measurementlist[camera]['exponential_p'][1]
-        bestfocus_error = measurementlist[camera]['exponential_rms'][1]
-        overplot_fit(sqrtfit,  measurementlist[camera]['exponential_p'], color=color)
-        plt1, = plt.plot(measurementlist[camera]['focuslist'], measurementlist[camera]['fwhmlist'], 'o', color=color, label=f"{camera} {bestfocus:6.2f}")
 
-        plt.axvline (x = bestfocus, color=color)
-        plothandles.append (plt1)
-        print (f"Best focus for camera {camera}: {bestfocus:5.2f}")
+        try:
+
+            color = colors [coloridx % len(colors)]
+            coloridx = coloridx+1
+            bestfocus = measurementlist[camera]['exponential_p'][1]
+            bestfocus_error = measurementlist[camera]['exponential_rms'][1]
+            overplot_fit(sqrtfit,  measurementlist[camera]['exponential_p'], color=color)
+            plt1, = plt.plot(measurementlist[camera]['focuslist'], measurementlist[camera]['fwhmlist'], 'o', color=color, label=f"{camera} {bestfocus:6.2f}")
+
+            plt.axvline (x = bestfocus, color=color)
+            plothandles.append (plt1)
+            print (f"Best focus for camera {camera}: {bestfocus:5.2f}")
+        except: _log.error ("Something bad")
 
 
     ax1.legend(handles=plothandles, loc="lower right", bbox_to_anchor=(1, -0.1),
@@ -283,7 +286,7 @@ def main():
 
     plt.title(f'Muscat Focus ID {args.requestid if args.requestid is not None else ""}')
 
-    plt.savefig("{}".format("muscat_focus.png"), bbox_inches="tight")
+    plt.savefig("{}".format(f'muscat_focus_{args.requestid if args.requestid is not None else os.path.basename(args.files[0])}.png'), bbox_inches="tight")
     _log.info ("All done")
 
 if __name__ == '__main__':
