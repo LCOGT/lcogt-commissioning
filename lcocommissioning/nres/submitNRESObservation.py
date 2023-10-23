@@ -22,7 +22,10 @@ def createNRESRequestsConfiguration(args):
         'instrument_configs': [{
             'exposure_time': args.exptime,
             'exposure_count': args.expcnt,
-            'mode': 'default'
+            'mode': 'default',
+            "extra_params": {
+                "defocus": args.defocus,
+            }
         },]
     }
     return configuration
@@ -126,6 +129,7 @@ def parseCommandLine():
     parser.add_argument('--exptime', type=float, default=120)
     parser.add_argument('--forcewcs', action='store_true',
                         help='Force WCSW based acquistion')
+    parser.add_argument('--defocus', type=float, default=0)
     parser.add_argument('--window', default=3, type=int, help="scheduling window length")
     parser.add_argument('--ipp', default=1.0, help="IPP priority for block")
     parser.add_argument('--pm', type=float, nargs=2, default = None, help="proper motion RA DEC in marcsec / year")
