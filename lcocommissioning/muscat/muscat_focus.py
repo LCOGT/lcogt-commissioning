@@ -18,7 +18,7 @@ from matplotlib import rc
 
 
 _log = logging.getLogger(__name__)
-
+logging.getLogger('matplotlib.font_manager').disabled = True
 L1FWHM = "L1FWHM"
 FOCDMD = "FOCDMD"
 
@@ -162,7 +162,7 @@ def getImageData(imagename, minarea=20, deblend=0.5, archive=False):
 
 def sort_input_images (inputlist):
     ''' Sort the input image list by camera. Return a dictionary {cameraname -> [listof iamges]}'''
-    cameraregex = '.*[12]m.*-([fea][apfk]\d\d)-.*'
+    cameraregex = '.*[012]m.*-([feas][apfkq]\d\d)-.*'
 
     returndict = {}
 
@@ -200,7 +200,7 @@ def parseCommandLine():
 def get_auto_focus_frames(requestid):
     candidates = get_frames_from_request(requestid)
     # get the camera ids
-    cameraregex = '.*[12]m.*-([fea][apfk]\d\d)-.*'
+    cameraregex = '.*[012]m.*-([sfea][aqpfk]\d\d)-.*'
     cameras = []
     for imageinfo in candidates['results']:
         m = re.search (cameraregex, imageinfo['basename'])
