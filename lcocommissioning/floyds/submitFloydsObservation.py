@@ -9,7 +9,6 @@ import lcocommissioning.common.common as common
 
 _logger = logging.getLogger(__name__)
 
-goodFloydsFluxStandards = ['auto', 'HZ 43', 'GD 71', 'BD+284211', 'HZ 44', 'L745-46A', 'Feige 110', 'EGGR274']
 
 
 def createRequestsForStar_scheduler(context):
@@ -126,8 +125,9 @@ def parseCommandLine():
             exit(1)
 
     if ('auto' in args.targetname):
-        args.targetname = common.get_auto_target(goodFloydsFluxStandards, args.site, args.start)
+        args.targetname = common.get_auto_target(common.goodFloydsFluxStandards, args.site, args.start)
         if args.targetname is None:
+            print ("No viable target found; giving up")
             exit(1)
 
     try:
@@ -141,7 +141,7 @@ def parseCommandLine():
             args.pm = common.listofpm[args.targetname]
         else:
             args.pm = [0,0]
-    print("Resolved target %s at corodinates %s %s" % (args.targetname, args.radec.ra, args.radec.dec))
+    print(f"Resolved target {args.targetname} at corodinates {args.radec} deg w/ pm= {args.pm} marcsec/yr")
     return args
 
 
