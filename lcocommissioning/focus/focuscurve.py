@@ -83,7 +83,7 @@ def main():
 
     of = focuslist
     os = fwhmlist
-    focuslist = np.asarray(of)
+    focuslist = np.asarray(of) * 15
     fwhmlist = np.asarray(os)
 
     print ("{}\n{}".format (np.round(focuslist,2), np.round (fwhmlist,2)))

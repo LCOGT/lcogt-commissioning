@@ -100,7 +100,7 @@ def create_request(args):
         target = {
             "type": "SATELLITE",
             "name": "{} {}".format(args.title, args.targetname),
-            'altitude': 65.,
+            'altitude': 70.,
             'azimuth' :180. if nh else 0.,
             'diff_altitude_rate': 0.,
             'diff_pitch_rate': 0.,
