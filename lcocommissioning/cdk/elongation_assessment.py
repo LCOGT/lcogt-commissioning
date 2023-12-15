@@ -95,6 +95,16 @@ def plotthings(t, site, enc, instrument, telid, dateobs, ndays):
     plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-winddir_el.png', bbox_inches='tight')
 
     plt.clf()
+    plt.scatter(t['AZIMUTH'], t['L1ELLIP'], c=t['WINDSPEE'], vmin=0, vmax=50, s=2)
+    plt.xlabel("Azimuth")
+    plt.ylabel("Ellipticity")
+    plt.colorbar(label='Windspeed')
+    plt.ylim([0, 1])
+    plt.xlim ([0,360])
+    plt.title (f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}')
+    plt.savefig(f'{site}-{enc}-{telid}--{instrument}-{dateobs.isoformat()}--{ndays}-azimuth_el.png', bbox_inches='tight')
+
+    plt.clf()
     plt.plot(t['EXPTIME'], t['L1ELLIP'], '.')
     plt.xlabel("Exposure Time")
     plt.ylabel("Ellipticity")
