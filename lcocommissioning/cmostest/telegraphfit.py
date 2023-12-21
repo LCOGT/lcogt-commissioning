@@ -35,7 +35,7 @@ def findditributionparamters (xvec, popt):
     def lnprob (parameters ):
         return -1 * summed_ln_likelihood(xvec,1,parameters[0],parameters[1],parameters[2],parameters[3])
 
-    res = scipy.optimize.minimize(lnprob, guess, bounds=( (0,1.0), (np.min(xvec),np.max(xvec)), (2,100), (0,100)),)
+    res = scipy.optimize.minimize(lnprob, guess, bounds=( (0,1.0), (np.min(xvec),np.max(xvec)), (1,100), (0,100)),)
     print (f"Likelihood fit:\n\t{res}")
 
 def findx0 (xvec, A, B, sigma, delta):
@@ -59,7 +59,7 @@ def fitandplot (data, label):
     numbins = 20
     bins = np.linspace (np.min(data), np.max(data), numbins)
     histo1, bins1 = np.histogram(data, bins=bins,)
-    histo1 = histo1 / np.sum(histo1)
+    histo1 = histo1 / np.max(histo1)
     binscenters = np.array([0.5 * (bins1[i] + bins1[i+1]) for i in range(len(bins1)-1)])
     popt = None
     pcov = None
@@ -88,7 +88,7 @@ def fitandplot (data, label):
     except Exception as e:
         print ("Fitting failed", e)
 
-    plt.hist ( data, bins=bins1, density = True,   label=f"data {label}")
+    plt.hist ( binscenters, len(binscenters), weights=histo1,    label=f"data {label}")
 
     if popt is not None:
         xspace = np.linspace(np.min(data)-20, np.max(data)+20, 100)
@@ -97,20 +97,22 @@ def fitandplot (data, label):
     return popt
 
 plt.figure()
-data = readdistribution('exampledata/mindistr.txt')
-fitandplot(data, "Best case")
+
 data = readdistribution('exampledata/maxdistr.txt')
 popt = fitandplot(data, "Worst case")
+data = readdistribution('exampledata/mindistr.txt')
+p_best=fitandplot(data, "Best case")
 plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
 plt.savefig ("distributionfit.png", bbox_inches="tight")
 plt.close()
 
 
-data = readdistribution('exampledata/maxdistr.txt')
+#data = readdistribution('exampledata/mindistr.txt')
 
 plt.figure()
-x = np.linspace(0,200,num=100)
-y=[summed_ln_likelihood(data[0:], 1, popt[1], popt[2], popt[3], _x ) for _x in x]
+#popt=p_best
+x = np.linspace(0,10,num=100)
+y=[summed_ln_likelihood(data[0:], 1, popt[1], popt[2], _x, popt[4] ) for _x in x]
 plt.plot (x,y, label="ln likelihood")
 plt.savefig ("lhe.png")
 
