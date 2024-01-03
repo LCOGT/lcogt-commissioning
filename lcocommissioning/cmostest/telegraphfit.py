@@ -10,6 +10,7 @@ import torch
 
 """
 
+TIMINGRUNS=10
 
 _sqrt2pi = math.sqrt(2 * math.pi)
 
@@ -52,7 +53,6 @@ def findditributionparamters(xvec, popt):
         return -1 * summed_ln_likelihood(xvec, 1, parameters[0], parameters[1], parameters[2], parameters[3])
 
     res = scipy.optimize.minimize(lnprob, guess, bounds=((0, 1.0), (np.min(xvec), np.max(xvec)), (1, 100), (0, 100)), )
-    print(f"Likelihood fit:\n\t{res}")
     return res
 
 
@@ -145,6 +145,7 @@ def main():
     data = readdistribution('exampledata/maxdistr.txt')
 
     popt = fitandplot_binneddata(data, "Worst case")
+    print (f"worst case fit {popt}")
     data = readdistribution('exampledata/mindistr.txt')
     p_best = fitandplot_binneddata(data, "Best case")
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
@@ -161,10 +162,20 @@ def main():
     plt.savefig("lhe.png")
 
     start = datetime.datetime.utcnow()
-    for ii in range(100):
-        findditributionparamters(data, popt)
+    for ii in range(TIMINGRUNS):
+        res=findditributionparamters(data, popt)
     end = datetime.datetime.utcnow()
-    print(f"Timing for likelyhodd fit: : : {(end - start) / 100}")
+    print(f"Likelihood fit:\n\t{res.success}\t{res.x}")
+    print(f"Timing for likelyhodd fit with knowing the answer : : {(end - start) / TIMINGRUNS}")
+
+
+    start = datetime.datetime.utcnow()
+    for ii in range(TIMINGRUNS):
+        res=findditributionparamters(data, [1,0.5,np.median(data),5,(np.max(data)-np.min(data))/2.])
+    end = datetime.datetime.utcnow()
+    print(f"Likelihood fit:\n\t{res.success}\t{res.x}")
+    print(f"Timing for likelyhodd fit without knowing the answer : : {(end - start) / TIMINGRUNS}")
+
 
     x = range(len(data))
     means = [np.mean(data[0:x]) for x in range(len(data))]
@@ -190,10 +201,10 @@ def main():
 
     _data = data[0:]
     start = datetime.datetime.utcnow()
-    for ii in range(10000):
+    for ii in range(TIMINGRUNS):
         findx0(_data, popt[0], popt[1], popt[3], popt[4])
     end = datetime.datetime.utcnow()
-    print(f"Timing for fit: : {(end - start) / 10000}")
+    print(f"Timing for fit: : {(end - start) / TIMINGRUNS}")
 
 
 if __name__ == '__main__':

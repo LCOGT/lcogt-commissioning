@@ -14,7 +14,7 @@ import scipy.stats
 
 def create_memmap (fitsfile):
     fimage = fits.open(fitsfile)
-    data = np.copy(np.asarray(fimage[1].data[100:250,100:250]))
+    data = np.copy(np.asarray(fimage[1].data[100:350,100:350]))
     data = data - np.mean (data)
     del fimage[0].data
     fimage.close()
