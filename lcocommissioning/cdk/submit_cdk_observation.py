@@ -136,7 +136,7 @@ def parseCommandLine():
                               help='If set, observe at meridian only in drifting sky mode.')
     parser.add_argument('--title', default="Delta Rho commissioning", help="Descriptive title for observation request")
     parser.add_argument('--proposalid', default="DeltaRho Commissioning", help="proposal ID")
-    parser.add_argument('--site', default='elp', choices=['ogg', 'elp', 'cpt'],
+    parser.add_argument('--site', default='elp', choices=['ogg', 'elp', 'cpt','tfn','coj'],
                         help="To which site to submit")
 
     parser.add_argument('--dome', default='aqwa', choices=['aqwa', 'aqwb', 'clma'])
