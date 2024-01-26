@@ -10,7 +10,7 @@ import torch
 
 """
 
-TIMINGRUNS=10
+TIMINGRUNS=1
 
 _sqrt2pi = math.sqrt(2 * math.pi)
 
@@ -24,7 +24,7 @@ def np_gaussian(x, A, x0, sigma):
 
      :returns: value of the gaussian distribution at that point.
     """
-    return A * np.exp(-1 * (x - x0) ** 2 / (2 * sigma ** 2)) / sigma / sigma / _sqrt2pi
+    return A * np.exp(-1 * (x - x0) ** 2 / (2 * sigma ** 2)) / sigma /  _sqrt2pi
 
 
 def np_tripple_gaussian_function(x, A, B, x0, sigma, delta):
@@ -90,19 +90,20 @@ def fitbinneddata (data, numbins=20):
     try:
         # Do a three-peak fit
         popt_3, pcov_3 = curve_fit(np_tripple_gaussian_function, xdata=binscenters, ydata=histo1,
-                                   p0=[0.5, 0.25, np.mean(data), 5, 100],
-                                   bounds=[[0, 0, np.min(data), 2.5, 0], [np.inf, 2, np.max(data), np.inf, np.inf]],
+                                   p0=[0.5, 0.25, np.mean(data), 5, (np.max(data)-np.mean(data)) * 0.5],
+                                   bounds=[[0, 0, np.mean(data)-15, 2.5, 0], [np.inf, 2, np.mean(data)+15, np.inf, np.inf]],
                                    )
         err_3 = np.sum(np.sqrt(np.diag(pcov_3)))
-        # print(f"Fit results 3 gauss: \n\t{popt_3}\n\t{err_3}")
+        print(f"Fit results 3 gauss: \n\t{popt_3}\n\t{err_3}")
         # Do a single peak fit
         popt_1, pcov_1 = curve_fit(np_gaussian, xdata=binscenters, ydata=histo1, p0=[1, np.mean(data), 5],
                                    bounds=[[0, np.min(data), 2], [np.inf, np.max(data), np.inf]],
                                    )
         err_1 = np.sum(np.sqrt(np.diag(pcov_1)))
-        # print(f"Fit results 1 gauss: \n\t{popt_1}\n\t{err_1}")
+        print(f"Fit results 1 gauss: \n\t{popt_1}\n\t{err_1}")
 
-        if err_1 < err_3:
+        if 1.5*err_1 < err_3:
+            print ("Single fit is better than tripple fit")
             popt_3[0] = popt_1[0]
             popt_3[1] = 0
             popt_3[2] = popt_1[1]
@@ -114,15 +115,11 @@ def fitbinneddata (data, numbins=20):
         print("Fitting failed", e)
     return popt
 
-def fitandplot_binneddata(data, label, numbins=20):
+def fitandplot_binneddata(data, label, numbins=15):
     """ Derive RTS paramters for a given pixel based on a sqeuince of readouts. This is based on fitting gaussians to a binned data sample
         Returns a popt set of coefficients .
     """
-    start = datetime.datetime.utcnow()
-    for ii in range(100):
-        popt = fitbinneddata(data, numbins)
-    end = datetime.datetime.utcnow()
-    print(f"Timing for parameter determination: : {(end - start) / 100}")
+    popt = fitbinneddata(data, numbins)
 
     bins = np.linspace(np.min(data), np.max(data), numbins)
     histo1, bins1 = np.histogram(data, bins=bins, )
@@ -142,11 +139,11 @@ def fitandplot_binneddata(data, label, numbins=20):
 def main():
     plt.figure()
 
-    data = readdistribution('exampledata/maxdistr.txt')
+    data = readdistribution('maxdistr.txt')
 
     popt = fitandplot_binneddata(data, "Worst case")
     print (f"worst case fit {popt}")
-    data = readdistribution('exampledata/mindistr.txt')
+    data = readdistribution('mindistr.txt')
     p_best = fitandplot_binneddata(data, "Best case")
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
     plt.savefig("distributionfit.png", bbox_inches="tight")
@@ -176,6 +173,7 @@ def main():
     print(f"Likelihood fit:\n\t{res.success}\t{res.x}")
     print(f"Timing for likelyhodd fit without knowing the answer : : {(end - start) / TIMINGRUNS}")
 
+    data = readdistribution('maxdistr.txt')
 
     x = range(len(data))
     means = [np.mean(data[0:x]) for x in range(len(data))]
@@ -205,6 +203,34 @@ def main():
         findx0(_data, popt[0], popt[1], popt[3], popt[4])
     end = datetime.datetime.utcnow()
     print(f"Timing for fit: : {(end - start) / TIMINGRUNS}")
+
+
+
+    plt.figure()
+
+    data = readdistribution('maxdistrm1.txt')
+    popt = fitandplot_binneddata(data, "Worst case y-1")
+
+    #data = readdistribution('maxdistr.txt')
+    #p_best = fitandplot_binneddata(data, "Worst case")
+
+    data = readdistribution('maxdistrp1.txt')
+    p_best = fitandplot_binneddata(data, "Worst case y+1")
+
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
+    plt.savefig("distributionfit_neighbours.png", bbox_inches="tight")
+    plt.close()
+
+
+    data_worst = readdistribution('maxdistr.txt')
+    data_worstm1 = readdistribution('maxdistrm1.txt')
+    plt.figure()
+
+    plt.plot (data_worst)
+    plt.plot (data_worstm1)
+    cor=np.correlate(data_worst, data_worstm1, mode='same')
+    plt.plot (cor / np.max(np.abs(cor))*10.)
+    plt.savefig ("worstcorrelation.png", bbox_inches="tight")
 
 
 if __name__ == '__main__':

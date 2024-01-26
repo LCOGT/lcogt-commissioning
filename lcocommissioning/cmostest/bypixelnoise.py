@@ -14,7 +14,7 @@ import scipy.stats
 
 def create_memmap (fitsfile):
     fimage = fits.open(fitsfile)
-    data = np.copy(np.asarray(fimage[1].data[100:350,100:350]))
+    data = np.copy(np.asarray(fimage['SCI'].data[0:350,0:350]))
     data = data - np.mean (data)
     del fimage[0].data
     fimage.close()
@@ -35,12 +35,9 @@ def main():
     print (perimagemedian)
     plt.figure()
     plt.plot (perimagemedian, "o")
-    plt.title ("Iamge mean value in series")
+    plt.title ("Image mean value in series")
     plt.savefig("timeline.png", dpi=150)
     plt.close()
-
-
-
 
 
     # look at the mean image
@@ -56,7 +53,7 @@ def main():
     plt.savefig("mean_image.png", dpi=150)
     plt.close()
 
-    print ("Making an image of of trhe noise distribution")
+    print ("Making an image of of the noise distribution")
     stdimage = np.std (imagedata, axis=0)
 
     plt.figure()
@@ -70,25 +67,28 @@ def main():
 
 
 
-
+    def argmedian(x):
+        return np.argpartition(x, len(x) // 2)[len(x) // 2]
 
 
     # look at the per pxiel distribution for a dedicated pixel
 
-    maxx, maxy = np.unravel_index(np.argmax (stdimage), stdimage.shape)
-    minx, miny = np.unravel_index(np.argmin (stdimage), stdimage.shape)
-
+    maxy, maxx = np.unravel_index(np.argmax (stdimage), stdimage.shape)
+    miny, minx = np.unravel_index(np.argmin (stdimage), stdimage.shape)
     print ("Looking at a single pixel distribution" )
     plt.figure()
-    minsinglepixel = imagedata[:,minx,miny]
+    minsinglepixel = imagedata[:,miny,minx]
     _ = plt.hist(minsinglepixel.flatten(),  bins=50, density = True, label=f"minimum noise {np.min(stdimage)} @ {minx}/{miny}")
-
     np.savetxt ("mindistr.txt",  minsinglepixel)
 
-
-    maxsinglepixel = imagedata[:,maxx,maxy]
+    maxsinglepixel = imagedata[:,maxy,maxx]
     _ = plt.hist(maxsinglepixel.flatten(),  bins=50, density = True, label=f"maximum noise {np.max(stdimage)} @ {maxx}/{maxy}")
     np.savetxt ("maxdistr.txt" , maxsinglepixel)
+
+    maxsinglepixel = imagedata[:,maxy+1,maxx]
+    np.savetxt ("maxdistrp1.txt" , maxsinglepixel)
+    maxsinglepixel = imagedata[:,maxy-1,maxx]
+    np.savetxt ("maxdistrm1.txt" , maxsinglepixel)
 
     plt.title ("Distribution of Single pixel values")
     plt.xlabel("Per pixel value [ADU]")
@@ -97,10 +97,9 @@ def main():
     plt.savefig("pixelhistogram.png", dpi=150)
     plt.close()
 
-
     print ("Looking at noise histogram distribution in image.")
     plt.figure()
-    _ = plt.hist(stdimage.flatten(), density = True, bins=100, range=[median-7*std, median+ 7* std])
+    _ = plt.hist(stdimage.flatten(), density = True, bins=100, range=[median-7*std, median+ 15* std])
     plt.title ("Distribution of per pixel noise")
     plt.xlabel("Per pixel noise [ADU]")
     plt.ylabel("Density")
