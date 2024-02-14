@@ -134,7 +134,7 @@ def processfits(fitsname, makepng=False, title=""):
 
 
     plt.figure()
-    plt.imshow(dt, cmap='viridis')
+    plt.imshow(dt, cmap='viridis', aspect='equal', origin='lower')
     plt.colorbar()
     plt.savefig (f'{basename}_gpsmap.png')
 
@@ -148,7 +148,7 @@ def processfits(fitsname, makepng=False, title=""):
     fit = np.poly1d (fit)
     residual = meandt -fit (row)
     good = residual < 3 * np.std (residual)
-    fit =np.polyfit (row[good], meandt[good], 1)
+    fit = np.polyfit (row[good], meandt[good], 1)
     fit = np.poly1d (fit)
 
     plt.plot (row, meandt,'.')
@@ -158,6 +158,14 @@ def processfits(fitsname, makepng=False, title=""):
     plt.ylabel ("Delay of start of exposure [s]")
     plt.title (title)
     plt.savefig(f'{basename}_gps_perrow.png', bbox_inches='tight')
+
+
+    plt.fig()
+    plt.plot (row,residual, '.')
+    plt.title (title)
+    plt.xlabel ('Row number')
+    plt.ylabel ('Timing residual from fir')
+    plt.savefig(f'{basename}_gps_perrow_residual.png', bbox_inches='tight')
 
 
 
