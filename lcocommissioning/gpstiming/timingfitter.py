@@ -1,4 +1,6 @@
 import argparse
+import functools
+
 import logging
 
 from astropy.io import ascii, fits
@@ -6,10 +8,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize
 from scipy import signal
-import sys
+log = logging.getLogger(__name__)
+plt.style.use("seaborn")
+from functools import partial
+from multiprocessing import Pool
 
-
-plt.style.use("seaborn-v0_8-whitegrid")
 
 def rampfunction (fractStartTime, dt05, amplitude, bias):
     """
@@ -37,7 +40,7 @@ def maketestplots ():
 #maketestplots()
 #exit(0)
 
-def do_gpsfitting (fractime, lightlevel, std=None, outpng = None):
+def do_gpsfitting (fractime, lightlevel, std, x,y, outpng):
     bounds = [[0, 0,-1000],[+1,10000,100000]]
     (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime, lightlevel, bounds=bounds, sigma=std)
 
@@ -60,7 +63,7 @@ def do_gpsfitting (fractime, lightlevel, std=None, outpng = None):
         plt.savefig (outpng,  bbox_inches='tight')
         plt.close()
 
-    return (paramset,istat)
+    return (paramset,istat,x,y)
 
 
 def getTestdata (testdeltaT=0, n=100, Amplitude=480*0.7, bias=500, ron=3.1, npixels=1):
@@ -115,25 +118,38 @@ def processfits(fitsname, makepng=False, title=""):
     dimX = f[0].header['NAXIS1']
     dimY = f[0].header['NAXIS2']
     dimZ = f[0].header['NAXIS3']
-    BLK = f[0].header['BLK']
     dt = np.zeros((dimY,dimX))
     dt_err = np.zeros((dimY,dimX))
 
     fracsec = f[2].data['fracsec']
+    myargs = []
+    log.info ("creating tasks")
     for xx in range (dimX):
         for yy in range (dimY):
             mean = f[0].data[:,yy,xx]
             std  = f[1].data[:,yy,xx]
-
             outpng=f"gpsfit_{xx}_{yy}.png" if makepng else None
-            paramset, pcov = do_gpsfitting(fracsec,mean, std=std, outpng=outpng)
-            perr = np.sqrt(np.diag(pcov))
 
-            dt[yy,xx] = paramset[0]
-            dt_err[yy,xx] = perr[0]
+            myargs.append ( (fracsec,mean,std,xx,yy,outpng) )
+
+            #paramset, pcov,x,y = do_gpsfitting(fracsec,mean, std, xx,yy, outpng)
+            #perr = np.sqrt(np.diag(pcov))
+            #dt[y,x] = paramset[0]
+            #dt_err[y,x] = perr[0]
+    log.info("Starting the fitting work")
+    with Pool() as pool:
+        results = pool.starmap (do_gpsfitting, myargs)
+
+        for result in results:
+            paramset, pcov,x,y = result
+            perr = np.sqrt(np.diag(pcov))
+            dt[y,x] = paramset[0]
+            dt_err[y,x] = perr[0]
+
+    log.info ("Making nice graphs")
 
     plt.figure()
-    plt.imshow(dt)
+    plt.imshow(dt, cmap='viridis', aspect='equal', origin='lower')
     plt.colorbar()
     plt.savefig (f'{basename}_gpsmap.png')
 
@@ -145,13 +161,26 @@ def processfits(fitsname, makepng=False, title=""):
 
     fit =np.polyfit (row, meandt, 1)
     fit = np.poly1d (fit)
+    residual = meandt -fit (row)
+    good = residual < 3 * np.std (residual)
+    fit = np.polyfit (row[good], meandt[good], 1)
+    fit = np.poly1d (fit)
+
     plt.plot (row, meandt,'.')
     plt.plot (row, fit(row), label=fit)
     plt.legend()
     plt.xlabel ("Row number")
     plt.ylabel ("Delay of start of exposure [s]")
     plt.title (title)
-    plt.savefig(f'{basename}_gpstime-perrow', bbox_inches='tight')
+    plt.savefig(f'{basename}_gps_perrow.png', bbox_inches='tight')
+
+
+    plt.figure()
+    plt.plot (row,residual, '.')
+    plt.title (title)
+    plt.xlabel ('Row number')
+    plt.ylabel ('Timing residual from fir')
+    plt.savefig(f'{basename}_gps_perrow_residual.png', bbox_inches='tight')
 
 
 
@@ -162,7 +191,7 @@ def parseCommandLine():
     parser.add_argument('--title', type=str)
     parser.add_argument('--png', action='store_true')
 
-    parser.add_argument('--loglevel', dest='log_level', default='WARN', choices=['DEBUG', 'INFO', 'WARN'],
+    parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
 
     args = parser.parse_args()
@@ -171,10 +200,13 @@ def parseCommandLine():
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
     return args
 
-args=parseCommandLine()
-print (args.inputfile)
-processfits(args.inputfile, makepng=args.png, title=args.title)
+def main():
+    args=parseCommandLine()
+    log.info (f'Reading in input file {args.inputfile}')
+    processfits(args.inputfile, makepng=args.png, title=args.title)
 
-#readsimplefile(sys.argv[1])
+
+if __name__ == '__main__':
+    main()
 
 
