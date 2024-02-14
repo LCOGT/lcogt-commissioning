@@ -6,10 +6,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize
 from scipy import signal
-import sys
-
-
-plt.style.use("seaborn-v0_8-whitegrid")
+import queue
+import threading
+log = logging.getLogger(__name__)
+plt.style.use("seaborn")
 
 def rampfunction (fractStartTime, dt05, amplitude, bias):
     """
@@ -115,7 +115,6 @@ def processfits(fitsname, makepng=False, title=""):
     dimX = f[0].header['NAXIS1']
     dimY = f[0].header['NAXIS2']
     dimZ = f[0].header['NAXIS3']
-    BLK = f[0].header['BLK']
     dt = np.zeros((dimY,dimX))
     dt_err = np.zeros((dimY,dimX))
 
@@ -132,8 +131,10 @@ def processfits(fitsname, makepng=False, title=""):
             dt[yy,xx] = paramset[0]
             dt_err[yy,xx] = perr[0]
 
+
+
     plt.figure()
-    plt.imshow(dt)
+    plt.imshow(dt, cmap='viridis')
     plt.colorbar()
     plt.savefig (f'{basename}_gpsmap.png')
 
@@ -145,13 +146,18 @@ def processfits(fitsname, makepng=False, title=""):
 
     fit =np.polyfit (row, meandt, 1)
     fit = np.poly1d (fit)
+    residual = meandt -fit (row)
+    good = residual < 3 * np.std (residual)
+    fit =np.polyfit (row[good], meandt[good], 1)
+    fit = np.poly1d (fit)
+
     plt.plot (row, meandt,'.')
     plt.plot (row, fit(row), label=fit)
     plt.legend()
     plt.xlabel ("Row number")
     plt.ylabel ("Delay of start of exposure [s]")
     plt.title (title)
-    plt.savefig(f'{basename}_gpstime-perrow', bbox_inches='tight')
+    plt.savefig(f'{basename}_gps_perrow.png', bbox_inches='tight')
 
 
 
@@ -172,9 +178,8 @@ def parseCommandLine():
     return args
 
 args=parseCommandLine()
-print (args.inputfile)
+log.info (f'Reading in input file {args.inputfile}')
 processfits(args.inputfile, makepng=args.png, title=args.title)
 
-#readsimplefile(sys.argv[1])
 
 

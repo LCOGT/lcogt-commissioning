@@ -8,7 +8,7 @@ from astropy.nddata import block_reduce
 
 log = logging.getLogger(__name__)
 
-def AnalyseFitsObject(FitsObject,where, width=None, ext=0):
+def AnalyseFitsObject(FitsObject,where, width=None, ext='SCI'):
 
     dimx = FitsObject[ext].header['NAXIS1']
     dimy = FitsObject[ext].header['NAXIS2']
