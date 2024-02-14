@@ -1,4 +1,6 @@
 import argparse
+import functools
+
 import logging
 
 from astropy.io import ascii, fits
@@ -6,10 +8,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize
 from scipy import signal
-import queue
-import threading
 log = logging.getLogger(__name__)
 plt.style.use("seaborn")
+from functools import partial
+from multiprocessing import Pool
+
 
 def rampfunction (fractStartTime, dt05, amplitude, bias):
     """
@@ -37,7 +40,7 @@ def maketestplots ():
 #maketestplots()
 #exit(0)
 
-def do_gpsfitting (fractime, lightlevel, std=None, outpng = None):
+def do_gpsfitting (fractime, lightlevel, std, x,y, outpng):
     bounds = [[0, 0,-1000],[+1,10000,100000]]
     (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime, lightlevel, bounds=bounds, sigma=std)
 
@@ -60,7 +63,7 @@ def do_gpsfitting (fractime, lightlevel, std=None, outpng = None):
         plt.savefig (outpng,  bbox_inches='tight')
         plt.close()
 
-    return (paramset,istat)
+    return (paramset,istat,x,y)
 
 
 def getTestdata (testdeltaT=0, n=100, Amplitude=480*0.7, bias=500, ron=3.1, npixels=1):
@@ -119,19 +122,31 @@ def processfits(fitsname, makepng=False, title=""):
     dt_err = np.zeros((dimY,dimX))
 
     fracsec = f[2].data['fracsec']
+    myargs = []
+    log.info ("creating tasks")
     for xx in range (dimX):
         for yy in range (dimY):
             mean = f[0].data[:,yy,xx]
             std  = f[1].data[:,yy,xx]
-
             outpng=f"gpsfit_{xx}_{yy}.png" if makepng else None
-            paramset, pcov = do_gpsfitting(fracsec,mean, std=std, outpng=outpng)
+
+            myargs.append ( (fracsec,mean,std,xx,yy,outpng) )
+
+            #paramset, pcov,x,y = do_gpsfitting(fracsec,mean, std, xx,yy, outpng)
+            #perr = np.sqrt(np.diag(pcov))
+            #dt[y,x] = paramset[0]
+            #dt_err[y,x] = perr[0]
+    log.info("Starting the fitting work")
+    with Pool() as pool:
+        results = pool.starmap (do_gpsfitting, myargs)
+
+        for result in results:
+            paramset, pcov,x,y = result
             perr = np.sqrt(np.diag(pcov))
+            dt[y,x] = paramset[0]
+            dt_err[y,x] = perr[0]
 
-            dt[yy,xx] = paramset[0]
-            dt_err[yy,xx] = perr[0]
-
-
+    log.info ("Making nice graphs")
 
     plt.figure()
     plt.imshow(dt, cmap='viridis', aspect='equal', origin='lower')
@@ -160,7 +175,7 @@ def processfits(fitsname, makepng=False, title=""):
     plt.savefig(f'{basename}_gps_perrow.png', bbox_inches='tight')
 
 
-    plt.fig()
+    plt.figure()
     plt.plot (row,residual, '.')
     plt.title (title)
     plt.xlabel ('Row number')
@@ -176,7 +191,7 @@ def parseCommandLine():
     parser.add_argument('--title', type=str)
     parser.add_argument('--png', action='store_true')
 
-    parser.add_argument('--loglevel', dest='log_level', default='WARN', choices=['DEBUG', 'INFO', 'WARN'],
+    parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
 
     args = parser.parse_args()
@@ -185,9 +200,13 @@ def parseCommandLine():
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
     return args
 
-args=parseCommandLine()
-log.info (f'Reading in input file {args.inputfile}')
-processfits(args.inputfile, makepng=args.png, title=args.title)
+def main():
+    args=parseCommandLine()
+    log.info (f'Reading in input file {args.inputfile}')
+    processfits(args.inputfile, makepng=args.png, title=args.title)
 
+
+if __name__ == '__main__':
+    main()
 
 
