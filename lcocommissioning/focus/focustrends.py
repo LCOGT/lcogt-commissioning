@@ -116,7 +116,7 @@ def get_focusStackData(args):
     sourcecolumn = ['FOCTEMP', 'ALTITUDE', 'FOCTELZP', 'FOCTOFF', 'FOCZOFF',
                     'FOCAFOFF', 'FOCINOFF', 'FOCFLOFF', 'FOCOBOFF', 'FOCPOSN',
                     'AZIMUTH', 'REFHUMID', 'DATE-OBS', 'DAY-OBS', 'ORIGNAME',
-                    'WMSTEMP', 'FILTER']
+                    'WMSTEMP', 'FILTER', 'CCDATEMP']
 
     # due to cameras moving around, and mirrors being replaced, autofocus values are
     # informative only over a limited date range.
@@ -180,17 +180,14 @@ def get_focusStackData(args):
         #t['FOCAFOFF'] = t['FOCAFOFF'] / 12.05
         magnification = 1+3.3239**2
 
-    mediantelfoc = np.mean(t['FOCTELZP'])
-    t['FOCAFOFF']  = t['FOCAFOFF'] / magnification
+    t['FOCAFOFF'] = t['FOCAFOFF'] / magnification
     t['FOCFLOFF'] = t['FOCFLOFF'] / magnification
-    t['ACTFOCUS'] = t['FOCTELZP'] +     t['FOCTOFF'] + t['FOCZOFF'] + t['FOCAFOFF']  \
+    t['ACTFOCUS'] = t['FOCTELZP'] + t['FOCTOFF'] + t['FOCZOFF'] + t['FOCAFOFF']  \
                     + t['FOCINOFF'] + t['FOCFLOFF']
 
     t['ZD'] = 90 - t['ALTITUDE']
     t['DATE-OBS'] = astt.Time(t['DATE-OBS'], scale='utc', format=None).to_datetime()
     t['DAY-OBS'] = astt.Time(t['DAY-OBS'], scale='utc', format=None).to_datetime()
-
-    t['FOCAFOFF_CORRECTED'] = t['FOCAFOFF'] + (t['FOCTELZP'] - mediantelfoc)
 
     # some rejection of bad values
     limit = 10
@@ -199,16 +196,13 @@ def get_focusStackData(args):
     if '1m0' in tel:
         limit = 5
 
-
+    fullsize = len(t)
     t.sort('DATE-OBS')
-
-    good = (t['DATE-OBS'] > bestaftertime)
-    good = good & (np.abs(t['ACTFOCUS']) < limit) & (t['FOCOBOFF'] == 0)
-
+    good = (np.abs(t['ACTFOCUS']) < limit) & (t['FOCOBOFF'] == 0)
     good = good & (t['FOCTEMP'] != 0.0)
 
     t = t[good] if np.sum(good) > 0 else None
-    log.info(f"Number of sanitized records: {len(t)}")
+    log.info(f"Number of sanitized records: {len(t)} / {fullsize}")
     return t
 
 
@@ -262,7 +256,7 @@ def analysecamera(args, t=None, ):
     plt.xlim([-6, 35])
     set_ylim(t['ACTFOCUS'], focusvaluerange)
     plt.legend()
-    plt.title("Temp vs absolute focus postion")
+    plt.title("Temp vs absolute focus position")
 
     ### ZD
     plt.subplot(5, 2, 2)
@@ -278,9 +272,7 @@ def analysecamera(args, t=None, ):
     plt.legend()
     plt.title("Zenith distance vs abs focus position")
 
-    # fig = plt.subplot(5, 3, 3, projection='3d')
-    # ydata = t['ACTFOCUS']
-    # fig.plot (temp, coszd,  ydata, '.')
+
 
 
     # Temperature Residual after multilinear fit corrections
@@ -312,7 +304,6 @@ def analysecamera(args, t=None, ):
     plt.setp(plt.gca().xaxis.get_minorticklabels(), rotation=25)
     plt.setp(plt.gca().xaxis.get_majorticklabels(), rotation=25)
     plt.legend()
-    print (t['FOCAFOFF'])
     set_ylim(t['FOCAFOFF'], 3*focusvaluerange)
 
     # no wlook how hard autofocus has to work to compenssate for temp & ZD
@@ -352,19 +343,20 @@ def analysecamera(args, t=None, ):
     #plt.ylim([-focustermrange / 5, focustermrange / 5])
 
     plt.subplot(5, 2, 10)
-    xdata = t['AZIMUTH']
+    xdata = t['CCDATEMP']
     ydata = residual_focus
 
-    plt.xlabel('AZ [deg]')
+    plt.xlabel('CCD Temp [deg C]')
     plt.ylabel('Residual after temperature and ZD correction')
     plt.plot(xdata, ydata, '.')
-    set_ylim(residual_focus, focustermrange)
+    set_ylim(residual_focus, focusvaluerange)
     #plt.ylim([-focustermrange / 5, focustermrange / 5])
 
     plt.suptitle("{} {} {} \n".format(site, enc, tel), fontsize=24, y=1.05)
 
     plt.tight_layout(pad=1)
     plt.savefig(f"focusstack_{site}_{enc}_{tel}.pdf")
+    plt.clf()
     return t
 
 
@@ -385,7 +377,7 @@ def getargs():
     logging.basicConfig(level=getattr(logging, args.log_level.upper()),
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
     if args.after is None:
-        args.after = datetime.datetime.fromisoformat("2022-09-01")
+        args.after = datetime.datetime.fromisoformat("2023-01-01")
     return args
 
 
