@@ -97,7 +97,7 @@ def simultaneousfit(temp, coszd, focus):
         log.info(f'Multilinear fit result, N={len(good_focus)}: {popt} +/-  {errors}')
 
         residual = good_focus - calulate_compensation(good_coszd, good_temp, popt)
-        goodvalues = np.abs(residual) < 3 * np.std (residual)
+        goodvalues = np.abs(residual) < 2.5 * np.std (residual)
         good_coszd = good_coszd [goodvalues]
         good_temp = good_temp [goodvalues]
         good_focus = good_focus[goodvalues]
@@ -114,7 +114,7 @@ def get_focusStackData(args):
     tel = args.tel
 
     sourcecolumn = ['FOCTEMP', 'ALTITUDE', 'FOCTELZP', 'FOCTOFF', 'FOCZOFF',
-                    'FOCAFOFF', 'FOCINOFF', 'FOCFLOFF', 'FOCOBOFF',
+                    'FOCAFOFF', 'FOCINOFF', 'FOCFLOFF', 'FOCOBOFF', 'FOCPOSN',
                     'AZIMUTH', 'REFHUMID', 'DATE-OBS', 'DAY-OBS', 'ORIGNAME',
                     'WMSTEMP', 'FILTER']
 
@@ -171,15 +171,19 @@ def get_focusStackData(args):
         return None
 
     if '1m0' in tel:
-        t['FOCAFOFF'] = t['FOCAFOFF'] / 11.24
+        magnification = 1+3.2**2
+        #t['FOCAFOFF'] = t['FOCAFOFF'] / 11.24
     if '0m4' in tel:
-        t['FOCAFOFF'] = t['FOCAFOFF'] / 1.
+        magnification = 1
+        #t['FOCAFOFF'] = t['FOCAFOFF'] / 1.
     if '2m0' in tel:
-        t['FOCAFOFF'] = t['FOCAFOFF'] / 12.05
+        #t['FOCAFOFF'] = t['FOCAFOFF'] / 12.05
+        magnification = 1+3.3239**2
 
     mediantelfoc = np.mean(t['FOCTELZP'])
-
-    t['ACTFOCUS'] = t['FOCTELZP'] + t['FOCTOFF'] + t['FOCZOFF'] + t['FOCAFOFF'] \
+    t['FOCAFOFF']  = t['FOCAFOFF'] / magnification
+    t['FOCFLOFF'] = t['FOCFLOFF'] / magnification
+    t['ACTFOCUS'] = t['FOCTELZP'] +     t['FOCTOFF'] + t['FOCZOFF'] + t['FOCAFOFF']  \
                     + t['FOCINOFF'] + t['FOCFLOFF']
 
     t['ZD'] = 90 - t['ALTITUDE']
@@ -299,13 +303,15 @@ def analysecamera(args, t=None, ):
 
     plt.subplot(5, 1, 3)
     # Time line plot - history of autofocus corrections
-    plt.plot(t['DATE-OBS'], t['FOCAFOFF'], '.', label="AUTOFOCUS Correction")
+    plt.plot (t['DATE-OBS'], t['FOCAFOFF'], '.', label="AUTOFOCUS Correction")
+    plt.plot (t['DATE-OBS'], t['FOCTELZP'] + t['FOCAFOFF'], '.',label="AUTOFOCUS + Foc Default")
     plt.xlabel('DATE-OBS')
     plt.ylabel('AUTO FOCUS TERM [mm]')
     plt.title("History of AF corrections")
     plt.setp(plt.gca().xaxis.get_minorticklabels(), rotation=25)
     plt.setp(plt.gca().xaxis.get_majorticklabels(), rotation=25)
-    set_ylim(t['FOCAFOFF'], 2*focusvaluerange)
+    plt.legend()
+    #set_ylim(t['FOCAFOFF'], 5*focusvaluerange)
 
     # no wlook how hard autofocus has to work to compenssate for temp & ZD
     # compensation should be noise around constant offset value for good
