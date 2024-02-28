@@ -66,7 +66,7 @@ def createRequestsForStar_scheduler(context):
                                   'slit': context.slit
                               },
                               'extra_params': {
-                                  'defocus': min(5, context.defocus),
+                                  'defocus': context.defocus,
                               }
                           }]
                           }
