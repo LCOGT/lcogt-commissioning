@@ -124,7 +124,7 @@ def get_focusStackData(args):
     log.info(f"Selecting after date: {bestaftertime}")
 
     query = f'SITEID:{site} AND ENCID:{enc} AND TELID:{tel} AND OBJECT:auto_focus' \
-            f' AND FOCOBOFF:0 AND RLEVEL:0 AND OBSTYPE:EXPOSE AND FILTER:rp '\
+            f' AND FOCOBOFF:0 AND RLEVEL:0 AND OBSTYPE:EXPOSE AND FILTER:rp' \
             f' AND DATE-OBS:[{bestaftertime.strftime("%Y-%m-%dT%H:%M:%S")} TO {args.before.strftime("%Y-%m-%dT%H:%M:%S")}]'
 
 
@@ -303,15 +303,17 @@ def analysecamera(args, t=None, ):
 
     plt.subplot(5, 1, 3)
     # Time line plot - history of autofocus corrections
+    plt.plot (t['DATE-OBS'], t['ACTFOCUS'], '.',label="Actual Focus")
     plt.plot (t['DATE-OBS'], t['FOCAFOFF'], '.', label="AUTOFOCUS Correction")
-    plt.plot (t['DATE-OBS'], t['FOCTELZP'] + t['FOCAFOFF'], '.',label="AUTOFOCUS + Foc Default")
+
     plt.xlabel('DATE-OBS')
     plt.ylabel('AUTO FOCUS TERM [mm]')
     plt.title("History of AF corrections")
     plt.setp(plt.gca().xaxis.get_minorticklabels(), rotation=25)
     plt.setp(plt.gca().xaxis.get_majorticklabels(), rotation=25)
     plt.legend()
-    #set_ylim(t['FOCAFOFF'], 5*focusvaluerange)
+    print (t['FOCAFOFF'])
+    set_ylim(t['FOCAFOFF'], 3*focusvaluerange)
 
     # no wlook how hard autofocus has to work to compenssate for temp & ZD
     # compensation should be noise around constant offset value for good
