@@ -66,9 +66,9 @@ def createRequestsForStar_scheduler(context):
                                   'slit': context.slit
                               },
                               'extra_params': {
-                                  'defocus': context.defocus,
+                                  'defocus': defocus,
                               }
-                          }]
+                          } for defocus in context.defocus]
                           }
 
     requests['configurations'].append (configuration)
@@ -95,7 +95,7 @@ def parseCommandLine():
     parser.add_argument('--exp-cnt', type=int, dest="expcnt", default=1)
     parser.add_argument('--exptime', type=float, default=120)
     parser.add_argument('--slit', type=str, default="slit_1.2as", choices=['slit_1.2as', 'slit_2.0as', 'slit_6.0as'])
-    parser.add_argument('--defocus', type=float, default=0.0, help="Amount to defocus star.")
+    parser.add_argument('--defocus', type=float, nargs='+', default=[0.0], help="Amount to defocus star.")
     parser.add_argument('--start', default=None,
                         help="When to start Floyds observation. If not given, defaults to \"NOW\"")
     parser.add_argument('--user', default='daniel_harbeck', help="Which user name to use for submission")
