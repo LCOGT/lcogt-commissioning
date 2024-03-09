@@ -17,6 +17,8 @@ TIMINGRUNS=1
 _sqrt2pi = math.sqrt(2 * math.pi)
 
 
+
+
 def np_gaussian(x, A, x0, sigma):
     """
      x vector of values
