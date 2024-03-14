@@ -89,6 +89,7 @@ def main():
         plt.xlim([350,610])
         plt.legend()
         plt.savefig(f"temp/pixelhistogram_{noise:6.3f}_{x}_{y}.png", dpi=150, bbox_inches="tight")
+        np.savetxt (f"temp/pixeldist_{noise:6.3f}_{x}_{y}.txt" , minsinglepixel.flatten())
         plt.close()
 
 
@@ -107,6 +108,9 @@ def main():
     maxsinglepixel = imagedata[:,maxy,maxx]
     _ = plt.hist(maxsinglepixel.flatten(),  bins=50, density = True, label=f"maximum noise {np.max(stdimage)} @ {maxx}/{maxy}")
     np.savetxt ("maxdistr.txt" , maxsinglepixel.flatten())
+
+    dualpixl = imagedata[:,155,229]
+    np.savetxt ("bimodal.txt" , dualpixl.flatten())
 
     maxsinglepixel = imagedata[:,maxy+1,maxx]
     np.savetxt ("maxdistrp1.txt" , maxsinglepixel)
