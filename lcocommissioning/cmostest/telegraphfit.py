@@ -5,14 +5,18 @@ import scipy.optimize
 from scipy.optimize import curve_fit
 import datetime
 import torch
+from matplotlib import colormaps
+plt.style.use("ggplot")
 
-"""
 
-"""
+
+
 
 TIMINGRUNS=1
 
 _sqrt2pi = math.sqrt(2 * math.pi)
+
+
 
 
 def np_gaussian(x, A, x0, sigma):
@@ -115,22 +119,19 @@ def fitbinneddata (data, numbins=20):
         print("Fitting failed", e)
     return popt
 
-def fitandplot_binneddata(data, label, numbins=15):
+def fitandplot_binneddata(data, label, numbins=15, color = 'black',  fitcolor='black', legend=None):
     """ Derive RTS paramters for a given pixel based on a sqeuince of readouts. This is based on fitting gaussians to a binned data sample
         Returns a popt set of coefficients .
     """
     popt = fitbinneddata(data, numbins)
+    counts, bins = np.histogram (data, bins=numbins)
 
-    bins = np.linspace(np.min(data), np.max(data), numbins)
-    histo1, bins1 = np.histogram(data, bins=bins, )
-    histo1 = histo1 / np.max(histo1)
-    binscenters = np.array([0.5 * (bins1[i] + bins1[i + 1]) for i in range(len(bins1) - 1)])
-
-    plt.hist(binscenters, len(binscenters), weights=histo1, label=f"data {label}")
+    counts = counts / np.max (counts)
+    plt.hist(bins[:-1], bins, weights=counts, color=color, label=legend)
 
     if popt is not None:
         xspace = np.linspace(np.min(data) - 20, np.max(data) + 20, 100)
-        plt.plot(xspace, np_tripple_gaussian_function(xspace, *popt),
+        plt.plot(xspace, np_tripple_gaussian_function(xspace, *popt), color=fitcolor, linewidth=2,
                  label=f"Fit: {popt[0]: 4.2f} {popt[1]: 4.2f} {popt[2]: 7.1f} "
                        f"{popt[3]:> 4.1f} {popt[4]:> 8.1f}")
     return popt
@@ -141,12 +142,15 @@ def main():
 
     data = readdistribution('maxdistr.txt')
 
-    popt = fitandplot_binneddata(data, "Worst case")
+    popt = fitandplot_binneddata(data, "Worst case", numbins=30, color='lightgreen', fitcolor='green', legend="worst pixel")
     print (f"worst case fit {popt}")
     data = readdistribution('mindistr.txt')
-    p_best = fitandplot_binneddata(data, "Best case")
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
-    plt.savefig("distributionfit.png", bbox_inches="tight")
+    p_best = fitandplot_binneddata(data, "Best case", numbins=10, color='yellow', fitcolor='darkblue', legend="best pixel")
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15))
+    plt.title ("QHY600 best & worst pixel")
+    plt.xlabel ("Signal [ADU]")
+    plt.savefig("distributionfit.png", bbox_inches="tight", dpi=150)
+
     plt.close()
 
     # data = readdistribution('exampledata/mindistr.txt')
@@ -163,7 +167,7 @@ def main():
         res=findditributionparamters(data, popt)
     end = datetime.datetime.utcnow()
     print(f"Likelihood fit:\n\t{res.success}\t{res.x}")
-    print(f"Timing for likelyhodd fit with knowing the answer : : {(end - start) / TIMINGRUNS}")
+    print(f"Timing for likelyhood fit with knowing the answer : : {(end - start) / TIMINGRUNS}")
 
 
     start = datetime.datetime.utcnow()
@@ -171,7 +175,7 @@ def main():
         res=findditributionparamters(data, [1,0.5,np.median(data),5,(np.max(data)-np.min(data))/2.])
     end = datetime.datetime.utcnow()
     print(f"Likelihood fit:\n\t{res.success}\t{res.x}")
-    print(f"Timing for likelyhodd fit without knowing the answer : : {(end - start) / TIMINGRUNS}")
+    print(f"Timing for likelyhoud fit without knowing the answer : : {(end - start) / TIMINGRUNS}")
 
     data = readdistribution('maxdistr.txt')
 
@@ -181,20 +185,30 @@ def main():
     mlh = [res.x[0] for res in mlhres]
     plt.figure()
     plt.plot(x, data, '.')
-    plt.plot(x, means, label="Mean of first N")
+    plt.plot(x, means, label="Mean of first N", color='blue')
+    plt.ylabel("Pixel value [ADU]")
+    plt.xlabel ("Image number")
+    plt.title ("Bias stacking")
     plt.hlines(np.mean(data), xmin=0, xmax=len(data), color='black')
-    plt.plot(x, mlh, label="maximum likelihood fit")
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
+    plt.plot(x, mlh,  color='aqua', linewidth=5, alpha=0.3)
+    plt.plot(x, mlh,  color='aqua', linewidth=3, alpha=0.5)
+    plt.plot(x, mlh, label="maximum likelihood fit", color='aqua', linewidth=1, alpha = 0.95)
+    plt.legend(loc='upper center', )#bbox_to_anchor=(0.5, -0.15))
     plt.savefig("meanvsmle.png", bbox_inches="tight", dpi=300)
 
     plt.figure()
+    plt.ylabel("Pixel value [ADU]")
+    plt.xlabel ("Image number")
     plt.plot(x, data, '.')
-    plt.plot(x, means, label="Mean of first N")
+    plt.plot(x, means, label="Mean of first N", color='blue')
     plt.hlines(np.mean(data), xmin=0, xmax=len(data), color='black')
-    plt.plot(x, mlh, label="maximum likelihood fit")
-    plt.ylim([np.mean(data) - 5, np.mean(data) + 5])
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05))
+    plt.plot(x, mlh, label="maximum likelihood fit", color='aqua')
+
+    plt.ylim([np.mean(data) - 25, np.mean(data) + 25])
+    plt.legend(loc='upper center')#, bbox_to_anchor=(0.5, -0.15))
+
     plt.savefig("meanvsmle_zoom.png", bbox_inches="tight", dpi=300)
+
     plt.close()
 
     _data = data[0:]

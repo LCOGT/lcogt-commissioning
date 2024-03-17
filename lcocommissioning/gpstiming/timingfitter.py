@@ -45,7 +45,7 @@ def do_gpsfitting (fractime, lightlevel, std, x,y, outpng):
     (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime, lightlevel, bounds=bounds, sigma=std)
 
     delta = np.abs (lightlevel - rampfunction(fractime, paramset[0], amplitude = paramset[1], bias = paramset[2]))
-    good = delta < np.std (delta) * 3
+    good = delta < np.std (delta) * 2
     (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime[good], lightlevel[good], bounds=bounds, sigma=std[good])
     perr = np.sqrt(np.diag(istat))
     if outpng is not None:
@@ -161,10 +161,11 @@ def processfits(fitsname, makepng=False, title=""):
 
     fit =np.polyfit (row, meandt, 1)
     fit = np.poly1d (fit)
-    residual = meandt -fit (row)
-    good = residual < 3 * np.std (residual)
-    fit = np.polyfit (row[good], meandt[good], 1)
-    fit = np.poly1d (fit)
+    for i in range(3):
+        residual =  (meandt -fit (row))
+        good = np.abs(residual) < 2 * np.std (residual)
+        fit = np.polyfit (row[good], meandt[good], 1)
+        fit = np.poly1d (fit)
 
     plt.plot (row, meandt,'.')
     plt.plot (row, fit(row), label=fit)
@@ -176,7 +177,7 @@ def processfits(fitsname, makepng=False, title=""):
 
 
     plt.figure()
-    plt.plot (row,residual, '.')
+    plt.plot (row[:-2],residual[:-2], '.')
     plt.title (title)
     plt.xlabel ('Row number')
     plt.ylabel ('Timing residual from fir')
