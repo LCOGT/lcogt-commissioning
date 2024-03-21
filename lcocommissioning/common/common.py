@@ -56,7 +56,7 @@ lco_muscat_instruments = ['mc03']
 lco_muscat_readmodes = ['MUSCAT_FAST', 'MUSCAT_SLOW']
 
 goodXTalkTargets = ['auto', '30Psc', 'HD30562', '15 Sex',   '51Hya', 'Zet Boo', '9Peg', '91 Aqr',   ]
-goodNRESFluxTargets = ['auto', 'HR9087', 'HR1544', 'HR4468', 'HD93521', 'HR3454', 'HR5501', 'HR7596']
+goodNRESFluxTargets = ['auto', 'HR9087', 'HR1544', 'HR4468', 'HD93521', 'HR3454', 'HR5501', 'HR7596',  'HD60753' ]
 goodFloydsFluxStandards = ['auto', 'HZ 43', 'GD 71', 'BD+284211', 'HZ 44', 'L745-46A', 'Feige 110', 'EGGR274', 'EG21']
 
 # list of proper motions for some stars:
@@ -76,8 +76,7 @@ listofpm = {'HR9087'  : [18.844,    -9.700],
             'Feige 110': [ 	-8.533, -0.592 ],
             'EG21': [ 	39.668, -103.237],
             'EGGR274' : [ 	77.398, 0.386 ],
-
-
+            'HD60753' : [-2.897,5.617 ],
 
           }
 
