@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 import scipy.optimize
 from scipy.optimize import curve_fit
 import datetime
+import re
 import torch
 from matplotlib import colormaps
 plt.style.use("ggplot")
+plt.rcParams['figure.figsize'] = [10, 5]
 
 TIMINGRUNS=1
 
@@ -141,19 +143,32 @@ def fitandplot_binneddata(data, label, numbins=15, color = 'black',  fitcolor='b
     return popt
 
 
+p = re.compile ("pixeldist_(\d*\.?\d*)_(\d*)_(\d*).txt")
 def analyseandplotdata(bestvec, probevec, name=None):
+
+    pixel_x = None
+    pixel_y = None
+    pixel_noise = None
+    if name is not None:
+        m = p.match (name)
+        pixel_noise = m.group(1)
+        pixel_x = m.group(2)
+        pixel_y = m.group(3)
+
+
 
     plt.figure()
 
-    popt_probe = fitandplot_binneddata(probevec, "Worst case", numbins=30, color='lightgreen', fitcolor='green', legend="worst pixel")
+    popt_probe = fitandplot_binneddata(probevec, "Worst case", numbins=30, color='lightgreen', fitcolor='green', legend=f"Pixel Noise {pixel_noise}")
     p_best = fitandplot_binneddata(minvec, "Best case", numbins=10, color='yellow', fitcolor='darkblue', legend="best pixel")
     print (f"worst case fit {popt_probe}")
 
     if (popt_probe) is None:
         print ("Cannot fit", name)
         return
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15))
-    plt.title (f"QHY600 best & {name}")
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2)
+
+    plt.title (f"QHY600 pixel @ {pixel_x}/ {pixel_y} ")
     plt.xlabel ("Signal [ADU]")
     plt.savefig(f"temp/distributionfit_{name}.png", bbox_inches="tight", dpi=150)
     plt.close()
@@ -178,11 +193,12 @@ def analyseandplotdata(bestvec, probevec, name=None):
     plt.plot(x, medians, label="Median of first N", color='red')
     plt.ylabel("Pixel value [ADU]")
     plt.xlabel ("Image number")
-    plt.title ("Bias stacking")
+    plt.title (f"Bias stacking @ {pixel_x}/{pixel_y}")
     plt.plot(x, mlh,  color='aqua', linewidth=5, alpha=0.3)
     plt.plot(x, mlh,  color='aqua', linewidth=3, alpha=0.5)
     plt.plot(x, mlh, label="maximum likelihood fit", color='aqua', linewidth=1, alpha = 0.95)
-    plt.legend(loc='upper center', )#bbox_to_anchor=(0.5, -0.15))
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2)
+
     plt.savefig(f"temp/meanvsmle{name}.png", bbox_inches="tight", dpi=150)
 
 
@@ -191,7 +207,7 @@ if __name__ == '__main__':
     minvec = readdistribution('mindistr.txt')
 
     listofdata = glob.glob('temp/*.txt')
-    for f in listofdata:
+    for f in listofdata[0:]:
 
         probevec = readdistribution(f)
         analyseandplotdata(minvec,probevec=probevec, name=os.path.basename(f) )

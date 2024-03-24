@@ -3,7 +3,7 @@ import sys
 import astropy.io.fits as fits
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.stats
+from  scipy import stats
 
 ''' Derive per pixel staistics: 
    output image of mean value per pixel
@@ -27,7 +27,7 @@ def main():
     inputfiles = sys.argv[1:]
     print ("Reading in all the images")
     imagedata =  np.asarray([create_memmap(inputfile) for inputfile in inputfiles])
-    print (imagedata.shape)
+    print (f"input data shape: {imagedata.shape}")
 
 
     # look at temporal values: is the illumination constant?
@@ -47,7 +47,7 @@ def main():
     print (mean_image.shape)
     plt.figure()
     median = np.median (mean_image)
-    std = scipy.stats.median_abs_deviation(mean_image, axis=None)
+    std = stats.median_abs_deviation(mean_image, axis=None)
     plt.imshow (mean_image, clim=[median - 2 * std, median + 2*std])
     plt.colorbar()
     plt.title ("Mean stacked image")
@@ -57,12 +57,9 @@ def main():
     print ("Making an image of of the noise distribution")
     stdimage = np.std (imagedata, axis=0)
 
-
-
-
     plt.figure()
     median = np.median (stdimage)
-    std = scipy.stats.median_abs_deviation(stdimage, axis=None)
+    std = stats.median_abs_deviation(stdimage, axis=None)
     plt.imshow (stdimage, clim=[median - 3*std, median+3*std])
     plt.colorbar()
     plt.title ("By pixel standard deviation")
@@ -71,7 +68,7 @@ def main():
 
 
     stdimage_flattened = stdimage.flatten();
-    idx_1d = stdimage_flattened.argsort()[-500:]
+    idx_1d = stdimage_flattened.argsort()[-5:]
 
     # convert the idx_1d back into indices arrays for each dimension
     x_idx, y_idx = np.unravel_index(idx_1d, stdimage.shape)
@@ -126,13 +123,21 @@ def main():
 
     print ("Looking at noise histogram distribution in image.")
     plt.figure()
-    _ = plt.hist(stdimage.flatten(), density = True, bins=100, range=[1,50])
+    flattenedimage = stdimage.flatten()
+    typicalnoise = stats.mode (flattenedimage)[0][0]
+
+    _ = plt.hist(flattenedimage, density = True, bins=80, range=[0,80])
     plt.title ("Distribution of per pixel noise")
     plt.xlabel("Per pixel rms noise [ADU]")
     plt.ylabel("Density")
-    plt.vlines(median,0,np.max(_[0]), color='red')
+    plt.vlines(typicalnoise,0,np.max(_[0]), color='yellow', label=f"Mode: {typicalnoise:.2f} ADU")
+    num = np.sum (flattenedimage[flattenedimage > 3*typicalnoise])
+    all =  len (flattenedimage)
+    print (f"Pixels >  {3*typicalnoise:.2f} ADU readnoise: {num} out of {all}. This is {num*100./all} %")
     plt.yscale('log')
+    plt.legend()
     plt.savefig("noisehistogram.png", dpi=150, bbox_inches="tight")
+
     plt.close()
 
 
