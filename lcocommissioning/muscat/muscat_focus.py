@@ -9,7 +9,8 @@ import numpy as np
 from astropy.io import fits
 from astropy.io.fits import ImageHDU, CompImageHDU
 from lcocommissioning.common.SourceCatalogProvider import SEPSourceCatalogProvider
-from lcocommissioning.common.lco_archive_utilities import get_frames_from_request, download_from_archive
+from lcocommissioning.common.lco_archive_utilities import get_frames_from_request, download_from_archive, \
+    get_muscat_focus_requesetids
 from lcocommissioning.common.muscatfocusdb_orm import muscatfocusdb, MuscatFocusMeasurement
 from scipy import optimize
 
@@ -102,6 +103,7 @@ def getImageData(imagename, minarea=20, deblend=0.5, archive=False):
     deltaFocus = None
     pixelscale = None
     foctemp = None
+    dateobs = None
     for ii in range(len(hdul)):
         if FOCDMD in hdul[ii].header:
             deltaFocus = hdul[ii].header[FOCDMD]
@@ -109,6 +111,8 @@ def getImageData(imagename, minarea=20, deblend=0.5, archive=False):
             pixelscale = hdul[ii].header['PIXSCALE']
         if 'FOCTEMP' in hdul[ii].header:
             foctemp = hdul[ii].header['FOCTEMP']
+        if 'DATE-OBS' in hdul[ii].header:
+            dateobs = hdul[ii].header['DATE-OBS']
 
     _log.info (f"Delta Focus:  {deltaFocus}")
     catalog = SEPSourceCatalogProvider(refineWCSViaLCO=False)
@@ -157,7 +161,7 @@ def getImageData(imagename, minarea=20, deblend=0.5, archive=False):
 
 
 
-    return deltaFocus, medianfwhm, mediantheta, medianell, foctemp
+    return deltaFocus, medianfwhm, mediantheta, medianell, foctemp, dateobs
 
 
 def sort_input_images (inputlist):
@@ -180,7 +184,7 @@ def sort_input_images (inputlist):
 
 def parseCommandLine():
     parser = argparse.ArgumentParser(
-        description='Do a simultanesous focus fit of Muscat ep cameras f')
+        description='Do a simultaneous focus fit of Muscat ep cameras f')
 
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -230,7 +234,7 @@ def get_focus_measurements(args, inputimagedict):
         measurementlist[camera] = {'focuslist': [], 'fwhmlist': []}
 
         for image in inputimagedict[camera]:
-            focus, fwhm, theta, ell, foctemp = getImageData(image, minarea=5, deblend=0.5, archive=args.requestid is not None)
+            focus, fwhm, theta, ell, foctemp, dateobs  = getImageData(image, minarea=5, deblend=0.5, archive=(args.requestid is not None) or (args.crawl_after is not None))
             measurementlist[camera]['focuslist'].append(focus)
             measurementlist[camera]['fwhmlist'].append(fwhm)
 
@@ -243,34 +247,72 @@ def get_focus_measurements(args, inputimagedict):
         measurementlist[camera]['exponential_p'] = exponential_p
         measurementlist[camera]['exponential_rms'] = exponential_p
 
-    return measurementlist, foctemp
+    return measurementlist, foctemp, dateobs
 
 def get_focus_measurements_requestid (requestid, args):
     inputimagedict = get_auto_focus_frames(requestid)
-    measurementlist, foctemp = get_focus_measurements(args, inputimagedict)
-    return measurementlist, foctemp
+    measurementlist, foctemp, dateobs  = get_focus_measurements(args, inputimagedict)
+    return measurementlist, foctemp, dateobs
 
 def get_focusmeasurements_filelist(filelist, args):
     inputimagedict = sort_input_images(filelist)
-    measurementlist, foctemp = get_focus_measurements(args, inputimagedict)
-    return measurementlist, foctemp
+    measurementlist, foctemp, dateobs  = get_focus_measurements(args, inputimagedict)
+    return measurementlist, foctemp, dateobs
 
+
+def  process_single_requestid (requestid, args):
+    measurementlist, foctemp, dateobs  = get_focus_measurements_requestid(requestid, args)
+    camera_g = 'ep06' if args.muscat=='mc04' else 'ep04'
+    camera_r = 'ep07'  if args.muscat=='mc04' else 'ep02'
+    camera_i = 'ep08'  if args.muscat=='mc04' else 'ep03'
+    camera_z = 'ep09'  if args.muscat=='mc04' else 'ep05'
+
+    _log.info (f"Measureemnt results: {measurementlist}")
+    newitem = MuscatFocusMeasurement(requestid=int (args.requestid),
+                                     muscat = str (args.muscat),
+                                     dateobs=str(dateobs),
+                                     temperature = float(foctemp),
+                                     camera_g = camera_g,
+                                     focus_g  = float(measurementlist[camera_g]['exponential_p'][1]),
+                                     seeing_g = float(measurementlist[camera_g]['exponential_p'][0]),
+                                     error_g  = float(measurementlist[camera_g]['exponential_rms'][1]),
+
+                                     camera_r = camera_r,
+                                     focus_r  = float(measurementlist[camera_r]['exponential_p'][1]),
+                                     seeing_r = float(measurementlist[camera_r]['exponential_p'][0]),
+                                     error_r  = float(measurementlist[camera_r]['exponential_rms'][1]),
+
+                                     camera_i = camera_i,
+                                     focus_i  = float(measurementlist[camera_i]['exponential_p'][1]),
+                                     seeing_i = float(measurementlist[camera_i]['exponential_p'][0]),
+                                     error_i  = float(measurementlist[camera_i]['exponential_rms'][1]),
+
+                                     camera_z = camera_z,
+                                     focus_z  = float(measurementlist[camera_z]['exponential_p'][1]),
+                                     seeing_z = float(measurementlist[camera_z]['exponential_p'][0]),
+                                     error_z  = float(measurementlist[camera_z]['exponential_rms'][1]),
+                                     )
+    _database.addMeasurement(newitem)
+    if not args.noplot:
+        plot_focuscurve(measurementlist, args)
 def main():
     args = parseCommandLine()
-
+    args.muscat = 'mc04'
     if (args.files):
-        measurementlist, foctemp = get_focusmeasurements_filelist(args.files, args)
+        measurementlist, foctemp, dateobs = get_focusmeasurements_filelist(args.files, args)
+        if not args.noplot:
+            plot_focuscurve(measurementlist, args)
     if args.requestid:
-        measurementlist, foctemp = get_focus_measurements_requestid(args.requestid, args)
-        newitem = MuscatFocusMeasurement(requestid=args.requestid,
-                                         muscat = 'mc04',
-                                         temperature = foctemp)
-        _database.addMeasurement(newitem)
-    print (measurementlist)
-    if not args.noplot:
+        process_single_requestid(args.requestid, args)
 
-        plot_focuscurve(measurementlist, args)
-    _log.info ("All done")
+
+    if args.crawl_after:
+        requestsids = get_muscat_focus_requesetids(args.muscat)
+        for requestid in requestsids:
+            args.requestid = requestid
+            process_single_requestid(requestid, args)
+
+
 
 
 def plot_focuscurve(measurementlist, args):
