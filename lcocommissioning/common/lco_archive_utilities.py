@@ -8,12 +8,10 @@ import numpy as np
 import requests
 from astropy.io import fits
 from astropy.table import Table
+from opensearch_dsl import Search
+from opensearchpy import OpenSearch
 
 from lcocommissioning.common.common import lco_site_lonlat
-from opensearchpy import OpenSearch
-from opensearch_dsl import Search
-
-import json
 
 log = logging.getLogger(__name__)
 logging.getLogger('opensearch').setLevel(logging.WARNING)
@@ -153,6 +151,28 @@ def get_frames_for_noisegainanalysis(dayobs, site=None, cameratype=None, camera=
     return t
 
 
+def get_muscat_focus_requesetids(muscat, before=None, after=None, opensearch_url='https://opensearch.lco.global'):
+    log.debug("Starting opensearch query for Muscat focus requests")
+
+    query_filters = [{'INSTRUME': 'ep07' if muscat == 'mc04' else 'ep02'},
+                     {'OBJECT':'auto_focus'},
+                     {'OBSTYPE': 'EXPOSE'},
+                     ]
+    range_filters = []
+    terms_filters = []
+    prefix_filters = []
+
+    queries = []
+    records = make_opensearch('fitsheaders', query_filters, queries, exclusion_filters=None,
+                              opensearch_url=opensearch_url,
+                              range_filters=range_filters, prefix_filters=prefix_filters,
+                              terms_filters=terms_filters).scan()
+    records_sanitized = [int(record['REQNUM']) if record['REQNUM'] is not None else 0  for record in records]
+    records_sanitized = np.unique(records_sanitized)
+    records_sanitized = records_sanitized[ records_sanitized > 0]
+    return records_sanitized
+
+
 def filename_to_archivepath_dict(filenametable, rootpath=ARCHIVE_ROOT):
     ''' Return a dictionary with camera -> list of FileIO-able path of imagers from an elastic search result.
         We are still married to /archive file names here - because reasons. Long term we should go away from that.
@@ -190,6 +210,7 @@ def get_auto_focus_frames(requestid):
 
     return focusimagelist
 
+
 def download_from_archive(frameid):
     """
     Download a file from the LCO archive by frame id.
@@ -216,13 +237,15 @@ def download_from_archive(frameid):
 if __name__ == '__main__':
 
     camera = 'fa15'
-    dates = ArchiveDiskCrawler.get_last_n_days(20)
+    dates = ArchiveDiskCrawler.get_last_n_days(1)
 
     for dayobs in dates:
         listofframes = get_frames_for_noisegainanalysis(dayobs, cameratype='fa')
         filelist = filename_to_archivepath_dict(listofframes)
         print("{} {} ".format(dayobs, filelist.keys()))
 
+    reqids = get_muscat_focus_requesetids('mc04')
+    print (reqids)
     # c = ArchiveCrawler()
     # for dayobs in dates:
     #     listofframes = c.findfiles_for_camera_dates("/archive/engineering/lsc/{}".format(camera), dayobs, 'raw', "*[xbf]00.fits*")
