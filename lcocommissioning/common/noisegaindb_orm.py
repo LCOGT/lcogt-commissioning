@@ -1,23 +1,18 @@
 import logging
 import sys
-import datetime
 from copy import deepcopy
 
-import numpy as np
-import sqlalchemy
-from astropy.table import Table
 import astropy.time as astt
-import math
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy_utils import database_exists, create_database
-from sqlalchemy.ext.declarative import declarative_base
+import numpy as np
+from astropy.table import Table
 from sqlalchemy import Column, Integer, String, Float, create_engine, or_
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 assert sys.version_info >= (3, 5)
 _logger = logging.getLogger(__name__)
 
 Base = declarative_base()
-
 
 class NoiseGainMeasurement(Base):
     __tablename__ = 'noisegain'
@@ -98,9 +93,10 @@ class noisegaindb():
             if not (None in readmode):
                 q = q.filter(NoiseGainMeasurement.readmode.in_(readmode))
             else:
-                newmodearray =deepcopy(readmode)
+                newmodearray = deepcopy(readmode)
                 newmodearray.remove(None)
-                q = q.filter(or_(NoiseGainMeasurement.readmode.in_(newmodearray), NoiseGainMeasurement.readmode.is_(None)))
+                q = q.filter(
+                    or_(NoiseGainMeasurement.readmode.in_(newmodearray), NoiseGainMeasurement.readmode.is_(None)))
 
         if filters is not None:
             q = q.filter(NoiseGainMeasurement.filter.in_(filters))

@@ -1,22 +1,19 @@
 import argparse
+import datetime as dt
 import logging
-import math
 import os
-import sys
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits
 from astropy.io.fits import ImageHDU, CompImageHDU
-from scipy import optimize
-import re
-
-from lcocommissioning.common.lco_archive_utilities import get_frames_from_request, download_from_archive
 from lcocommissioning.common.SourceCatalogProvider import SEPSourceCatalogProvider
+from lcocommissioning.common.lco_archive_utilities import get_frames_from_request, download_from_archive
+from lcocommissioning.common.muscatfocusdb_orm import muscatfocusdb, MuscatFocusMeasurement
+from scipy import optimize
 
-from matplotlib import rc
-
-
+_database = muscatfocusdb('sqlite:///muscatfocus.sqlite')
 _log = logging.getLogger(__name__)
 logging.getLogger('matplotlib.font_manager').disabled = True
 L1FWHM = "L1FWHM"
@@ -104,11 +101,14 @@ def getImageData(imagename, minarea=20, deblend=0.5, archive=False):
 
     deltaFocus = None
     pixelscale = None
+    foctemp = None
     for ii in range(len(hdul)):
         if FOCDMD in hdul[ii].header:
             deltaFocus = hdul[ii].header[FOCDMD]
         if 'PIXSCALE' in hdul[ii].header:
             pixelscale = hdul[ii].header['PIXSCALE']
+        if 'FOCTEMP' in hdul[ii].header:
+            foctemp = hdul[ii].header['FOCTEMP']
 
     _log.info (f"Delta Focus:  {deltaFocus}")
     catalog = SEPSourceCatalogProvider(refineWCSViaLCO=False)
@@ -157,7 +157,7 @@ def getImageData(imagename, minarea=20, deblend=0.5, archive=False):
 
 
 
-    return deltaFocus, medianfwhm, mediantheta, medianell
+    return deltaFocus, medianfwhm, mediantheta, medianell, foctemp
 
 
 def sort_input_images (inputlist):
@@ -187,10 +187,12 @@ def parseCommandLine():
 
     group.add_argument ('--files', type=str, nargs='+')
     group.add_argument ('--requestid', type=int, nargs='?')
+    group.add_argument ('--crawl-after', type=dt.datetime.fromisoformat, help="Consider data only after the given date, in ISO format (e.g., 2022-09-01 00:00:00")
 
     parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
-
+    parser.add_argument('--noplot', action='store_true',)
+    parser.add_argument('--before',  type=dt.datetime.fromisoformat, default=dt.datetime.utcnow().isoformat())
     args = parser.parse_args()
 
     logging.basicConfig(level=getattr(logging, args.log_level.upper()),
@@ -221,73 +223,94 @@ def get_auto_focus_frames(requestid):
                 focusimagedict[camera].append(imageinfo['id'])
 
     return focusimagedict
-def main():
-    args = parseCommandLine()
 
-    if (args.files):
-        inputimagedict = sort_input_images(args.files)
-    if args.requestid:
-        inputimagedict = get_auto_focus_frames(args.requestid)
-
+def get_focus_measurements(args, inputimagedict):
     measurementlist = {}
     for camera in inputimagedict:
         measurementlist[camera] = {'focuslist': [], 'fwhmlist': []}
 
         for image in inputimagedict[camera]:
+            focus, fwhm, theta, ell, foctemp = getImageData(image, minarea=5, deblend=0.5, archive=args.requestid is not None)
+            measurementlist[camera]['focuslist'].append(focus)
+            measurementlist[camera]['fwhmlist'].append(fwhm)
 
-            focus, fwhm, theta, ell = getImageData(image, minarea=5, deblend=0.5,archive = args.requestid is not None)
-            measurementlist[camera]['focuslist'].append (focus)
-            measurementlist[camera]['fwhmlist'].append (fwhm)
-
-        measurementlist[camera]['focuslist'] = np.asarray ( measurementlist[camera]['focuslist'])
+        measurementlist[camera]['focuslist'] = np.asarray(measurementlist[camera]['focuslist'])
         measurementlist[camera]['fwhmlist'] = np.asarray(measurementlist[camera]['fwhmlist'])
 
-        exponential_p, exponential_rms = focus_curve_fit( measurementlist[camera]['focuslist'],
-                                                          measurementlist[camera]['fwhmlist'], sqrtfit)
+        exponential_p, exponential_rms = focus_curve_fit(measurementlist[camera]['focuslist'],
+                                                         measurementlist[camera]['fwhmlist'], sqrtfit)
 
         measurementlist[camera]['exponential_p'] = exponential_p
         measurementlist[camera]['exponential_rms'] = exponential_p
 
+    return measurementlist, foctemp
+
+def get_focus_measurements_requestid (requestid, args):
+    inputimagedict = get_auto_focus_frames(requestid)
+    measurementlist, foctemp = get_focus_measurements(args, inputimagedict)
+    return measurementlist, foctemp
+
+def get_focusmeasurements_filelist(filelist, args):
+    inputimagedict = sort_input_images(filelist)
+    measurementlist, foctemp = get_focus_measurements(args, inputimagedict)
+    return measurementlist, foctemp
+
+def main():
+    args = parseCommandLine()
+
+    if (args.files):
+        measurementlist, foctemp = get_focusmeasurements_filelist(args.files, args)
+    if args.requestid:
+        measurementlist, foctemp = get_focus_measurements_requestid(args.requestid, args)
+        newitem = MuscatFocusMeasurement(requestid=args.requestid,
+                                         muscat = 'mc04',
+                                         temperature = foctemp)
+        _database.addMeasurement(newitem)
+    print (measurementlist)
+    if not args.noplot:
+
+        plot_focuscurve(measurementlist, args)
+    _log.info ("All done")
+
+
+def plot_focuscurve(measurementlist, args):
     plt.style.use('ggplot')
-
-
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
     plt.xlim([-3.6, 3.6])
     plt.ylim([0, 4])
-
     plt.xlabel("FOCUS Demand [mm foc plane]")
     plt.ylabel("FWHM ['']")
-
     plothandles = []
     bestfocus_yu = 0.1
-    colors = ['g','r','b','orange']
+    colors = ['g', 'r', 'b', 'orange']
     coloridx = 0
     for camera in measurementlist:
 
         try:
 
-            color = colors [coloridx % len(colors)]
-            coloridx = coloridx+1
+            color = colors[coloridx % len(colors)]
+            coloridx = coloridx + 1
             bestfocus = measurementlist[camera]['exponential_p'][1]
             bestfocus_error = measurementlist[camera]['exponential_rms'][1]
-            overplot_fit(sqrtfit,  measurementlist[camera]['exponential_p'], color=color)
-            plt1, = plt.plot(measurementlist[camera]['focuslist'], measurementlist[camera]['fwhmlist'], 'o', color=color, label=f"{camera} {bestfocus:6.2f}")
+            overplot_fit(sqrtfit, measurementlist[camera]['exponential_p'], color=color)
+            plt1, = plt.plot(measurementlist[camera]['focuslist'], measurementlist[camera]['fwhmlist'], 'o',
+                             color=color, label=f"{camera} {bestfocus:6.2f}")
 
-            plt.axvline (x = bestfocus, color=color)
-            plothandles.append (plt1)
-            print (f"Best focus for camera {camera}: {bestfocus:5.2f}")
-        except: _log.error ("Something bad")
-
-
+            plt.axvline(x=bestfocus, color=color)
+            plothandles.append(plt1)
+            print(f"Best focus for camera {camera}: {bestfocus:5.2f}")
+        except:
+            _log.error("Something bad")
     ax1.legend(handles=plothandles, loc="lower right", bbox_to_anchor=(1, -0.1),
                bbox_transform=fig.transFigure, ncol=4)
-
-
     plt.title(f'Muscat Focus ID {args.requestid if args.requestid is not None else ""}')
+    plt.savefig("{}".format(
+        f'muscat_focus_{args.requestid if args.requestid is not None else os.path.basename(args.files[0])}.png'),
+                bbox_inches="tight")
 
-    plt.savefig("{}".format(f'muscat_focus_{args.requestid if args.requestid is not None else os.path.basename(args.files[0])}.png'), bbox_inches="tight")
-    _log.info ("All done")
 
 if __name__ == '__main__':
     main()
+
+_database.close()
