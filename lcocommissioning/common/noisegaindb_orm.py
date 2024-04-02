@@ -64,7 +64,7 @@ class noisegaindb():
         self.session.close()
 
     def exists(self, name):
-        return self.session.query(NoiseGainMeasurement).filter_by(name==name).first()
+        return self.session.query(NoiseGainMeasurement).filter_by(name=name).first()
 
     def getCameras(self):
         q = self.session.query(NoiseGainMeasurement.camera).distinct()

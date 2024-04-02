@@ -61,9 +61,9 @@ class muscatfocusdb():
         _logger.debug("Closing data base session")
         self.session.close()
 
-    def exists(self, requestid):
-        entry =  self.session.query(MuscatFocusMeasurement).filter_by(requestid==requestid).first()
-        _logger.info (f"Entry query {requestid} returns {entry}")
+    def exists(self, request_id):
+        entry =  self.session.query(MuscatFocusMeasurement).filter_by(requestid=request_id).first()
+        _logger.info (f"Entry query {request_id} returns {entry}")
         return entry
 
     def addMeasurement(self, m, commit=True):
