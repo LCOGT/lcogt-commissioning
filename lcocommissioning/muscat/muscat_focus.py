@@ -261,16 +261,21 @@ def get_focusmeasurements_filelist(filelist, args):
 
 def  process_single_requestid (requestid, args):
     measurementlist, foctemp, dateobs  = get_focus_measurements_requestid(requestid, args)
+
     camera_g = 'ep06' if args.muscat=='mc04' else 'ep04'
     camera_r = 'ep07'  if args.muscat=='mc04' else 'ep02'
     camera_i = 'ep08'  if args.muscat=='mc04' else 'ep03'
     camera_z = 'ep09'  if args.muscat=='mc04' else 'ep05'
 
-    _log.info (f"Measureemnt results: {measurementlist}")
-    goodresult = measurementlist[camera_g]['exponential_p'] is not None
-    goodresult = goodresult and (measurementlist[camera_r]['exponential_p'] is not None)
-    goodresult = goodresult and (measurementlist[camera_i]['exponential_p'] is not None)
-    goodresult = goodresult and (measurementlist[camera_z]['exponential_p'] is not None)
+    _log.info (f"Measurement results: {measurementlist}")
+    goodresult = all (k in measurementlist for k in [camera_g,camera_r,camera_i,camera_z])
+    if goodresult:
+        goodresult = goodresult and (measurementlist[camera_g]['exponential_p'] is not None)
+        goodresult = goodresult and (measurementlist[camera_r]['exponential_p'] is not None)
+        goodresult = goodresult and (measurementlist[camera_i]['exponential_p'] is not None)
+        goodresult = goodresult and (measurementlist[camera_z]['exponential_p'] is not None)
+
+
 
     if goodresult:
         newitem = MuscatFocusMeasurement(requestid=int (args.requestid),
