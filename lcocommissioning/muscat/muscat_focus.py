@@ -268,9 +268,9 @@ def  process_single_requestid (requestid, args):
 
     _log.info (f"Measureemnt results: {measurementlist}")
     goodresult = measurementlist[camera_g]['exponential_p'] is not None
-    goodresult = goodresult & measurementlist[camera_r]['exponential_p'] is not None
-    goodresult = goodresult & measurementlist[camera_i]['exponential_p'] is not None
-    goodresult = goodresult & measurementlist[camera_z]['exponential_p'] is not None
+    goodresult = goodresult and (measurementlist[camera_r]['exponential_p'] is not None)
+    goodresult = goodresult and (measurementlist[camera_i]['exponential_p'] is not None)
+    goodresult = goodresult and (measurementlist[camera_z]['exponential_p'] is not None)
 
     if goodresult:
         newitem = MuscatFocusMeasurement(requestid=int (args.requestid),
