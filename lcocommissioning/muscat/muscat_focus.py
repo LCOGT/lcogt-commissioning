@@ -312,7 +312,7 @@ def main():
         for requestid in requestsids:
             _log.info (f" PROCESSING {requestid}")
             args.requestid = requestid
-            if not _database.exists(requestid):
+            if  _database.exists(requestid) is None:
                 process_single_requestid(requestid, args)
             else:
                 _log.info (f"Ommitting request file {requestid} since already processed.")
