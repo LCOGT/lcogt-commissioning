@@ -14,7 +14,6 @@ from lcocommissioning.common.lco_archive_utilities import get_frames_from_reques
 from lcocommissioning.common.muscatfocusdb_orm import muscatfocusdb, MuscatFocusMeasurement
 from scipy import optimize
 
-_database = muscatfocusdb('sqlite:///muscatfocus.sqlite')
 _log = logging.getLogger(__name__)
 logging.getLogger('matplotlib.font_manager').disabled = True
 L1FWHM = "L1FWHM"
@@ -303,6 +302,8 @@ def  process_single_requestid (requestid, args):
     _database.addMeasurement(newitem)
     if not args.noplot:
         plot_focuscurve(measurementlist, args)
+
+
 def main():
     args = parseCommandLine()
     args.muscat = 'mc04'
@@ -364,8 +365,9 @@ def plot_focuscurve(measurementlist, args):
         f'muscat_focus_{args.requestid if args.requestid is not None else os.path.basename(args.files[0])}.png'),
                 bbox_inches="tight")
 
-
+_database = muscatfocusdb('sqlite:///muscatfocus.sqlite')
 if __name__ == '__main__':
-    main()
 
-_database.close()
+
+    main()
+    _database.close()

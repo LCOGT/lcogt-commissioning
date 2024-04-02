@@ -7,6 +7,8 @@ logging.getLogger('matplotlib').setLevel(logging.FATAL)
 
 _database = muscatfocusdb('sqlite:///muscatfocus.sqlite')
 
+print ("entry exists: ",_database.exists(3350099))
+
 
 alldata =_database.getMeasurementsForMuscat('mc04')
 

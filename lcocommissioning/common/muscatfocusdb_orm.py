@@ -50,9 +50,6 @@ class muscatfocusdb():
     def __init__(self, fname):
         _logger.debug("Open data base file %s" % fname)
         self.engine = create_engine(fname, echo=False)
-        # This fails in AWS since user has no privilege to inspect databases.....
-        # if not database_exists(self.engine.url):
-        #    create_database(self.engine.url)
         MuscatFocusMeasurement.__table__.create(bind=self.engine, checkfirst=True)
         self.session = sessionmaker(bind=self.engine)()
 
@@ -62,7 +59,7 @@ class muscatfocusdb():
         self.session.close()
 
     def exists(self, request_id):
-        entry =  self.session.query(MuscatFocusMeasurement).filter_by(requestid=request_id).first()
+        entry =  self.session.query(MuscatFocusMeasurement).filter_by(requestid=int(request_id)).first()
         _logger.info (f"Entry query {request_id} returns {entry}")
         return entry
 
