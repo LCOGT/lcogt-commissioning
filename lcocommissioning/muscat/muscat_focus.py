@@ -197,6 +197,7 @@ def parseCommandLine():
                         help='Set the debug level')
     parser.add_argument('--noplot', action='store_true', )
     parser.add_argument('--before', type=dt.datetime.fromisoformat, default=dt.datetime.utcnow().isoformat())
+    parser.add_argument('--muscat', default='mc04', choices=['mc03','mc04'])
     args = parser.parse_args()
 
     logging.basicConfig(level=getattr(logging, args.log_level.upper()),
@@ -315,7 +316,7 @@ def process_single_requestid(requestid, args):
 
 def main():
     args = parseCommandLine()
-    args.muscat = 'mc04'
+
     if (args.files):
         measurementlist, foctemp, dateobs = get_focusmeasurements_filelist(args.files, args)
         if not args.noplot:
