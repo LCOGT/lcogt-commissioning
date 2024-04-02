@@ -308,7 +308,7 @@ def main():
 
     if args.crawl_after:
         requestsids = get_muscat_focus_requesetids(args.muscat)
-        _log.info(f"Got {len(requestsids)} auto focus entries".)
+        _log.info(f"Got {len(requestsids)} auto focus entries")
         for requestid in requestsids:
             _log.info (f" PROCESSING {requestid}")
             args.requestid = requestid
