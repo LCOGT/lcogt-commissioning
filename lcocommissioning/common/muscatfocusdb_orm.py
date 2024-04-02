@@ -65,6 +65,7 @@ class muscatfocusdb():
         entry =  self.session.query(MuscatFocusMeasurement).filter_by(requestid=requestid).first()
         _logger.info (f"Entry query {requestid} returns {entry}")
         return entry
+
     def addMeasurement(self, m, commit=True):
         existingEntry = self.exists(m.requestid)
         if (existingEntry):
@@ -96,7 +97,12 @@ class muscatfocusdb():
         _logger.info (t['dateobs'])
         t['dateobs'] = t['dateobs'].astype(str)
         t['dateobs'] = astt.Time(t['dateobs'], scale='utc', format=None).to_datetime()
-
+        t['temperature'] = t['temperature'].astype (float)
+        t['focus_g'] = t['focus_g'].astype (float)
+        t['focus_r'] = t['focus_r'].astype (float)
+        t['focus_i'] = t['focus_i'].astype (float)
+        t['focus_z'] = t['focus_z'].astype (float)
+        t['seeing_r'] = t['seeing_r'].astype (float)
         return t
 
 
