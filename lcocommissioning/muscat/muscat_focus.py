@@ -310,7 +310,8 @@ def main():
         requestsids = get_muscat_focus_requesetids(args.muscat)
         for requestid in requestsids:
             args.requestid = requestid
-            process_single_requestid(requestid, args)
+            if not _database.exists(requestid):
+                process_single_requestid(requestid, args)
 
 
 
