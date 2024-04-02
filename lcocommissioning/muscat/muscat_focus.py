@@ -268,7 +268,13 @@ def  process_single_requestid (requestid, args):
     camera_z = 'ep09'  if args.muscat=='mc04' else 'ep05'
 
     _log.info (f"Measureemnt results: {measurementlist}")
-    newitem = MuscatFocusMeasurement(requestid=int (args.requestid),
+    goodresult = measurementlist[camera_g]['exponential_p'] is not None
+    goodresult = goodresult & measurementlist[camera_r]['exponential_p'] is not None
+    goodresult = goodresult & measurementlist[camera_i]['exponential_p'] is not None
+    goodresult = goodresult & measurementlist[camera_z]['exponential_p'] is not None
+
+    if goodresult:
+        newitem = MuscatFocusMeasurement(requestid=int (args.requestid),
                                      muscat = str (args.muscat),
                                      dateobs=str(dateobs),
                                      temperature = float(foctemp),
@@ -292,6 +298,8 @@ def  process_single_requestid (requestid, args):
                                      seeing_z = float(measurementlist[camera_z]['exponential_p'][0]),
                                      error_z  = float(measurementlist[camera_z]['exponential_rms'][1]),
                                      )
+    else:
+        newitem = MuscatFocusMeasurement(requestid=int (args.requestid))
     _database.addMeasurement(newitem)
     if not args.noplot:
         plot_focuscurve(measurementlist, args)
