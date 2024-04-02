@@ -62,7 +62,7 @@ class muscatfocusdb():
         self.session.close()
 
     def exists(self, requestid):
-        entry =  self.session.query(MuscatFocusMeasurement).filter_by(requestid=requestid).first()
+        entry =  self.session.query(MuscatFocusMeasurement).filter_by(requestid==requestid).first()
         _logger.info (f"Entry query {requestid} returns {entry}")
         return entry
 
@@ -103,6 +103,7 @@ class muscatfocusdb():
         t['focus_i'] = t['focus_i'].astype (float)
         t['focus_z'] = t['focus_z'].astype (float)
         t['seeing_r'] = t['seeing_r'].astype (float)
+        t['requestid'] = t['requestid'].astype (int)
         return t
 
 
