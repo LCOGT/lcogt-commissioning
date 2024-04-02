@@ -312,6 +312,8 @@ def main():
             args.requestid = requestid
             if not _database.exists(requestid):
                 process_single_requestid(requestid, args)
+            else:
+                _log.info (f"Ommitting request file {requestid} since already processed.")
 
 
 
