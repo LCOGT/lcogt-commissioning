@@ -151,14 +151,17 @@ def get_frames_for_noisegainanalysis(dayobs, site=None, cameratype=None, camera=
     return t
 
 
-def get_muscat_focus_requesetids(muscat, before=None, after=None, opensearch_url='https://opensearch.lco.global'):
+def get_muscat_focus_request_ids(muscat, before=None, after=None, opensearch_url='https://opensearch.lco.global'):
     log.debug("Starting opensearch query for Muscat focus requests")
 
     query_filters = [{'INSTRUME': 'ep07' if muscat == 'mc04' else 'ep02'},
                      {'OBJECT':'auto_focus'},
                      {'OBSTYPE': 'EXPOSE'},
                      ]
-    range_filters = []
+    range_filters = [{'DATE-OBS' :  {
+        "gte": after,
+        "lte": before
+        } } ]
     terms_filters = []
     prefix_filters = []
 
@@ -244,7 +247,7 @@ if __name__ == '__main__':
         filelist = filename_to_archivepath_dict(listofframes)
         print("{} {} ".format(dayobs, filelist.keys()))
 
-    reqids = get_muscat_focus_requesetids('mc04')
+    reqids = get_muscat_focus_request_ids('mc04')
     print (reqids)
     # c = ArchiveCrawler()
     # for dayobs in dates:
