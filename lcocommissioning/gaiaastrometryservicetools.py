@@ -73,11 +73,12 @@ def astrometryServiceRefineWCSFromImage(imagepath, wcs=None):
     log.debug(imagepath)
     if wcs is None:
         fitsimage = fits.open(imagepath)
-        for hdu in fitsimage:
+        for hdu in fitsimage[1:]:
 
             try:
                 wcs = WCS(hdu.header)
                 fitsimage.close()
+                log.info(wcs)
                 continue
             except:
                 log.warning("NO RA/DEC found yet, trying next extension")
