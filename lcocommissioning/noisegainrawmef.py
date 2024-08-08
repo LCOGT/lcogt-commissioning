@@ -30,7 +30,7 @@ def findkeywordinhdul(hdulist, keyword):
     return None
 
 
-def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_frame", ignoretemp=False, useaws=False):
+def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_frame", ignoretemp=False, useaws=False, useoverscan=True):
     """ go through the list of input and sort files by bias and flat type.
     Find pairs of flats that are of the same exposure time / closest in illumination level."""
 
@@ -87,7 +87,7 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
             if (sortby == 'filterlevel'):
                 filter = findkeywordinhdul(hdu, "FILTER")
                 if (filter is not None) and ('b00' not in filecandidate['FILENAME']):
-                    image = Image(hdu, overscancorrect=True, alreadyopenedhdu=True)
+                    image = Image(hdu, overscancorrect=useoverscan, alreadyopenedhdu=True)
                     if image.data is None:
                         level = -1
                     else:
@@ -255,7 +255,7 @@ def do_noisegain_for_fileset(inputlist, database: noisegaindb, args, frameidtran
 
     _logger.info("Sifting through the input files and finding viable flat pair candidates")
     sortedinputlist = sortinputfitsfiles(inputlist, sortby=args.sortby, selectedreadmode=args.readmode,
-                                         ignoretemp=args.ignoretemp, useaws=args.useaws)
+                                         ignoretemp=args.ignoretemp, useaws=args.useaws, useoverscan=not args.ignoreov)
     _logger.info("Found {} viable sets for input. Starting noise gain calculation.".format(len(sortedinputlist)))
 
     bias1_fname = sortedinputlist['bias'][0]
@@ -364,6 +364,8 @@ def parseCommandLine():
                         help="Do not reprocess if data are already in database")
     parser.add_argument('--ignoretemp', action='store_true',
                         help="ignore if actual temperature differs from set point temperature. Reject by default.")
+    parser.add_argument('--ignoreov', action='store_true',
+                        help="ignore overscan definition")
 
     parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
