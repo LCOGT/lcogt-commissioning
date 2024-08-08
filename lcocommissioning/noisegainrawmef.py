@@ -121,7 +121,7 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
 
         for filename in filemetrics.keys():
             (filter, level) = filemetrics[filename]
-            if level < 10:
+            if level < 5:
                 _logger.info("rejecting image {}, level is to low".format(filename))
 
             if (filter not in tempsortedListofFiles.keys()):
@@ -155,13 +155,13 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
     return sortedlistofFiles
 
 
-def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, maxlinearity = 60000):
+def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, maxlinearity = 40000):
     _logger.debug("Plotting gain vs level")
     plt.figure()
     for ext in alllevels:
         gains = np.asarray(allgains[ext])
         levels = np.asarray(alllevels[ext])
-        statdata = gains[(levels > 1000) & (levels < maxlinearity) & (gains < 20)]
+        statdata = gains[(levels > 100) & (levels < maxlinearity) & (gains < 20)]
         bestgain = np.mean(statdata)
         for iter in range(2):
             if len(statdata >=3):
@@ -188,7 +188,7 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, max
         plt.loglog(alllevels[ext], allshotnoises[ext], '.', label="extension %s" % ext)
     plt.legend()
     plt.xlim([1, 65000])
-    plt.ylim([5, 300])
+    plt.ylim([0.5, 300])
     plt.xlabel("Exposure Level [ADU]")
     plt.ylabel("Measured Noise [ADU]")
     plt.savefig("ptc.png", bbox_inches="tight")

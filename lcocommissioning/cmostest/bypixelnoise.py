@@ -15,7 +15,7 @@ plt.style.use("ggplot")
 
 def create_memmap (fitsfile):
     fimage = fits.open(fitsfile)
-    data = np.copy(np.asarray(fimage['SCI'].data[0:,0:]))
+    data = np.copy(np.asarray(fimage['SCI'].data[-4096:,-4096:]))
     data = data #- np.median (data)
     del fimage[0].data
     fimage.close()
@@ -40,6 +40,9 @@ def main():
     plt.savefig("timeline.png", dpi=150)
     plt.close()
 
+    offset = np.mean (perimagemedian)
+    for ii in range (len (inputfiles)):
+        imagedata[ii] = imagedata[ii] - perimagemedian[ii] + offset
 
     # look at the mean image
     print ("Making a median stacked image")
@@ -52,6 +55,7 @@ def main():
     plt.colorbar()
     plt.title ("Mean stacked image")
     plt.savefig("mean_image.png", dpi=150)
+    del mean_image
     plt.close()
 
     print ("Making an image of of the noise distribution")
@@ -68,7 +72,7 @@ def main():
 
 
     stdimage_flattened = stdimage.flatten();
-    idx_1d = stdimage_flattened.argsort()[-5:]
+    idx_1d = stdimage_flattened.argsort()[-500:]
 
     # convert the idx_1d back into indices arrays for each dimension
     x_idx, y_idx = np.unravel_index(idx_1d, stdimage.shape)
@@ -79,14 +83,14 @@ def main():
         plt.figure()
         minsinglepixel = imagedata[:,x,y]
         noise = stdimage[x][y]
-        _ = plt.hist(minsinglepixel.flatten(),  bins=50, density = True, label=f"noise {noise} @ {x}/{y}")
+        _ = plt.hist(minsinglepixel.flatten(),  bins=50, density = False, label=f"noise {noise} @ {x}/{y}")
         plt.title ("Distribution of Single pixel values")
         plt.xlabel("Per pixel value [ADU]")
         plt.ylabel("Density")
-        plt.xlim([350,610])
+        #plt.xlim([350,610])
         plt.legend()
-        plt.savefig(f"temp/pixelhistogram_{noise:6.3f}_{x}_{y}.png", dpi=150, bbox_inches="tight")
-        np.savetxt (f"temp/pixeldist_{noise:6.3f}_{x}_{y}.txt" , minsinglepixel.flatten())
+        plt.savefig(f"temp/pixelhistogram_{noise:06.3f}_{x}_{y}.png", dpi=150, bbox_inches="tight")
+        np.savetxt (f"temp/pixeldist_{noise:06.3f}_{x}_{y}.txt" , minsinglepixel.flatten())
         plt.close()
 
 
