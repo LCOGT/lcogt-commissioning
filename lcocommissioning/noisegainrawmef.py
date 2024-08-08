@@ -92,7 +92,7 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
                         level = -1
                     else:
                         level = np.median(image.data[0][50:-50, 50:-50])
-                    _logger.debug("Input file metrics %s %s %s" % (filecandidate, filter, level))
+                    _logger.debug(f"Input file metrics {filecandidate} {filter} {level} {useoverscan}")
                     filemetrics[str(filecandidate['FILENAME'])] = (filter, level)
 
         hdu.close()
@@ -287,7 +287,7 @@ def do_noisegain_for_fileset(inputlist, database: noisegaindb, args, frameidtran
                     frameidfromname(flat_2_fname, frameidtranslationtable))
 
                 gains, levels, noises, shotnoises, level1s, level2s, exptimes = dosingleLevelGain(
-                    bias1, bias2, flat1, flat2, args)
+                    bias1, bias2, flat1, flat2, args, overscancorrect = not args.ignoreov)
 
                 # grabbing some meta data while we can
                 dateobs = findkeywordinhdul(flat1, 'DATE-OBS')
