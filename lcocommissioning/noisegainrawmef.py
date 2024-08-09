@@ -159,6 +159,7 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
             for knownlevel in tempsortedListofFiles[knownfilter].keys():
                 sortedlistofFiles["%s% 8f" % (knownfilter, knownlevel)] = tempsortedListofFiles[knownfilter][knownlevel]
 
+    _logger.debug (sortedlistofFiles)
     return sortedlistofFiles
 
 
@@ -302,20 +303,21 @@ def do_noisegain_for_fileset(inputlist, database: noisegaindb, args, frameidtran
         print("Bias1 id", bias1_fname, bias1_frameid)
         print("Bias2 id", bias2_fname, bias2_frameid)
 
-    bias1 = fits.open(sortedinputlist['bias'][0]) if not args.useaws else lco_archive_utilities.download_from_archive(
+    bias1 = fits.open(bias1_fname) if not args.useaws else lco_archive_utilities.download_from_archive(
         bias1_frameid)
-    bias2 = fits.open(sortedinputlist['bias'][1]) if not args.useaws else lco_archive_utilities.download_from_archive(
+    bias2 = fits.open(bias2_fname) if not args.useaws else lco_archive_utilities.download_from_archive(
         bias2_frameid)
 
     for pair_ii in sortedinputlist:
 
         if 'bias' not in pair_ii:
             if len(sortedinputlist[pair_ii]) == 2:
-                print("\nNoise / Gain measurement based on metric %s" % pair_ii)
-                print("===========================================")
-
                 flat_1_fname = sortedinputlist[pair_ii][0]
                 flat_2_fname = sortedinputlist[pair_ii][1]
+                print(f"\nNoise / Gain measurement based on metric {pair_ii}")
+                print(f" File names {flat_1_fname} {flat_2_fname}")
+                print("===========================================")
+
                 flat1 = fits.open(flat_1_fname) if not args.useaws else lco_archive_utilities.download_from_archive(
                     frameidfromname(flat_1_fname, frameidtranslationtable))
                 flat2 = fits.open(flat_2_fname) if not args.useaws else lco_archive_utilities.download_from_archive(

@@ -35,39 +35,33 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     """
 
     if minx is None:
-        minx = (int)(flat1.shape[1] * 3 / 8)
+        minx = (int)(flat1.shape[1] * 3 // 8)
     if maxx is None:
-        maxx = (int)(flat1.shape[1] * 5 / 8)
+        maxx = (int)(flat1.shape[1] * 5 // 8)
     if miny is None:
-        miny = (int)(flat1.shape[0] * 3 / 8)
+        miny = (int)(flat1.shape[0] * 3 // 8)
     if maxy is None:
-        maxy = (int)(flat1.shape[0] * 5 / 8)
+        maxy = (int)(flat1.shape[0] * 5 // 8)
 
-    flat1lvl,_,_ = sigma_clipped_stats(flat1[miny:maxy, minx:maxx], sigma=5)
-    flat2lvl,_,_= sigma_clipped_stats(flat2[miny:maxy, minx:maxx], sigma=5)
-    bias1lvl,_,_ = sigma_clipped_stats(bias1[miny:maxy, minx:maxx], sigma=3)
-    bias2lvl,_,_ = sigma_clipped_stats(bias2[miny:maxy, minx:maxx], sigma=3)
+    flat1lvl,_,_ = sigma_clipped_stats(flat1[miny:maxy, minx:maxx], sigma=10)
+    flat2lvl,_,_ = sigma_clipped_stats(flat2[miny:maxy, minx:maxx], sigma=10)
+    bias1lvl,_,_ = sigma_clipped_stats(bias1[miny:maxy, minx:maxx], sigma=10)
+    bias2lvl,_,_ = sigma_clipped_stats(bias2[miny:maxy, minx:maxx], sigma=10)
 
     avgbiaslevel = 0.5 * (bias2lvl + bias2lvl)
     leveldifference = abs(flat1lvl - flat2lvl)
-    avglevel = (flat1lvl - avgbiaslevel + flat2lvl - avgbiaslevel) / 2.
+    flatlevel = (flat1lvl + flat2lvl - 2. * avgbiaslevel) / 2.
     if (leveldifference > avglevel * 0.1):
         _logger.warning("flat level difference % 8f is large compared to level % 8f. Result will be questionable" % (
             leveldifference, flat1lvl - bias1lvl))
     # Measure noise of flat and bias differential images
     deltaflat = (flat1 - flat2)[miny:maxy, minx:maxx]
     deltabias = (bias1 - bias2)[miny:maxy, minx:maxx]
-    #biasnoise = np.std(deltabias)
-    #biasnoise = np.std(deltabias[np.abs(deltabias - np.median(deltabias)) < 10 * biasnoise])
-    _,_,biasnoise = sigma_clipped_stats(deltabias, sigma=5)
-    #flatnoise = np.std(deltaflat)
-    #flatnoise = np.std(deltaflat[np.abs(deltaflat - np.median(deltaflat)) < 10 * flatnoise])
+    _,_,biasnoise = sigma_clipped_stats(deltabias, sigma=10)
     _,_,flatnoise = sigma_clipped_stats(deltaflat, sigma=10)
     _logger.debug(
-        " Levels (flat,flat,bias,bias), and noise (flat, bias): [%d:%d, %d:%d]: % 7.2f, % 7.2f | % 5.2f, % 5.2f | % 7.2f % 5.2f" % (
-            minx, maxx, miny, maxy, flat1lvl, flat2lvl, bias1lvl, bias2lvl, flatnoise, biasnoise))
+        f" Levels (flat,flat,bias,bias), and noise (flat, bias): {minx}:{maxx},{miny}:{maxy} {flat1lvl} {flat2lvl} {bias1lvl} {bias2lvl} {flatnoise} {biasnoise}")
 
-    flatlevel = (flat1lvl + flat2lvl) / 2 - (bias1lvl + bias2lvl) / 2
     gain = 2 * flatlevel / (flatnoise ** 2 - biasnoise ** 2)
     readnoise = gain * biasnoise / math.sqrt(2)
 
@@ -134,14 +128,14 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
     retval = (gains, levels, noises, shotnoises, level1s, level2s, exptimes)
 
     # Do some pretty console output with useful statistics.
-    gains = gains / gains[0]
-    levels = levels / levels[0]
-    print("Sanity checks of relative gain and levels above bias:")
-    print("Relative gains:  ", end="")
-    for ii in range(len(gains)):
-        print(" % 4.2f" % gains[ii], end="")
-    print("\nRelative levels: ", end="")
-    for ii in range(len(levels)):
-        print(" % 4.2f" % levels[ii], end="")
-    print()
+    # gains = gains / gains[0]
+    # levels = levels / levels[0]
+    # print("Sanity checks of relative gain and levels above bias:")
+    # print("Relative gains:  ", end="")
+    # for ii in range(len(gains)):
+    #     print(" % 4.2f" % gains[ii], end="")
+    # print("\nRelative levels: ", end="")
+    # for ii in range(len(levels)):
+    #     print(" % 4.2f" % levels[ii], end="")
+    # print()
     return retval

@@ -12,11 +12,11 @@ _database = muscatfocusdb('sqlite:///muscatfocus.sqlite')
 
 for muscat in ['mc03','mc04']:
 
-    bestafter = dt.datetime.fromisoformat("2023-10-18") if muscat == 'mc04' else dt.datetime.fromisoformat("2023-12-01")
+    bestafter = dt.datetime.fromisoformat("2023-10-18") if muscat == 'mc04' else dt.datetime.fromisoformat("2023-12-10")
 
     alldata =_database.getMeasurementsForMuscat(muscat)
     alldata = alldata[ alldata ['seeing_r'] < 1.5]
-    gooddata = alldata [ alldata['dateobs'] > dt.datetime.fromisoformat("2023-10-18")]
+    gooddata = alldata [ alldata['dateobs'] > bestafter]
 
 
     df_g = gooddata['focus_g'] - gooddata['focus_r']
