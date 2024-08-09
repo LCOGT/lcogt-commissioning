@@ -7,9 +7,12 @@ import os
 import os.path
 import numpy as np
 import argparse
+import astropy.time as astt
+
 
 from lcocommissioning.common import lco_archive_utilities
 from lcocommissioning.common.ccd_noisegain import dosingleLevelGain
+from lcocommissioning.common.common import dateformat
 from lcocommissioning.common.noisegaindb_orm import NoiseGainMeasurement, noisegaindb
 from lcocommissioning.common.Image import Image
 import matplotlib.pyplot as plt
@@ -36,6 +39,7 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
 
     sortedlistofFiles = {}
     filemetrics = {}
+    listoffiles=sorted (listoffiles)
     # random.shuffle(listoffiles)
     for filecandidate in listoffiles:
         # First stage: go through the images and derive the metrics from them to pair.
@@ -86,12 +90,15 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
 
             if (sortby == 'filterlevel'):
                 filter = findkeywordinhdul(hdu, "FILTER")
+                naxis1 = findkeywordinhdul(hdu, "NAXIS1")
+                naxis2 = findkeywordinhdul(hdu, "NAXIS2")
+
                 if (filter is not None) and ('b00' not in filecandidate['FILENAME']):
                     image = Image(hdu, overscancorrect=useoverscan, alreadyopenedhdu=True)
                     if image.data is None:
                         level = -1
                     else:
-                        level = np.median(image.data[0][50:-50, 50:-50])
+                        level = np.mean(image.data[0][naxis2 // 4 : naxis2 * 3 // 4, naxis1//4 : naxis1*3//4])
                     _logger.debug(f"Input file metrics {filecandidate} {filter} {level} {useoverscan}")
                     filemetrics[str(filecandidate['FILENAME'])] = (filter, level)
 
@@ -155,13 +162,40 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
     return sortedlistofFiles
 
 
-def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, maxlinearity = 40000):
+def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs, maxlinearity = 40000):
+
+    plt.figure()
+    for ext in alllevels:
+        flux = np.asarray(alllevels[ext] ) / np.asarray (allexptimes[ext])
+        mydateobs = np.asarray (alldateobs[ext])
+        plt.plot(mydateobs,  flux, 'o', label="extension %s data" % (ext))
+    plt.legend()
+    plt.ylabel(("Time vs Flux [ADU/s]"))
+    plt.xlabel("DATE-OBS")
+    plt.gcf().autofmt_xdate()
+    plt.savefig("ptc_dateobs_flux.png", bbox_inches="tight")
+    plt.close()
+
+    plt.figure()
+    for ext in alllevels:
+        flux = np.asarray(alllevels[ext] ) / np.asarray (allexptimes[ext])
+        exptime = np.asarray (allexptimes[ext])
+        print (exptime, flux)
+        plt.plot(exptime,  flux, 'o', label="extension %s data" % (ext))
+    plt.legend()
+    plt.ylabel(("Time vs Flux [ADU/s]"))
+    plt.xlabel("Exptime [s]")
+    plt.savefig("ptc_exptime_flux.png", bbox_inches="tight")
+    plt.close()
+
+
+
     _logger.debug("Plotting gain vs level")
     plt.figure()
     for ext in alllevels:
         gains = np.asarray(allgains[ext])
         levels = np.asarray(alllevels[ext])
-        statdata = gains[(levels > 100) & (levels < maxlinearity) & (gains < 20)]
+        statdata = gains[(levels > 10) & (levels < maxlinearity) & (gains < 20)]
         bestgain = np.mean(statdata)
         for iter in range(2):
             if len(statdata >=3):
@@ -179,7 +213,7 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, max
     plt.legend()
     plt.xlabel(("Exposure level [ADU]"))
     plt.ylabel("Gain [e-/ADU]")
-    plt.savefig("levelgain.png", bbox_inches="tight")
+    plt.savefig("ptc_levelgain.png", bbox_inches="tight")
     plt.close()
 
     _logger.debug("Plotting ptc")
@@ -191,7 +225,7 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, max
     plt.ylim([0.5, 300])
     plt.xlabel("Exposure Level [ADU]")
     plt.ylabel("Measured Noise [ADU]")
-    plt.savefig("ptc.png", bbox_inches="tight")
+    plt.savefig("ptc_ptc.png", bbox_inches="tight")
     plt.close()
 
     _logger.info("Plotting level vs exptime")
@@ -223,7 +257,7 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, max
     #ax1.set_ylim([0, 65000])
     #ax2.set_xlim([0, 65000])
     #ax2.set_ylim([-5,5])
-    plt.savefig("texplevel.png", bbox_inches="tight")
+    plt.savefig("ptc_texplevel.png", bbox_inches="tight")
     plt.close()
 
 
@@ -252,6 +286,7 @@ def do_noisegain_for_fileset(inputlist, database: noisegaindb, args, frameidtran
     alllevel1s = {}
     alllevel2s = {}
     allexptimes = {}
+    alldateobs = {}
 
     _logger.info("Sifting through the input files and finding viable flat pair candidates")
     sortedinputlist = sortinputfitsfiles(inputlist, sortby=args.sortby, selectedreadmode=args.readmode,
@@ -294,7 +329,7 @@ def do_noisegain_for_fileset(inputlist, database: noisegaindb, args, frameidtran
                 camera = findkeywordinhdul(flat1, 'INSTRUME')
                 filter = findkeywordinhdul(flat1, 'FILTER')
                 readmode = findkeywordinhdul(flat1, 'CONFMODE')
-
+                dateobst = astt.Time(dateobs, scale='utc', format=None).to_datetime()
                 flat1.close()
                 flat2.close()
 
@@ -307,6 +342,7 @@ def do_noisegain_for_fileset(inputlist, database: noisegaindb, args, frameidtran
                         alllevel1s[extension] = []
                         alllevel2s[extension] = []
                         allexptimes[extension] = []
+                        alldateobs[extension] = []
 
                     if database is not None:
                         identifier = "%s-%s-%s" % (
@@ -330,12 +366,13 @@ def do_noisegain_for_fileset(inputlist, database: noisegaindb, args, frameidtran
                     alllevel1s[extension].append(level1s[extension])
                     alllevel2s[extension].append(level2s[extension])
                     allexptimes[extension].append(exptimes[extension])
+                    alldateobs[extension].append(dateobst)
 
     bias1.close()
     bias2.close()
 
     if args.makepng:
-        graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes)
+        graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs)
 
 
 def parseCommandLine():

@@ -14,6 +14,9 @@ class LED_Illuminator:
     def expose(self, exptime, voltage = None, block=True, overhead=0):
         ''' Expose via constant illumination.
         Sets the function generator into pulse mode'''
+        if exptime > 950:
+            _logger.fatal ("cannot expose for more than 950 seconds. not supported")
+            exit(1)
         _logger.debug ("Lab exposing for % 5.2f s" % (exptime))
 
         self.ins.write ("*RST")
