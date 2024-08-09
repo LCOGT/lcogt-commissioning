@@ -43,14 +43,14 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     if maxy is None:
         maxy = (int)(flat1.shape[0] * 5 / 8)
 
-    _,flat1lvl,_ = sigma_clipped_stats(flat1[miny:maxy, minx:maxx], sigma=5)
-    _,flat2lvl,_ = sigma_clipped_stats(flat2[miny:maxy, minx:maxx], sigma=5)
-    _,bias1lvl,_ = sigma_clipped_stats(bias1[miny:maxy, minx:maxx], sigma=3)
-    _,bias2lvl,_ = sigma_clipped_stats(bias2[miny:maxy, minx:maxx], sigma=3)
+    flat1lvl,_,_ = sigma_clipped_stats(flat1[miny:maxy, minx:maxx], sigma=5)
+    flat2lvl,_,_= sigma_clipped_stats(flat2[miny:maxy, minx:maxx], sigma=5)
+    bias1lvl,_,_ = sigma_clipped_stats(bias1[miny:maxy, minx:maxx], sigma=3)
+    bias2lvl,_,_ = sigma_clipped_stats(bias2[miny:maxy, minx:maxx], sigma=3)
 
     avgbiaslevel = 0.5 * (bias2lvl + bias2lvl)
     leveldifference = abs(flat1lvl - flat2lvl)
-    avglevel = (flat1lvl - avgbiaslevel + flat2lvl - avgbiaslevel) / 2
+    avglevel = (flat1lvl - avgbiaslevel + flat2lvl - avgbiaslevel) / 2.
     if (leveldifference > avglevel * 0.1):
         _logger.warning("flat level difference % 8f is large compared to level % 8f. Result will be questionable" % (
             leveldifference, flat1lvl - bias1lvl))

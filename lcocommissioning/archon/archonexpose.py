@@ -72,7 +72,7 @@ class archonexposure:
                 try:
                     log.info ("Loading config file: " + configfile)
                     self.archon.load_configuration(configfile)
-                    self.pon()
+                    #self.pon()
                 except lcocommissioning.archon.archon_v02_plus.CommandFailure as ex:
                     log.error (ex.message)
                     logmsg = self.archon.command('FETCHLOG').decode()

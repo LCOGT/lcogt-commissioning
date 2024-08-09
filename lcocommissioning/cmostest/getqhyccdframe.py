@@ -224,7 +224,7 @@ def main():
     if args.testled:
         lab = LED_Illuminator()
         print("LED ON")
-        lab.expose(exptime=10, overhead=1, block=True)
+        lab.expose(exptime=args.exptime[0], overhead=1, block=True, voltage=args.ledvoltage)
         print("LED OFF")
         exit(0)
     qhyccd = QHYCCD()

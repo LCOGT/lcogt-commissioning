@@ -107,7 +107,7 @@ def simultaneousfit(temp, coszd, focus):
 
 def get_focusStackData(args):
     """Get focus-relevant fits header keywords for end of focus exposures,
-       as a proxy for the idealy focused telescope state """
+       as a proxy for the ideally focused telescope state """
 
     site = args.site
     enc = args.dome
@@ -116,7 +116,7 @@ def get_focusStackData(args):
     sourcecolumn = ['FOCTEMP', 'ALTITUDE', 'FOCTELZP', 'FOCTOFF', 'FOCZOFF',
                     'FOCAFOFF', 'FOCINOFF', 'FOCFLOFF', 'FOCOBOFF', 'FOCPOSN',
                     'AZIMUTH', 'REFHUMID', 'DATE-OBS', 'DAY-OBS', 'ORIGNAME',
-                    'WMSTEMP', 'FILTER', 'CCDATEMP']
+                    'WMSTEMP', 'FILTER', 'CCDATEMP', 'REQNUM']
 
     # due to cameras moving around, and mirrors being replaced, autofocus values are
     # informative only over a limited date range.
@@ -163,7 +163,7 @@ def get_focusStackData(args):
         dtypes[sourcecolumn.index('DAY-OBS')] = str
         dtypes[sourcecolumn.index('ORIGNAME')] = str
         dtypes[sourcecolumn.index('FILTER')] = str
-
+        dtypes[sourcecolumn.index('REQNUM')] = str
         t = Table(t, names=sourcecolumn,
                   dtype=dtypes)
     except:
@@ -248,9 +248,14 @@ def analysecamera(args, t=None, ):
     xdata = temp
     ydata = t['ACTFOCUS']
     plt.plot(xdata, ydata, '.', label="Measurements")
+    for i, txt in enumerate (t['REQNUM']):
+        plt.annotate(txt, (xdata[i], ydata[i]), size=0.2)
     xdata = np.arange(-5, 35, 0.05)
     ydata = simfitresult[0] + simfitresult[2] * xdata + np.mean(coszd) * simfitresult[1]
     plt.plot(xdata, ydata, '-', label=f"Temperature term {simfitresult[2]:6.4f} +/- {simfiterrors[2]:6.4f}")
+
+
+
     plt.xlabel('FOCTEMP [deg C]')
     plt.ylabel('FOCUS [mm]')
     plt.xlim([-6, 35])
