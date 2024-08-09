@@ -60,7 +60,7 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     _,_,biasnoise = sigma_clipped_stats(deltabias, sigma=10)
     _,_,flatnoise = sigma_clipped_stats(deltaflat, sigma=10)
     _logger.debug(
-        f" Levels (flat,flat,bias,bias), and noise (flat, bias): {minx}:{maxx},{miny}:{maxy} {flat1lvl} {flat2lvl} {bias1lvl} {bias2lvl} {flatnoise} {biasnoise}")
+        f" Levels (flat,flat,bias,bias), and noise (flat, bias): {minx}:{maxx},{miny}:{maxy} {flat1lvl} {flat2lvl} {bias1lvl} {bias2lvl}\n\t-> {flatlevel} {flatnoise}f rms {biasnoise} brms")
 
     gain = 2 * flatlevel / (flatnoise ** 2 - biasnoise ** 2)
     readnoise = gain * biasnoise / math.sqrt(2)
@@ -114,7 +114,7 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
                                                                              minx=args.minx, maxx=args.maxx,
                                                                              miny=args.miny, maxy=args.maxy, )
 
-        print("Extension %1d  Level: % 7.1f  Gain % 5.3f e-/ADU  Noise % 5.2f e-" % (ii, level, gain, noise))
+        print(f"  Extension {ii}  Level: {level:7.1f}  Gain {gain:5.3f} e-/ADU  Noise {noise:5.2f} e-")
 
         gains.append(gain)
         levels.append(level)

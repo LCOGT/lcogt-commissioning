@@ -165,11 +165,14 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
 
 def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs, maxlinearity = 40000):
 
+    
     plt.figure()
     for ext in alllevels:
-        flux = np.asarray(alllevels[ext] ) / np.asarray (allexptimes[ext])
+        myexptimes = np.asarray(allexptimes[ext])
+        flux = np.asarray(alllevels[ext] ) / myexptimes
         mydateobs = np.asarray (alldateobs[ext])
         plt.plot(mydateobs,  flux, 'o', label="extension %s data" % (ext))
+        plt.plot(mydateobs[myexptimes ==3],  flux[myexptimes==3], 'o', label="extension %s data[Texp=3s]" % (ext))
     plt.legend()
     plt.ylabel(("Time vs Flux [ADU/s]"))
     plt.xlabel("DATE-OBS")
@@ -315,9 +318,9 @@ def do_noisegain_for_fileset(inputlist, database: noisegaindb, args, frameidtran
                 flat_1_fname = sortedinputlist[pair_ii][0]
                 flat_2_fname = sortedinputlist[pair_ii][1]
                 print(f"\nNoise / Gain measurement based on metric {pair_ii}")
-                print(f" File names {flat_1_fname} {flat_2_fname}")
-                print("===========================================")
-
+                print(f" Flat names {os.path.basename(flat_1_fname)} {os.path.basename(flat_2_fname)}")
+                print(f" Bias names {os.path.basename(bias1_fname)} {os.path.basename(bias2_fname)}")
+              
                 flat1 = fits.open(flat_1_fname) if not args.useaws else lco_archive_utilities.download_from_archive(
                     frameidfromname(flat_1_fname, frameidtranslationtable))
                 flat2 = fits.open(flat_2_fname) if not args.useaws else lco_archive_utilities.download_from_archive(
