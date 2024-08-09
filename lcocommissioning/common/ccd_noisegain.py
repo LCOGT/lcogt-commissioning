@@ -51,7 +51,7 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     avgbiaslevel = 0.5 * (bias2lvl + bias2lvl)
     leveldifference = abs(flat1lvl - flat2lvl)
     flatlevel = (flat1lvl + flat2lvl - 2. * avgbiaslevel) / 2.
-    if (leveldifference > avglevel * 0.1):
+    if (leveldifference > flatlevel * 0.1):
         _logger.warning("flat level difference % 8f is large compared to level % 8f. Result will be questionable" % (
             leveldifference, flat1lvl - bias1lvl))
     # Measure noise of flat and bias differential images
