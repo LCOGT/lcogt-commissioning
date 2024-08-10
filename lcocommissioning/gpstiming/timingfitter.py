@@ -42,28 +42,28 @@ def maketestplots ():
 
 def do_gpsfitting (fractime, lightlevel, std, x,y, outpng):
     bounds = [[0, 0,-1000],[+1,10000,100000]]
-    (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime, lightlevel, bounds=bounds, sigma=std)
+    try:
+        (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime, lightlevel, bounds=bounds, )
+        delta = np.abs (lightlevel - rampfunction(fractime, paramset[0], amplitude = paramset[1], bias = paramset[2]))
+        good = delta < np.std (delta) * 4
+        (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime[good], lightlevel[good], bounds=bounds, )
+        perr = np.sqrt(np.diag(istat))
+        if outpng is not None:
+            plt.figure()
+            x = np.arange(0,1,0.01)
+            plt.plot (fractime, lightlevel, '.', c='grey', )
+            plt.plot (fractime[good], lightlevel[good], '.',  c='black', label="data")
+            plt.plot (x,rampfunction(x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
+            plt.legend()
+            plt.xlabel("Fractional UTSTART [s]")
+            plt.ylabel ("Illumination Level [ADU]")
+            plt.savefig (outpng,  bbox_inches='tight')
+            plt.close()
 
-    delta = np.abs (lightlevel - rampfunction(fractime, paramset[0], amplitude = paramset[1], bias = paramset[2]))
-    good = delta < np.std (delta) * 2
-    (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime[good], lightlevel[good], bounds=bounds, sigma=std[good])
-    perr = np.sqrt(np.diag(istat))
-    if outpng is not None:
-        plt.figure()
-
-        x = np.arange(0,1,0.01)
-
-        plt.plot (fractime, lightlevel, '.', c='grey', )
-        plt.plot (fractime[good], lightlevel[good], '.',  c='black', label="data")
-
-        plt.plot (x,rampfunction(x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
-        plt.legend()
-        plt.xlabel("Fractional UTSTART [s]")
-        plt.ylabel ("Illumination Level [ADU]")
-        plt.savefig (outpng,  bbox_inches='tight')
-        plt.close()
-
-    return (paramset,istat,x,y)
+        return (paramset,istat,x,y)
+    except:
+        print ("fitting exception caught")
+    return (None,None,x,y)
 
 
 def getTestdata (testdeltaT=0, n=100, Amplitude=480*0.7, bias=500, ron=3.1, npixels=1):
@@ -137,14 +137,15 @@ def processfits(fitsname, makepng=False, title=""):
             #dt[y,x] = paramset[0]
             #dt_err[y,x] = perr[0]
     log.info("Starting the fitting work")
-    with Pool() as pool:
+    with Pool(processes=30) as pool:
         results = pool.starmap (do_gpsfitting, myargs)
 
         for result in results:
             paramset, pcov,x,y = result
-            perr = np.sqrt(np.diag(pcov))
-            dt[y,x] = paramset[0]
-            dt_err[y,x] = perr[0]
+            if paramset is not None:
+                perr = np.sqrt(np.diag(pcov))
+                dt[y,x] = paramset[0]
+                dt_err[y,x] = perr[0]
 
     log.info ("Making nice graphs")
 
@@ -163,7 +164,7 @@ def processfits(fitsname, makepng=False, title=""):
     fit = np.poly1d (fit)
     for i in range(3):
         residual =  (meandt -fit (row))
-        good = np.abs(residual) < 2 * np.std (residual)
+        good = np.abs(residual) < 3 * np.std (residual)
         fit = np.polyfit (row[good], meandt[good], 1)
         fit = np.poly1d (fit)
 
