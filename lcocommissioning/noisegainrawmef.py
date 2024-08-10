@@ -8,8 +8,8 @@ import os.path
 import numpy as np
 import argparse
 import astropy.time as astt
-
-
+from astropy.table import QTable, Table, Column
+from astropy.io import ascii
 from lcocommissioning.common import lco_archive_utilities
 from lcocommissioning.common.ccd_noisegain import dosingleLevelGain
 from lcocommissioning.common.common import dateformat
@@ -165,7 +165,6 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
 
 def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs, maxlinearity = 40000):
 
-    
     plt.figure()
     for ext in alllevels:
         myexptimes = np.asarray(allexptimes[ext])
@@ -375,6 +374,19 @@ def do_noisegain_for_fileset(inputlist, database: noisegaindb, args, frameidtran
 
     bias1.close()
     bias2.close()
+
+
+    for ext in alllevels:
+        t = Table()
+        t['avglevel'] = alllevels[ext]
+        t['level1'] = alllevel1s[ext]
+        t['level2'] = alllevel1s[ext]
+        t['gain'] = allgains[ext]
+        t['noise'] = allnoises[ext]
+        t['flatnoise'] = allshotnoises[ext]
+        t['exptime'] = allexptimes[ext]
+        t['dateobs'] = alldateobs[ext]
+        ascii.write (t,f"ptc_data_{ext}.dat", overwrite=True)
 
     if args.makepng:
         graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs)
