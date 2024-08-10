@@ -8,7 +8,7 @@ import os.path
 import numpy as np
 import argparse
 import astropy.time as astt
-
+import math
 
 from lcocommissioning.common import lco_archive_utilities
 from lcocommissioning.common.ccd_noisegain import dosingleLevelGain
@@ -21,6 +21,8 @@ from astropy.io import fits
 _logger = logging.getLogger(__name__)
 mpl_logger = logging.getLogger('matplotlib')
 mpl_logger.setLevel(logging.WARNING)
+
+
 
 
 def findkeywordinhdul(hdulist, keyword):
@@ -163,7 +165,7 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
     return sortedlistofFiles
 
 
-def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs, maxlinearity = 40000):
+def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs, maxlinearity = 40000, adurange=2**18):
 
     
     plt.figure()
@@ -225,8 +227,8 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, all
     for ext in alllevels:
         plt.loglog(alllevels[ext], allshotnoises[ext], '.', label="extension %s" % ext)
     plt.legend()
-    plt.xlim([1, 65000])
-    plt.ylim([0.5, 300])
+    plt.xlim([1, 1.1 * adurange])
+    plt.ylim([1, 3*math.sqrt(adurange)])
     plt.xlabel("Exposure Level [ADU]")
     plt.ylabel("Measured Noise [ADU]")
     plt.savefig("ptc_ptc.png", bbox_inches="tight")
@@ -402,6 +404,7 @@ def parseCommandLine():
                         help="Automatically group flat fiel;ds by exposure time (great if using dome flas, or lab flats)."
                              ", or by measured light level (great when using sky flats, but more computing intensive")
     parser.add_argument('--readmode', default="full_frame")
+    parser.add_argument('--adubits', default=18)
     parser.add_argument('--noreprocessing', action='store_true',
                         help="Do not reprocess if data are already in database")
     parser.add_argument('--ignoretemp', action='store_true',
@@ -416,6 +419,8 @@ def parseCommandLine():
 
     args = parser.parse_args()
     args.useaws=False
+
+    args.adubits = 2 ** args.adubits
 
     logging.basicConfig(level=getattr(logging, args.log_level.upper()),
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
