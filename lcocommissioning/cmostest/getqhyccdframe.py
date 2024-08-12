@@ -224,7 +224,12 @@ def main():
     if args.testled:
         lab = LED_Illuminator()
         print("LED ON")
-        lab.expose(exptime=args.exptime[0], overhead=1, block=True, voltage=args.ledvoltage)
+        if not args.nburstcycles:
+            lab.expose(exptime=args.exptime[0], overhead=1, block=True, voltage=args.ledvoltage)
+        else :
+            lab.expose_burst(args.exptime[0], ncycles=args.nburstcycles, overhead=1, voltage=args.ledvoltage, block=True)
+
+
         print("LED OFF")
         exit(0)
     qhyccd = QHYCCD()
