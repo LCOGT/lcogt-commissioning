@@ -12,7 +12,6 @@ from  scipy import stats
 plt.style.use("ggplot")
 
 
-
 def create_memmap (fitsfile):
     fimage = fits.open(fitsfile)
     data = np.copy(np.asarray(fimage['SCI'].data[-4096:,-4096:]))

@@ -169,6 +169,7 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
 
 def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs, maxlinearity = 40000):
 
+    adurange=2**18
     plt.figure()
     for ext in alllevels:
         myexptimes = np.asarray(allexptimes[ext])
