@@ -167,9 +167,9 @@ def sortinputfitsfiles(listoffiles, sortby='exptime', selectedreadmode="full_fra
     return sortedlistofFiles
 
 
-def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs, maxlinearity = 40000):
+def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs, args, maxlinearity = 40000):
 
-    adurange=2**18
+    adurange = 1 << args.adubits
     plt.figure()
     for ext in alllevels:
         myexptimes = np.asarray(allexptimes[ext])
@@ -178,22 +178,24 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, all
         plt.plot(mydateobs,  flux, 'o', label="extension %s data" % (ext))
         plt.plot(mydateobs[myexptimes ==3],  flux[myexptimes==3], 'o', label="extension %s data[Texp=3s]" % (ext))
     plt.legend()
-    plt.ylabel(("Time vs Flux [ADU/s]"))
+    plt.ylabel(("Flux [ADU/s]"))
     plt.xlabel("DATE-OBS")
     plt.gcf().autofmt_xdate()
-    plt.savefig("ptc_dateobs_flux.png", bbox_inches="tight")
+    plt.title (args.readmode)
+    plt.savefig(f"ptc_{args.readmode}_dateobs_flux.png", bbox_inches="tight")
     plt.close()
 
     plt.figure()
     for ext in alllevels:
         flux = np.asarray(alllevels[ext] ) / np.asarray (allexptimes[ext])
-        exptime = np.asarray (allexptimes[ext])
-        print (exptime, flux)
-        plt.plot(exptime,  flux, 'o', label="extension %s data" % (ext))
+        level = np.asarray (alllevels[ext])
+        print (level, flux)
+        plt.plot(level,  flux, 'o', label="extension %s data" % (ext))
     plt.legend()
     plt.ylabel(("Time vs Flux [ADU/s]"))
-    plt.xlabel("Exptime [s]")
-    plt.savefig("ptc_exptime_flux.png", bbox_inches="tight")
+    plt.xlabel("Level  [ADU]")
+    plt.title(args.readmode)
+    plt.savefig(f"ptc_{args.readmode}_level_flux.png", bbox_inches="tight")
     plt.close()
 
 
@@ -221,9 +223,11 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, all
     plt.legend()
     plt.xlabel(("Exposure level [ADU]"))
     plt.ylabel("Gain [e-/ADU]")
-    plt.savefig("ptc_levelgain.png", bbox_inches="tight")
+    plt.title (args.readmode)
+    plt.savefig(f"ptc_{args.readmode}_levelgain.png", bbox_inches="tight")
     plt.close()
 
+    print (adurange)
     _logger.debug("Plotting ptc")
     plt.figure()
     for ext in alllevels:
@@ -233,13 +237,12 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, all
     plt.ylim([1, 3*math.sqrt(adurange)])
     plt.xlabel("Exposure Level [ADU]")
     plt.ylabel("Measured Noise [ADU]")
-    plt.savefig("ptc_ptc.png", bbox_inches="tight")
+    plt.title (args.readmode)
+    plt.savefig(f"ptc_{args.readmode}_ptc.png", bbox_inches="tight")
     plt.close()
 
     _logger.info("Plotting level vs exptime")
     plt.figure()
-    print ("modified")
-    # print (alllevels)
     f, (ax1,ax2) = plt.subplots(2,1, gridspec_kw={'height_ratios':[2,1]})
     for ext in alllevels:
 
@@ -247,6 +250,7 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, all
         levels = np.asarray (alllevels[ext])
 
         ax1.plot(exptimes, levels, '.', label="extension %s" % ext)
+
         print (exptimes, levels)
         texp_sorted = np.sort(exptimes)
         good = (levels < maxlinearity) & (exptimes >= 1)
@@ -257,15 +261,18 @@ def graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, all
         ax2.plot (levels, (levels / p(exptimes)  -1 ) * 100, '.', label="extension %s" % ext)
 
     ax1.legend()
+    ax1.xaxis.tick_top()
+    ax1.xaxis.set_label_position('bottom') 
     ax1.set_xlabel("Exposure time [s]")
     ax1.set_ylabel("Exposure level [ADU]")
     ax2.set_xlabel ("Exposure Level [ADU]")
     ax2.set_ylabel ("Residual (%)")
 
+    plt.suptitle (f"{args.readmode}\n")
     #ax1.set_ylim([0, 65000])
     #ax2.set_xlim([0, 65000])
     #ax2.set_ylim([-5,5])
-    plt.savefig("ptc_texplevel.png", bbox_inches="tight")
+    plt.savefig(f"ptc_{args.readmode}_texplevel.png", bbox_inches="tight")
     plt.close()
 
 
@@ -394,7 +401,7 @@ def do_noisegain_for_fileset(inputlist, database: noisegaindb, args, frameidtran
         ascii.write (t,f"ptc_data_{ext}.dat", overwrite=True)
 
     if args.makepng:
-        graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs)
+        graphresults(alllevels, allgains, allnoises, allshotnoises, allexptimes, alldateobs, args)
 
 
 def parseCommandLine():
@@ -435,7 +442,6 @@ def parseCommandLine():
     args = parser.parse_args()
     args.useaws=False
 
-    args.adubits = 2 ** args.adubits
 
     logging.basicConfig(level=getattr(logging, args.log_level.upper()),
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
