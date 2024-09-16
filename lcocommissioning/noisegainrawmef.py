@@ -9,13 +9,12 @@ import os.path
 import numpy as np
 import argparse
 import astropy.time as astt
-from astropy.table import QTable, Table, Column
+from astropy.table import Table
 from astropy.io import ascii
 import math
 
 from lcocommissioning.common import lco_archive_utilities
 from lcocommissioning.common.ccd_noisegain import dosingleLevelGain
-from lcocommissioning.common.common import dateformat
 from lcocommissioning.common.noisegaindb_orm import NoiseGainMeasurement, noisegaindb
 from lcocommissioning.common.Image import Image
 import matplotlib.pyplot as plt
