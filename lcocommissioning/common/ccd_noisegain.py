@@ -123,6 +123,11 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
         level2s.append(level2)
         exptimes.append(flat1.primaryheader['REQTIME'])
 
+    del bias1
+    del bias2
+    del flat1
+    del flat2
+
     # sanity check on gain and levels:
     retval = (gains, levels, noises, shotnoises, level1s, level2s, exptimes)
 
