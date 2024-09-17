@@ -73,7 +73,7 @@ def astrometryServiceRefineWCSFromImage(imagepath, wcs=None):
     log.debug(imagepath)
     if wcs is None:
         fitsimage = fits.open(imagepath)
-        for hdu in fitsimage[1:]:
+        for hdu in fitsimage[0:]:
 
             try:
                 wcs = WCS(hdu.header)
