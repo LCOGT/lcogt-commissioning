@@ -196,6 +196,7 @@ class QHYCCD:
         prihdr = fits.Header()
         prihdr['OBJECT'] = object
         prihdr['EXPTIME'] = exptime
+        prihdr['REQTIME'] = exptime
         prihdr['FILTER'] = 'None'
         prihdr['AIRMASS'] = 1.0
         dateobs = start_readout + datetime.timedelta(seconds=exptime)
@@ -204,6 +205,7 @@ class QHYCCD:
         prihdr['CCDSUM'] = f"[{self.wbin.value} {self.hbin.value}]"
         prihdr['READMODE'] = self.readmode.value
         prihdr['CCDTEMP'] = self.getTemp()
+        prihdr['BIASSEC'] = "[50:9200,6390:6418]"
 
         hdu = fits.PrimaryHDU(x, header=prihdr)
         hdul = fits.HDUList([hdu])
