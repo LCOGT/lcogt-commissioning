@@ -7,6 +7,7 @@ import os
 import os.path
 import numpy as np
 import argparse
+import astropy.time as astt
 
 from scipy import optimize
 
@@ -21,7 +22,7 @@ _logger = logging.getLogger(__name__)
 mpl_logger = logging.getLogger('matplotlib')
 mpl_logger.setLevel(logging.WARNING)
 
-
+overscanragion =  m = np.s_[6390:6418, 50:-50]
 
 sqrtfunc = lambda x, gain, z , exp:  ((gain*x)**exp + z**exp)**(1/exp) - z
 
@@ -78,7 +79,12 @@ def combinedarks (listofdarks):
         a[i, :, :] = data.data[0][:, :] #- dark
         #_logger.info (f"dark oversan: {dark}")
     stacked_data = a.sum(axis=0) / len(listofdarks)
+    
+    if overscanragion:
+        ov,_,_  = astropy.stats.sigma_clipped_stats (stacked_data[overscanragion])
+        stacked_data = stacked_data - ov
     std = np.std(stacked_data[100:-100,100:-100])
+
     m = np.median(stacked_data[100:-100,100:-100])
     plt.figure()
     plt.imshow (stacked_data, vmin=m-1*std, vmax = m+1*std)
@@ -92,12 +98,17 @@ def getlevelforimage (image, masterdark):
 
     #imageov,_,_ = astropy.stats.sigma_clipped_stats(image[:,-50:-10])
     #_logger.info (f"Oversscan: {imageov}")
-    imageov = 0
-    zerocorrected = (image-imageov) - (masterdark)
+    if overscanragion:
+        imageov, mean, std = astropy.stats.sigma_clipped_stats (image[overscanragion])
+    else:
+        imageov = 0
 
-    levell, mean, std = astropy.stats.sigma_clipped_stats (zerocorrected[1100:1500,500:800])
-    levelr, mean, std = astropy.stats.sigma_clipped_stats (zerocorrected[1100:1500,-500:-200])
-    return levell,levelr
+    print ("Overscan: ", imageov)
+    zerocorrected = (image-imageov) - (masterdark)
+    dimy = zerocorrected.shape[0]
+    dimx = zerocorrected.shape[1]
+    levell, mean, std = astropy.stats.sigma_clipped_stats (zerocorrected[dimy // 4: dimy * 3 // 4, dimx // 4:dimx * 3 // 4])
+    return levell,levell
 
 def do_linearity_for_fileset (fitsfiles, args):
 
@@ -107,16 +118,26 @@ def do_linearity_for_fileset (fitsfiles, args):
     exptimes = []
     levels = []
     levelsr = []
+    dateobs = []
     for flat in flats:
         exptime = float(flat.primaryheader['OBJECT'].split()[3])
         levell,levelr = getlevelforimage(flat.data[0], masterdark)
 
         exptimes.append (exptime)
         levels.append(levell)
+        dateobst = astt.Time(flat.primaryheader['DATE-OBS'], scale='utc', format=None).to_datetime()
+        dateobs.append (dateobst)
 
     exptimes = np.asarray(exptimes)
     levels = np.asarray (levels)
-    print (exptimes, levels)
+    dateobs = np.asarray(dateobs)
+    print (exptimes, levels,dateobs)
+
+
+    title = args.camera.replace(" ","_") if args.camera is not None else None
+    plt.figure()
+    plt.plot (dateobs, levels / exptimes, '.')
+    plt.savefig (f'{title}_dateobs_flux.png')
 
     plt.figure()
     plt.plot (exptimes, levels, '.')
@@ -125,26 +146,17 @@ def do_linearity_for_fileset (fitsfiles, args):
     plt.ylabel ('Exposure level [ADU]')
 
 
-    good = np.asarray(exptimes)>500
+    good = (np.asarray(exptimes)>10) & (np.asanyarray(exptimes) < 5000)
     z = np.polyfit (exptimes[good], levels[good], 1)
     p = np.poly1d(z)
     plt.plot (exptimes, p(exptimes), label = p)
     plt.legend()
-    title = args.camera.replace(" ","_") if args.camera is not None else None
+   
     plt.savefig ("exptimelevel.png")
     plt.savefig (f'{title}_exptimelevel.png')
     plt.figure()
-
-
     plt.axhline (0, color='grey')
     plt.plot (levels, (levels - p(exptimes)), '.', label="linear fit")
-
-
-    paramset, paramerror = linearityfit(exptimes, levels, sqrtfunc)
-
-    fitted  = sqrtfunc(exptimes, paramset[0], paramset[1], paramset[2])
-
-    plt.plot (levels, (levels - fitted) , '.' , label = f"(x**k+z**k)**(1/k)-z\nz={paramset[1]:5.1f} k={paramset[2]:5.3f}")
 
     plt.title (args.camera)
     plt.xlabel("level [ADU]")

@@ -1,5 +1,4 @@
 import math
-import matplotlib
 import numpy as np
 from astropy.io.fits import HDUList
 from astropy.stats import sigma_clipped_stats
@@ -48,9 +47,9 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     bias1lvl,_,_ = sigma_clipped_stats(bias1[miny:maxy, minx:maxx], sigma=10)
     bias2lvl,_,_ = sigma_clipped_stats(bias2[miny:maxy, minx:maxx], sigma=10)
 
-    avgbiaslevel = 0.5 * (bias2lvl + bias2lvl)
+    avgbiaslevel =  (bias1lvl + bias2lvl) / 2.
     leveldifference = abs(flat1lvl - flat2lvl)
-    flatlevel = (flat1lvl + flat2lvl - 2. * avgbiaslevel) / 2.
+    flatlevel = (flat1lvl + flat2lvl) / 2.  - avgbiaslevel
     if (leveldifference > flatlevel * 0.1):
         _logger.warning("flat level difference % 8f is large compared to level % 8f. Result will be questionable" % (
             leveldifference, flat1lvl - bias1lvl))
@@ -122,7 +121,12 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
         shotnoises.append(shotnoise)
         level1s.append(level1)
         level2s.append(level2)
-        exptimes.append(flat1.primaryheader['EXPTIME'])
+        exptimes.append(flat1.primaryheader['REQTIME'])
+
+    del bias1
+    del bias2
+    del flat1
+    del flat2
 
     # sanity check on gain and levels:
     retval = (gains, levels, noises, shotnoises, level1s, level2s, exptimes)

@@ -33,15 +33,15 @@ def create_cdk_request_configuration(args):
                 'offset_dec': args.offsetDec,
             }
 
-        }, ]
+        }, ],
+        'extra_params' : {}
+
     }
 
-    # if args.selfguide:
-    #     # several implemtnations tried out:
-    #     # initially: one channal as guider camera:
-    #     # configuration['guiding_config']['mode'] = f'MUSCAT_{args.selfguide.upper()}'
-    #     # or: self-guide with an appropiate channel.
-    #     configuration['guiding_config']['mode'] = 'OFF'
+
+    if args.stackexptime >0:
+        configuration['extra_params']['sub_expose'] = True
+        configuration['extra_params']['sub_expose_time'] = (int) (args.stackexptime*1000)
 
     if args.exp_cnt:
         configuration['type'] = 'EXPOSE'
@@ -136,7 +136,7 @@ def parseCommandLine():
                               help='If set, observe at meridian only in drifting sky mode.')
     parser.add_argument('--title', default="Delta Rho commissioning", help="Descriptive title for observation request")
     parser.add_argument('--proposalid', default="DeltaRho Commissioning", help="proposal ID")
-    parser.add_argument('--site', default='elp', choices=['ogg', 'elp', 'cpt','tfn','coj'],
+    parser.add_argument('--site', default='elp', choices=['ogg', 'elp', 'cpt','tfn','coj','lsc'],
                         help="To which site to submit")
 
     parser.add_argument('--dome', default='aqwa', choices=['aqwa', 'aqwb', 'clma'])
@@ -169,6 +169,7 @@ def parseCommandLine():
     repeatgroup.add_argument('--filltime', type=float, help="How long to repeat exposures (seconds)")
 
     parser.add_argument('--readmode', type=str, default='full_frame', )
+    parser.add_argument('--stackexptime', type=float, default=0, help=" Enter self-guideded image stacking mode with a sub-expoure time defined in seconds. No stacking if time is 0 seconds. ")
     parser.add_argument('--direct', action='store_true',
                          help='If set, submit directly instead of via scheduler.')
     parser.add_argument('--CONFIRM', dest='opt_confirmed', action='store_true',
