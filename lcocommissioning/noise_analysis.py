@@ -21,8 +21,9 @@ def image_fft(image, samplefreq = 0):
 
     fft_image_0 = abs(np.fft.rfft(image,axis=0)).mean(axis=1)
     fft_image_1 = abs(np.fft.rfft(image,axis=1)).mean(axis=0)
-    gaussian_noise = np.random.normal(0, image[5:-5,5:-5].std(), size=image.shape)
-    print (f"Gauss Standard Deviation: {gaussian_noise:5.3f}")
+    std = image[5:-5,5:-5].std()
+    gaussian_noise = np.random.normal(0, std, size=image.shape)
+    print (f"Gauss Standard Deviation: {std}")
     fft_noise = abs(np.fft.rfft(gaussian_noise,axis=0)).mean(axis=1)
 
     return fft_image_0, fft_image_1, fft_noise
