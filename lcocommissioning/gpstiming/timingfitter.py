@@ -45,15 +45,17 @@ def do_gpsfitting (fractime, lightlevel, std, x,y, outpng):
     try:
         (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime, lightlevel, bounds=bounds, )
         delta = np.abs (lightlevel - rampfunction(fractime, paramset[0], amplitude = paramset[1], bias = paramset[2]))
-        good = delta < np.std (delta) * 4
+        good = (delta < np.std (delta) * 4) & (lightlevel > 10)
         (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime[good], lightlevel[good], bounds=bounds, )
         perr = np.sqrt(np.diag(istat))
+       
         if outpng is not None:
             plt.figure()
-            x = np.arange(0,1,0.01)
-            plt.plot (fractime, lightlevel, '.', c='grey', )
+            _x = np.arange(0,1,0.01)
+            bad = np.logical_not(good)
+            plt.plot (fractime[bad], lightlevel[bad], 'x', c='grey', )
             plt.plot (fractime[good], lightlevel[good], '.',  c='black', label="data")
-            plt.plot (x,rampfunction(x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
+            plt.plot (_x,rampfunction(_x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
             plt.legend()
             plt.xlabel("Fractional UTSTART [s]")
             plt.ylabel ("Illumination Level [ADU]")
@@ -142,15 +144,19 @@ def processfits(fitsname, makepng=False, title=""):
 
         for result in results:
             paramset, pcov,x,y = result
+            print (paramset, pcov, x, y)
             if paramset is not None:
-                perr = np.sqrt(np.diag(pcov))
-                dt[y,x] = paramset[0]
-                dt_err[y,x] = perr[0]
+                try:
+                    perr = np.sqrt(np.diag(pcov))
+                    dt[y,x] = paramset[0]
+                    dt_err[y,x] = perr[0]
+                except Exception as e:
+                    print (f"Error while parsing fit {paramset} {e}")
 
     log.info ("Making nice graphs")
 
     plt.figure()
-    plt.imshow(dt, cmap='viridis', aspect='equal', origin='lower')
+    plt.imshow(dt, cmap='viridis', aspect='equal', vmin=0.83, vmax=0.96, origin='lower')
     plt.colorbar()
     plt.savefig (f'{basename}_gpsmap.png')
 

@@ -200,6 +200,11 @@ def sortinputfitsfiles(
     _logger.debug(sortedlistofFiles)
     return sortedlistofFiles
 
+def find_nearest(array, value):
+    delta = np.abs(array - value)
+    idx = delta.argmin()
+    print ("Index " ,  idx, delta)
+    return idx
 
 def graphresults(
     alllevels,
@@ -309,8 +314,17 @@ def graphresults(
         p = np.poly1d(z)
         ax1.plot(texp_sorted, p(texp_sorted), "-", label=f"fit: {p}")
 
+        midlevel = np.max (levels) / 2.
+        mp_idx = max (0, find_nearest(levels, midlevel)-1)
+        print ("Midlevel",  mp_idx,levels[mp_idx]) 
+        mp_level = levels[mp_idx]
+        mp_texp = exptimes[mp_idx]
+        mp_flux = mp_level / mp_texp
+        #linearity residual
+        LR = 100 * (1 - mp_flux / ( levels / exptimes ) )
+
         ax2.plot(
-            levels, (levels / p(exptimes) - 1) * 100, ".", label="extension %s" % ext
+            levels, LR, ".", label="ext %s" % ext
         )
 
     ax1.legend()

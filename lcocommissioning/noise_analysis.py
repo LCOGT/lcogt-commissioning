@@ -10,6 +10,7 @@ import numpy as np
 from os import path
 import matplotlib.pyplot as plt
 from scipy.signal import medfilt
+from astropy.stats import sigma_clipped_stats
 
 from common.Image import Image
 log = logging.getLogger(__name__)
@@ -21,9 +22,10 @@ def image_fft(image, samplefreq = 0):
 
     fft_image_0 = abs(np.fft.rfft(image,axis=0)).mean(axis=1)
     fft_image_1 = abs(np.fft.rfft(image,axis=1)).mean(axis=0)
-    std = image[5:-5,5:-5].std()
-    gaussian_noise = np.random.normal(0, std, size=image.shape)
-    print (f"Gauss Standard Deviation: {std}")
+    s = image.shape
+    mean, median, stddev = sigma_clipped_stats(image[5:-5,5:-5], sigma=4)
+    gaussian_noise = np.random.normal(0, stddev, size=image.shape)
+    print (f"Gauss Standard Deviation: {stddev}")
     fft_noise = abs(np.fft.rfft(gaussian_noise,axis=0)).mean(axis=1)
 
     return fft_image_0, fft_image_1, fft_noise
