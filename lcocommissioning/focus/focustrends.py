@@ -78,7 +78,7 @@ def calulate_compensation(zdinput, tempinput, fitresult):
     return fitresult[0] + fitresult[1] * zdinput + fitresult[2] * tempinput
 
 
-def simultaneousfit(temp, coszd, focus):
+def simultaneousfit(temp, coszd, focus, zdterm = None):
     ''' Do  A MULTI-LINEAR FIT TO SIMULTANEOUSLY FIT THE TEMP AND ZD DEPENDENCE
     OF THE focus position. '''
     def fn(x, a, cterm, tterm):
@@ -86,13 +86,17 @@ def simultaneousfit(temp, coszd, focus):
 
     np.set_printoptions(formatter={'float_kind': '{:6.4f}'.format})
 
+    zdmin = -math.inf if zdterm is None else np.nextafter(-zdterm, -1) 
+    zdmax = math.inf if zdterm is None else -zdterm
+    bounds = ([-math.inf,zdmin, -math.inf], [math.inf, zdmax, math.inf])
+
     good_coszd = coszd
     good_temp = temp
     good_focus = focus
 
     for iter in range (3):
         # 3 sigma clipping of fit result to remove outliers
-        popt, pcov, = curve_fit(fn, [good_coszd, good_temp], good_focus)
+        popt, pcov, = curve_fit(fn, [good_coszd, good_temp], good_focus, bounds=bounds)
         errors = np.sqrt(np.diag(pcov))
         log.info(f'Multilinear fit result, N={len(good_focus)}: {popt} +/-  {errors}')
 
@@ -235,7 +239,7 @@ def analysecamera(args, t=None, ):
     # Multi-linear fit to find dependency on temeprature and zenith distance.
     coszd = np.cos(t['ZD'] * math.pi / 180)
     temp = t['FOCTEMP']
-    simfitresult, simfiterrors = simultaneousfit(temp, coszd, t['ACTFOCUS'])
+    simfitresult, simfiterrors = simultaneousfit(temp, coszd, t['ACTFOCUS'], zdterm=0.15 if "1m0" in tel else None)
     fitted_focus = calulate_compensation(coszd, temp, simfitresult)
     residual_focus = t['ACTFOCUS'] - fitted_focus
 
