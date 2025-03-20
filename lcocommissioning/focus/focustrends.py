@@ -115,7 +115,7 @@ def get_focusStackData(args):
     sourcecolumn = ['FOCTEMP', 'ALTITUDE', 'FOCTELZP', 'FOCTOFF', 'FOCZOFF',
                     'FOCAFOFF', 'FOCINOFF', 'FOCFLOFF', 'FOCOBOFF', 'FOCPOSN',
                     'AZIMUTH', 'REFHUMID', 'DATE-OBS', 'DAY-OBS', 'ORIGNAME',
-                    'WMSTEMP', 'FILTER', 'CCDATEMP', 'REQNUM', 'L1FWHM']
+                    'WMSTEMP', 'FILTER', 'CCDATEMP', 'REQNUM', 'L1FWHM', 'SUNALT']
 
     # due to cameras moving around, and mirrors being replaced, autofocus values are
     # informative only over a limited date range.
@@ -124,7 +124,7 @@ def get_focusStackData(args):
 
     query = f'SITEID:{site} AND ENCID:{enc} AND TELID:{tel} AND OBJECT:auto_focus' \
             f' AND FOCOBOFF:0 AND RLEVEL:91 AND OBSTYPE:EXPOSE AND FILTER:rp' \
-            f' AND L1FWHM:[0.5 TO {args.maxfwhm}]' \
+            f' AND L1FWHM:[0.5 TO {args.maxfwhm}] AND SUNALT:[-180 TO {args.maxsunalt}]' \
             f' AND DATE-OBS:[{bestaftertime.strftime("%Y-%m-%dT%H:%M:%S")} TO {args.before.strftime("%Y-%m-%dT%H:%M:%S")}]'
 
 
@@ -378,6 +378,7 @@ def getargs():
     parser.add_argument('--after', type=dt.datetime.fromisoformat, help="Consider data only after the given date, in ISO format (e.g., 2022-09-01 00:00:00")
     parser.add_argument('--before',  type=dt.datetime.fromisoformat, default=dt.datetime.utcnow().isoformat())
     parser.add_argument('--maxfwhm', type=float, default=5.0, help='Maximum allowable seiing in \'\'')
+    parser.add_argument('--maxsunalt', type=float, default=-18, help='Maximum allowable sun altitude')
 
     parser.add_argument('--loglevel', dest='log_level', default='INFO',
                         choices=['DEBUG', 'INFO', 'WARN'], help='Set the debug level')
