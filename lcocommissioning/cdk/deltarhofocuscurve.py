@@ -16,6 +16,10 @@ from lcocommissioning.common.SourceCatalogProvider import getImageFWHM
 L1FWHM = "L1FWHM"
 FOCDMD = "FOCDMD"
 
+
+focuslimit = {'sq': [-0.1, 0.1],
+              'fa':[-3,3],
+              }
 _LIMIT_EXPONENT_U = 1.0
 _MIN_NUMBER_OF_POINTS = 5
 
@@ -39,6 +43,9 @@ def focus_curve_fit(xdata, ydata, func=sqrtfit):
     # TODO: Boundaries and intial guess externally driven by context.
     initial_guess = [3, 0, 60, 0.5] if func == sqrtfit else None
     bounds = [[2, -0.1, 0, 0.4], [6, 0.1, 100, _LIMIT_EXPONENT_U]] if func == sqrtfit else [-math.inf, math.inf]
+    # for fa:
+    bounds = [[2, -2, 0, 0.4], [6, 2, 100, _LIMIT_EXPONENT_U]] if func == sqrtfit else [-math.inf, math.inf]
+
 
     for iter in range(2):
         try:
@@ -66,6 +73,8 @@ def overplot_fit(func, paramset, ax):
     if paramset is None:
         return
     base = np.arange(-0.1, 0.1, 0.01)
+    base = np.arange(-2.5, 2.5, 0.1)
+
     y = func(base, *paramset)
     ax.plot(base, y, "--", color='orange' if func == sqrtfit else 'grey',
              label="sqrt {:5.2f}".format(paramset[3]) if func == sqrtfit else "parabola")
@@ -158,6 +167,8 @@ def main():
     error_string = None
     focusdict = {}
     fwhmdict = {}
+    thetadict = {}
+    ellipitictydict = {}
 
     if '.pickle' in sys.argv[1]:
         analyse_tilts(sys.argv[1])
@@ -165,10 +176,15 @@ def main():
 
     for image in sys.argv[1:]:
         fwhmdict[image] = {}
-        focus, fwhm = getImageFWHM(image, minarea=5, sections=True)
+        focus, fwhm, theta, ellipiticty = getImageFWHM(image, minarea=5, sections=True)
         focusdict[image] = focus
         fwhmdict[image] = fwhm
+        thetadict[image] = theta
+        ellipitictydict[image] = ellipiticty
         print (fwhmdict[image])
+
+    cameratype = 'sq' if 'sq' in sys.argv[1] else 'fa'
+    print (f"Cameratype is {cameratype}")
 
     bestfits = {}
     plt.figure()
@@ -219,7 +235,7 @@ def main():
             ax.set_ylabel("FWHM (pix)")
             overplot_fit(sqrtfit, exponential_p, ax=ax)
             ax.plot(focuslist, fwhmlist, 'o')
-            ax.set_xlim([-0.1, 0.1])
+            ax.set_xlim(focuslimit[cameratype])
             ax.set_ylim([0, 8])
             ax.grid(True)
             ax.set_title(f"{section} {bestfocus:5.3f}mm" if math.isfinite(
@@ -227,13 +243,85 @@ def main():
 
     plt.suptitle (f"Focus Gradient {os.path.basename(sys.argv[1])}")
     plt.tight_layout()
-    plt.savefig("{}".format("deltarho_focusgradient.pdf"), bbox_inches='tight', dpi=150)
+    plt.savefig("{}".format("deltarho_focusgradient.png"), bbox_inches='tight', dpi=300)
 
     with open('deltarho_focus' + '.pickle', 'wb') as f:
         pickle.dump(bestfits, f, pickle.HIGHEST_PROTOCOL)
 
     analyse_tilts('deltarho_focus' + '.pickle')
 
+
+    # further plots for theta and ellipticity
+    bestfits = {}
+    plt.figure()
+    fig, axes = plt.subplots(3, 3, figsize=(7 ,7))
+    plt.subplots_adjust (hspace=0.4)
+
+    for section in range (0,9):
+        ax = axes[2 - section // 3, section % 3]
+        focuslist = []
+        ellipticitylist = []
+        for image in focusdict.keys():
+            focuslist.append (focusdict[image])
+            ellipticitylist.append (ellipitictydict[image][section])
+        focuslist = np.asarray(focuslist)
+        ellipticitylist = np.asarray(ellipticitylist)
+        print ("Focus input: {}\ Ellipticity: {}".format (np.round(focuslist,3), np.round (ellipticitylist,3)))
+
+       
+        return_package = None
+
+   
+        #ax.set_xlabel("FOCUS  [mm]")
+        #ax.set_ylabel("Ellipticity")
+       
+        ax.plot(focuslist, ellipticitylist, 'o')
+        ax.set_xlim(focuslimit[cameratype])
+        ax.set_ylim([0, 1])
+        ax.grid(True)
+        ax.set_title(f"Ellipticity")
+
+    plt.suptitle (f"Ellipticity Gradient {os.path.basename(sys.argv[1])}")
+    plt.tight_layout()
+    plt.savefig("{}".format("deltarho_ellipticitygradient.png"), bbox_inches='tight', dpi=300)
+
+     # further plots for theta 
+    bestfits = {}
+    plt.figure()
+    fig, axes = plt.subplots(3, 3, figsize=(7 ,7))
+    plt.subplots_adjust (hspace=0.4)
+
+    for section in range (0,9):
+        ax = axes[2 - section // 3, section % 3]
+        focuslist = []
+        thetalist = []
+        for image in focusdict.keys():
+            focuslist.append (focusdict[image])
+            thetalist.append (thetadict[image][section])
+        focuslist = np.asarray(focuslist)
+        thetalist = np.asarray(thetalist)
+        print ("Focus input: {}\ Theta: {}".format (np.round(focuslist,3), np.round (thetalist,3)))
+
+       
+        return_package = None
+
+   
+        #ax.set_xlabel("FOCUS  [mm]")
+        #ax.set_ylabel("Ellipticity")
+       
+        ax.plot(focuslist, thetalist, 'o')
+        ax.set_xlim(focuslimit[cameratype])
+        ax.set_ylim([-90, 90])
+        ax.grid(True)
+        ax.set_title(f"Theta")
+
+    plt.suptitle (f"Theta Gradient {os.path.basename(sys.argv[1])}")
+    plt.tight_layout()
+    plt.savefig("{}".format("deltarho_thetagradient.png"), bbox_inches='tight', dpi=300)
+
+
+
+    
 
 def analyse_tilts(filename):
     with open(filename, 'rb') as f:

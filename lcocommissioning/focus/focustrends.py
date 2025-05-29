@@ -42,14 +42,21 @@ telescopedict = {
     'tfn': ['aqwa-0m4a', 'aqwa-0m4b', 'doma-1m0a', 'domb-1m0a'],
 }
 
-wellintonighttime = {
-    'lsc': dt.timedelta(hours=26),
-    'coj': dt.timedelta(hours=11),
-    'ogg': dt.timedelta(hours=24 + 9),
-    'elp': dt.timedelta(hours=28),
-    'cpt': dt.timedelta(hours=19),
-    'tfn': dt.timedelta(hours=23)
-}
+# wellintonighttime = {
+#     'lsc': dt.timedelta(hours=26),
+#     'coj': dt.timedelta(hours=11),
+#     'ogg': dt.timedelta(hours=24 + 9),
+#     'elp': dt.timedelta(hours=28),
+#     'cpt': dt.timedelta(hours=19),
+#     'tfn': dt.timedelta(hours=23)
+# }
+
+
+focus_temp_reference_points  = {
+    '1m0': 15,
+    '0m4': 15,
+   
+    }
 
 
 def robustfit(x, y, sigma=3, iterations=3, label=None):
@@ -73,33 +80,39 @@ def robustfit(x, y, sigma=3, iterations=3, label=None):
     return p
 
 
-def calulate_compensation(zdinput, tempinput, fitresult):
+def calulate_compensation(zdinput, tempinput, fitresult, tempref = 0):
     ''' Convenience method to use a multi-linear fit result and apply it to data. '''
-    return fitresult[0] + fitresult[1] * zdinput + fitresult[2] * tempinput
+    deltaT = tempinput - tempref
+    result =  fitresult[0] + fitresult[1] * zdinput + fitresult[2] * deltaT  + fitresult[3] * deltaT**2
+    return result
 
-
-def simultaneousfit(temp, coszd, focus, zdterm = None):
+def simultaneousfit(temp, coszd, focus, zdterm = None, focus_temp_reference=0, order = 1):
     ''' Do  A MULTI-LINEAR FIT TO SIMULTANEOUSLY FIT THE TEMP AND ZD DEPENDENCE
     OF THE focus position. '''
-    def fn(x, a, cterm, tterm):
-        return a + cterm * x[0] + tterm * x[1]
-
+    def fn(x, a, cterm, tterm, tterm2):
+        deltaT = x[1] - focus_temp_reference
+        return  a + cterm * x[0] + tterm * deltaT + tterm2 * deltaT**2
+    
+    
     np.set_printoptions(formatter={'float_kind': '{:6.4f}'.format})
 
     zdmin = -math.inf if zdterm is None else np.nextafter(-zdterm, -1) 
     zdmax = math.inf if zdterm is None else -zdterm
-    bounds = ([-math.inf,zdmin, -math.inf], [math.inf, zdmax, math.inf])
-
+    tterm2low = -math.inf if order == 2 else 0  
+    tterm2high = math.inf if order == 2 else np.nextafter(0, 1)
+       
+    bounds = ([-math.inf,zdmin, -math.inf, tterm2low], [math.inf, zdmax, math.inf, tterm2high])
+    
     goodvalues =[True for  ii in range (len(focus))]
 
+
     for iter in range (5):
-        # 3 sigma clipping of fit result to remove outliers
-        popt, pcov, = curve_fit(fn, [coszd[goodvalues], temp[goodvalues]], focus[goodvalues], bounds=bounds)    
+        popt, pcov, = curve_fit(fn, [coszd[goodvalues], temp[goodvalues]], focus[goodvalues], bounds=bounds)
         errors = np.sqrt(np.diag(pcov))  
-        residual = focus - calulate_compensation(coszd, temp, popt)
+        residual = focus - calulate_compensation(coszd, temp, popt, tempref=focus_temp_reference)
         residualrms = np.std (residual[goodvalues])
         log.info(f'Multilinear fit result, N={np.sum (goodvalues)}: {popt} +/-  {errors}, measured rms {residualrms:5.2f}')
-        goodvalues = np.abs(residual) < 2 * residualrms
+        goodvalues = np.abs(residual) < 2.2 * residualrms
    
     return popt, errors, goodvalues
 
@@ -235,8 +248,8 @@ def analysecamera(args, t=None, ):
     # Multi-linear fit to find dependency on temeprature and zenith distance.
     coszd = np.cos(t['ZD'] * math.pi / 180)
     temp = t['FOCTEMP']
-    simfitresult, simfiterrors, goodvalues = simultaneousfit(temp, coszd, t['ACTFOCUS'], zdterm=0.15 if "1m0" in tel else None)
-    fitted_focus = calulate_compensation(coszd, temp, simfitresult)
+    simfitresult, simfiterrors, goodvalues = simultaneousfit(temp, coszd, t['ACTFOCUS'], zdterm=0.15 if "1m0" in tel else None, order=args.fitorder, focus_temp_reference=args.focus_temp_reference)
+    fitted_focus = calulate_compensation(coszd, temp, simfitresult, tempref=args.focus_temp_reference)
     residual_focus = t['ACTFOCUS'] - fitted_focus
 
     # Now let's get some diagnostic plots.
@@ -252,8 +265,8 @@ def analysecamera(args, t=None, ):
     for i, txt in enumerate (t['REQNUM']):
         plt.annotate(txt, (xdata[i], ydata[i]), size=0.2)
     xdata = np.arange(-5, 35, 0.05)
-    ydata = simfitresult[0] + simfitresult[2] * xdata + np.mean(coszd) * simfitresult[1]
-    plt.plot(xdata, ydata, '-', label=f"Temperature term {simfitresult[2]:6.4f} +/- {simfiterrors[2]:6.4f}")
+    ydata = simfitresult[0] + simfitresult[2] * (xdata-args.focus_temp_reference) + simfitresult[3] * (xdata - args.focus_temp_reference)**2 + np.mean(coszd) * simfitresult[1]
+    plt.plot(xdata, ydata, '-', label=f"Temperature term {simfitresult[2]:5.4f}[{simfiterrors[2]:5.4f}]T\n + {simfitresult[3]:6.5f}[{simfiterrors[3]:6.5f}]T^2\nTref={args.focus_temp_reference} deg C")
 
     plt.xlabel('FOCTEMP [deg C]')
     plt.ylabel('FOCUS [mm]')
@@ -272,8 +285,9 @@ def analysecamera(args, t=None, ):
     plt.xlim([0, 1.05])
     set_ylim(t['ACTFOCUS'], focusvaluerange)
     xdata = np.arange(0, 4.1, 0.05)
-    ydata = simfitresult[0] + simfitresult[1] * xdata + np.mean(temp) * simfitresult[2]
-    plt.plot(xdata, ydata, '-', label=f"Compression term {simfitresult[1]:6.4f} +/- {simfiterrors[1]:6.4f}")
+    deltaTmean = np.mean (temp) -args.focus_temp_reference
+    ydata = simfitresult[0] + simfitresult[1] * xdata + deltaTmean * simfitresult[2] + deltaTmean**2 * simfitresult[3]
+    plt.plot(xdata, ydata, '-', label=f"Compression term {simfitresult[1]:5.4f} +/- {simfiterrors[1]:5.4f}")
     plt.legend()
     plt.title("Zenith distance vs abs focus position")
 
@@ -379,7 +393,8 @@ def getargs():
     parser.add_argument('--before',  type=dt.datetime.fromisoformat, default=dt.datetime.utcnow().isoformat())
     parser.add_argument('--maxfwhm', type=float, default=5.0, help='Maximum allowable seiing in \'\'')
     parser.add_argument('--maxsunalt', type=float, default=-18, help='Maximum allowable sun altitude')
-
+    parser.add_argument('--fitorder', type=int, default=1, choices=[1,2], help='Fit order')
+    parser.add_argument('--focus_temp_reference', type=float, default=None , help='Focus temp reference point')
     parser.add_argument('--loglevel', dest='log_level', default='INFO',
                         choices=['DEBUG', 'INFO', 'WARN'], help='Set the debug level')
 
@@ -388,6 +403,18 @@ def getargs():
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
     if args.after is None:
         args.after = datetime.datetime.fromisoformat("2023-01-01")
+
+
+    if (args.fitorder > 1) and (args.tel[:3] not in focus_temp_reference_points.keys() and (args.focus_temp_reference is None)):
+        log.error(f"Polynomial fit order > 1 not supported for this telescope class {args.tel[:3]}. Need to specifying different temp reference points with --focus_temp_reference")
+        args.focus_temp_reference = 0
+        exit(1) 
+    elif args.focus_temp_reference is None:
+        args.focus_temp_reference = focus_temp_reference_points[args.tel[:3]]
+        log.info(f"Using {args.focus_temp_reference} as focus temp reference point for {args.tel[:3]} telescope class")
+    else:
+        pass
+
     return args
 
 
