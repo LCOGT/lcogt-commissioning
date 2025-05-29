@@ -1,2 +1,5 @@
+2.1.9 May 29 2025 
+ * Exclude also kb cameras from report generation
+
 2.1.2 Dec 12 2022
 * Modifications to the handling of sq?? camera data in noisegaincrawler app.

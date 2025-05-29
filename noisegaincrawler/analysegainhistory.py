@@ -380,7 +380,7 @@ def main():
     database = noisegaindb(args.database)
     cameras = args.cameras if args.cameras is not None else database.getCameras()
     #we are not intersted in old fl data that may be included
-    cameras = [ c for c in cameras if not c.startswith('fl')]
+    cameras = [ c for c in cameras if ( (not c.startswith('fl')) & (not c.startswith('kb')))]
     _logger.info("Cameras: {}".format(cameras))
 
     filenames = []
