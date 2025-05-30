@@ -1,3 +1,6 @@
+2.1.10 May 30 2025
+* also filter old graphs on kb and fs cameras out in web app
+
 2.1.9 May 29 2025 
  * Exclude also kb cameras from report generation
 

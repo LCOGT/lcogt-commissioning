@@ -56,9 +56,11 @@ def build_site_info_dict():
     for objdict in s3_list_objects():
         filename = objdict['Key']
         parts = filename.split('-')
-        if len(parts) >= 2 and parts[0] == 'gainhist':
+        if (len(parts) >= 2) and (parts[0] == 'gainhist'):
             cameracode = parts[1]
-            retval[cameracode].append(filename)
+            # Sort out obsolete kb and fs cameras
+            if (not cameracode.startswith('fs')) and (not cameracode.startswith('kb')):
+                retval[cameracode].append(filename)
 
     # Sort it appropriately
     for key, values in retval.items():
@@ -97,7 +99,7 @@ def healthz():
     return 'Healthy!\n'
 
 def main():
-    #app.run(port=8080)
+    app.run(port=8080)
     pass
 
 if __name__ == '__main__':
