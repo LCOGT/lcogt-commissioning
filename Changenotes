@@ -1,3 +1,7 @@
+
+2.1.11 June 06 2025
+* Bug fix w.r.t missing ignoreov and table sorting ... why did this work before?
+
 2.1.10 May 30 2025
 * also filter old graphs on kb and fs cameras out in web app
 

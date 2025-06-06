@@ -49,7 +49,7 @@ def sortinputfitsfiles(
 
     sortedlistofFiles = {}
     filemetrics = {}
-    listoffiles = sorted(listoffiles)
+    listoffiles.sort(['FILENAME'])
     # random.shuffle(listoffiles)
     for filecandidate in listoffiles:
         # First stage: go through the images and derive the metrics from them to pair.
