@@ -1,3 +1,5 @@
+2.1.12 June 8 2025
+* Bug fix: wrong read of NAXIS
 
 2.1.11 June 06 2025
 * Bug fix w.r.t missing ignoreov and table sorting ... why did this work before?

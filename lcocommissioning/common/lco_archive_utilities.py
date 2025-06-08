@@ -221,7 +221,7 @@ def download_from_archive(frameid):
     return: Astropy HDUList
     """
     url = f'https://archive-api.lco.global/frames/{frameid}'
-    log.info("Downloading image frameid {} from URL: {}".format(frameid, url))
+    log.debug("Downloading image frameid {} from URL: {}".format(frameid, url))
     headers = {'Authorization': 'Token {}'.format(ARCHIVE_API_TOKEN)}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
