@@ -65,8 +65,8 @@ def sortinputfitsfiles(
         if useaws:
             hdu = lco_archive_utilities.download_from_archive(filecandidate["frameid"])
         else:
-            _looger.info (f"Candidate:  {filecandidate}")
-            filecandidate = {"FILENAME": filecandidate}
+            _logger.info (f"Candidate:  {filename}")
+            filecandidate = {"FILENAME": filename}
             fitsfilepath = str(filecandidate["FILENAME"])
             hdu = fits.open(fitsfilepath)
 
@@ -380,7 +380,7 @@ def do_noisegain_for_fileset(
     alldateobs = {}
 
     _logger.info(
-        "Sifting through the input files and finding viable flat pair candidates"
+        f"Sifting through the input files and finding viable flat pair candidates {inputlist}"
     )
     sortedinputlist = sortinputfitsfiles(
         inputlist,
@@ -619,6 +619,8 @@ def parseCommandLine():
         if not os.path.isfile(args.fitsfile[ii]):
             _logger.error("File %s does not exist. Giving up." % (args.fitsfile[ii]))
             sys.exit(0)
+
+    args.fitsfile = Table(data=[np.asarray(args.fitsfile)], names=['FILENAME', ])
 
     return args
 
