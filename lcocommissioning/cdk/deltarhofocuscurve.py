@@ -73,7 +73,7 @@ def overplot_fit(func, paramset, ax):
     if paramset is None:
         return
     base = np.arange(-0.1, 0.1, 0.01)
-    base = np.arange(-2.5, 2.5, 0.1)
+    #base = np.arange(-2.5, 2.5, 0.1)
 
     y = func(base, *paramset)
     ax.plot(base, y, "--", color='orange' if func == sqrtfit else 'grey',
