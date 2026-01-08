@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 from tracemalloc import start
 from astropy.table import Table, unique
 from matplotlib import pyplot as plt
@@ -52,7 +53,7 @@ def submit_RTI_block(site, enclosure, telescope, starttime, endtime, reason, sub
         response = requests.post(
                     f'{downtime_url}/api/',
                     json=data,
-                    headers={'Authorization': 'Token {thetoken}'}
+                    headers={'Authorization': f'Token {thetoken}'}
                    )
                 
         response.raise_for_status()
@@ -89,9 +90,8 @@ def define_RTI_blocks (site, templatetimes, startdate, enddate, holidays):
 
 if __name__ == "__main__":
     for site in ['coj', 'ogg']:
-        #template_times_ogg = readslots(site,)
-        #define_RTI_blocks(site, template_times_ogg, startdate, enddate, holidays)
+        template_times_ogg = readslots(site,)
+        define_RTI_blocks(site, template_times_ogg, startdate, enddate, holidays)
         pass
-    now = datetime.datetime.utcnow()
-    endtime = now + datetime.timedelta(minutes=30)
-    submit_RTI_block('lsc', 'aqwb', '0m4a', now, endtime, 'Daniel Test', submit=True)
+    
+    #submit_RTI_block('lsc', 'aqwb', '0m4a', now, endtime, 'Daniel Test', submit=True)
