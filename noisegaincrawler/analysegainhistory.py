@@ -16,6 +16,11 @@ from lcocommissioning.common.noisegaindb_orm import noisegaindb
 _logger = logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.FATAL)
 
+figsize_date = (10,6)
+figsize_nodate = (6,6)
+fig_dpi=200
+
+
 starttimeall = datetime.datetime(2016, 1, 1)
 starttimefa = datetime.datetime(2018, 7, 1)
 starttimeep = datetime.datetime(2020, 10, 1)
@@ -189,7 +194,7 @@ def make_plots_for_camera(camera, args, database):
 
 
 def plot_flatlevelhist(camera, dataset, extensions, outputdir, starttime, readmode=None):
-    plt.figure()
+    plt.figure(figsize=figsize_date)
     for ext in extensions:
         d = dataset['dateobs'][dataset['extension'] == ext]
         l = dataset['level'][dataset['extension'] == ext]
@@ -203,7 +208,7 @@ def plot_flatlevelhist(camera, dataset, extensions, outputdir, starttime, readmo
     readmode = "".join(readmode) if readmode is not None else ""
 
     with io.BytesIO() as fileobj:
-        plt.savefig(fileobj, format='png', bbox_inches='tight')
+        plt.savefig(fileobj, format='png', bbox_inches='tight', dpi=fig_dpi)
         plt.close()
         filename = "flatlevel-{}{}.png".format(camera, readmode)
         write_to_storage_backend(outputdir, filename, fileobj.getvalue())
@@ -213,14 +218,13 @@ def plot_flatlevelhist(camera, dataset, extensions, outputdir, starttime, readmo
 
 def plotnoisehist(camera, dataset, extensions, outputdir, starttime, readmode=None):
     readmode = "".join(readmode) if readmode is not None else ""
-    plt.figure()
+    plt.figure(figsize=figsize_date)
     for ext in extensions:
         d = dataset['dateobs'][dataset['extension'] == ext]
         g = dataset['readnoise'][dataset['extension'] == ext]
 
 
         recentnoise = np.max(d) -  d < datetime.timedelta(days=30)
-        print ('recentnoise:',recentnoise)
 
         dr = d[recentnoise]
         nr = g[recentnoise]
@@ -252,7 +256,7 @@ def plotnoisehist(camera, dataset, extensions, outputdir, starttime, readmode=No
     plt.legend()
 
     with io.BytesIO() as fileobj:
-        plt.savefig(fileobj, format='png', bbox_inches='tight')
+        plt.savefig(fileobj, format='png', bbox_inches='tight', dpi=fig_dpi)
         plt.close()
         filename = "noise-{}{}.png".format(camera, readmode)
         write_to_storage_backend(outputdir, filename, fileobj.getvalue())
@@ -262,7 +266,7 @@ def plotnoisehist(camera, dataset, extensions, outputdir, starttime, readmode=No
 
 def plot_levelgain(camera, dataset, extensions, outputdir, readmode=None):
     readmode = "".join(readmode) if readmode is not None else ""
-    plt.figure()
+    plt.figure(figsize=figsize_nodate)
     for ext in extensions:
         d = dataset['level'][dataset['extension'] == ext]
         g = dataset['gain'][dataset['extension'] == ext]
@@ -289,7 +293,7 @@ def plot_levelgain(camera, dataset, extensions, outputdir, readmode=None):
     plt.legend()
 
     with io.BytesIO() as fileobj:
-        plt.savefig(fileobj, format='png', bbox_inches='tight')
+        plt.savefig(fileobj, format='png', bbox_inches='tight', dpi=fig_dpi)
         plt.close()
         filename = "levelgain-{}{}.png".format(camera, readmode)
         write_to_storage_backend(outputdir, filename, fileobj.getvalue())
@@ -299,7 +303,7 @@ def plot_levelgain(camera, dataset, extensions, outputdir, readmode=None):
 
 def plot_gainhist(camera, dataset, extensions, outputdir, starttime, readmode=None):
     readmode = "".join(readmode) if readmode is not None else ""
-    plt.figure()
+    plt.figure(figsize=figsize_date)
     for ext in extensions:
         d = dataset['dateobs'][dataset['extension'] == ext]
         g = dataset['gain'][dataset['extension'] == ext]
@@ -337,7 +341,7 @@ def plot_gainhist(camera, dataset, extensions, outputdir, starttime, readmode=No
     plt.legend()
 
     with io.BytesIO() as fileobj:
-        plt.savefig(fileobj, format='png', bbox_inches='tight')
+        plt.savefig(fileobj, format='png', bbox_inches='tight', dpi=fig_dpi)
         plt.close()
         filename = "gainhist-{}{}.png".format(camera, readmode)
         write_to_storage_backend(outputdir, filename, fileobj.getvalue())
@@ -349,7 +353,7 @@ def plot_gainhist(camera, dataset, extensions, outputdir, starttime, readmode=No
 def plot_ptc(camera, dataset, extensions, outputdir, readmode=None):
     readmode = "".join(readmode) if readmode is not None else ""
 
-    plt.figure()
+    plt.figure(figsize=figsize_nodate)
     for ext in extensions:
         l = dataset['level'][dataset['extension'] == ext]
         n = (dataset['diffnoise'][dataset['extension'] == ext])
@@ -361,7 +365,7 @@ def plot_ptc(camera, dataset, extensions, outputdir, readmode=None):
     plt.xlim([1, 70000])
     plt.legend()
     with io.BytesIO() as fileobj:
-        plt.savefig(fileobj, format='png', bbox_inches='tight')
+        plt.savefig(fileobj, format='png', bbox_inches='tight', dpi=fig_dpi)
         plt.close()
         filename = "ptchist-{}{}.png".format(camera, readmode)
         write_to_storage_backend(outputdir, filename, fileobj.getvalue())
