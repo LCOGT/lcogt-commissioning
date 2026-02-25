@@ -9,9 +9,10 @@ import matplotlib.pyplot as plt
 import scipy.optimize
 from scipy import signal
 log = logging.getLogger(__name__)
-plt.style.use("seaborn")
+plt.style.use("seaborn-v0_8")
 from functools import partial
 from multiprocessing import Pool
+log = logging.getLogger(__name__)
 
 
 def rampfunction (fractStartTime, dt05, amplitude, bias):
@@ -22,7 +23,7 @@ def rampfunction (fractStartTime, dt05, amplitude, bias):
     :return:
     """
     # triable is the absolute value of a sawtooth
-    frequency = 1
+    frequency = 0.5
     deltaphase = 2* np.pi *dt05
     retval =  amplitude * np.abs(signal.sawtooth(2 * np.pi * frequency * fractStartTime + deltaphase)) + bias
     return retval
@@ -40,8 +41,8 @@ def maketestplots ():
 #maketestplots()
 #exit(0)
 
-def do_gpsfitting (fractime, lightlevel, std, x,y, outpng):
-    bounds = [[0, 0,-1000],[+1,10000,100000]]
+def do_gpsfitting (fractime, lightlevel, std, x,y, outpng, period):
+    bounds = [[-period/2, 0,-1000],[0,200000,200000]]
     try:
         (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime, lightlevel, bounds=bounds, )
         delta = np.abs (lightlevel - rampfunction(fractime, paramset[0], amplitude = paramset[1], bias = paramset[2]))
@@ -51,7 +52,7 @@ def do_gpsfitting (fractime, lightlevel, std, x,y, outpng):
        
         if outpng is not None:
             plt.figure()
-            _x = np.arange(0,1,0.01)
+            _x = np.arange(0,period,0.01)
             bad = np.logical_not(good)
             plt.plot (fractime[bad], lightlevel[bad], 'x', c='grey', )
             plt.plot (fractime[good], lightlevel[good], '.',  c='black', label="data")
@@ -64,7 +65,7 @@ def do_gpsfitting (fractime, lightlevel, std, x,y, outpng):
 
         return (paramset,istat,x,y)
     except:
-        print ("fitting exception caught")
+        log.warning ("fitting exception caught")
     return (None,None,x,y)
 
 
@@ -111,60 +112,65 @@ def readsimplefile(filename):
 
 
 
-def processfits(fitsname, makepng=False, title=""):
+def processfits(fitsname, makepng=False, title="", period=1, x=None, y=None):
     basename = fitsname[:-5]
     print (basename)
     f = fits.open (fitsname)
     binning = f[0].header['BLK']
-
     dimX = f[0].header['NAXIS1']
     dimY = f[0].header['NAXIS2']
     dimZ = f[0].header['NAXIS3']
     dt = np.zeros((dimY,dimX))
     dt_err = np.zeros((dimY,dimX))
-
     fracsec = f[2].data['fracsec']
+
     myargs = []
-    log.info ("creating tasks")
+    log.info ("creating fitting tasks tasks")
     for xx in range (dimX):
         for yy in range (dimY):
             mean = f[0].data[:,yy,xx]
             std  = f[1].data[:,yy,xx]
-            outpng=f"gpsfit_{xx}_{yy}.png" if makepng else None
-
-            myargs.append ( (fracsec,mean,std,xx,yy,outpng) )
+            outpng=f"gpsfit_{xx}_{yy}.pdf" if makepng else None
+            if (x is not None) and (y is not None) and (xx == x)  and (yy == y):
+                 outpng=f"gpsfit_{xx}_{yy}.pdf" 
+            myargs.append ( (fracsec,mean,std,xx,yy,outpng,period) )
 
             #paramset, pcov,x,y = do_gpsfitting(fracsec,mean, std, xx,yy, outpng)
             #perr = np.sqrt(np.diag(pcov))
             #dt[y,x] = paramset[0]
             #dt_err[y,x] = perr[0]
     log.info("Starting the fitting work")
-    with Pool(processes=30) as pool:
+    with Pool(processes=8) as pool:
         results = pool.starmap (do_gpsfitting, myargs)
 
         for result in results:
             paramset, pcov,x,y = result
-            print (paramset, pcov, x, y)
+            log.debug (f'Fitting result: {paramset}, {pcov}, {x}, {y}' )
             if paramset is not None:
                 try:
                     perr = np.sqrt(np.diag(pcov))
                     dt[y,x] = paramset[0]
                     dt_err[y,x] = perr[0]
                 except Exception as e:
-                    print (f"Error while parsing fit {paramset} {e}")
+                    log.error (f"Error while parsing fit {paramset} {e}")
 
     log.info ("Making nice graphs")
 
+    mean_delay = np.median (dt)
+    min = np.min (dt)
+    max = np.max (dt)
+
+
+
     plt.figure()
-    plt.imshow(dt, cmap='viridis', aspect='equal', vmin=0.83, vmax=0.96, origin='lower')
+    plt.imshow(dt, cmap='viridis', aspect='equal', vmin=min, vmax=max , origin='lower')
     plt.colorbar()
     plt.savefig (f'{basename}_gpsmap.png')
 
     plt.figure()
     meandt = np.mean (dt,axis=1)
-
     row = np.arange (dimY)
-    row = row *binning + binning /2.
+    row = row *binning + binning/2.
 
     fit =np.polyfit (row, meandt, 1)
     fit = np.poly1d (fit)
@@ -184,11 +190,27 @@ def processfits(fitsname, makepng=False, title=""):
 
 
     plt.figure()
-    plt.plot (row[:-2],residual[:-2], '.')
+    meandt = np.mean (dt,axis=0)
+    col = np.arange (dimX)
+    col = col *binning + binning/2.
+
+    fit =np.polyfit (col, meandt, 1)
+    fit = np.poly1d (fit)
+    for i in range(3):
+        residual =  (meandt -fit (col))
+        good = np.abs(residual) < 3 * np.std (residual)
+        fit = np.polyfit (row[good], meandt[good], 1)
+        fit = np.poly1d (fit)
+
+    plt.plot (col, meandt,'.')
+    plt.plot (col, fit(col), label=fit)
+    plt.legend()
+    plt.xlabel ("Col number")
+    plt.ylabel ("Delay of start of exposure [s]")
     plt.title (title)
-    plt.xlabel ('Row number')
-    plt.ylabel ('Timing residual from fir')
-    plt.savefig(f'{basename}_gps_perrow_residual.png', bbox_inches='tight')
+    plt.savefig(f'{basename}_gps_percolumn.png', bbox_inches='tight')
+
+
 
 
 
@@ -198,6 +220,9 @@ def parseCommandLine():
     parser.add_argument('inputfile', nargs=1)
     parser.add_argument('--title', type=str)
     parser.add_argument('--png', action='store_true')
+    parser.add_argument('--x', type=int,default=None )
+    parser.add_argument('--y', type=int,default=None )
+    parser.add_argument('--period', default = 2, type=int, help="Signal period in seconds")
 
     parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
@@ -211,7 +236,7 @@ def parseCommandLine():
 def main():
     args=parseCommandLine()
     log.info (f'Reading in input file {args.inputfile}')
-    processfits(args.inputfile, makepng=args.png, title=args.title)
+    processfits(args.inputfile, makepng=args.png, title=args.title, period=args.period, x=args.x, y=args.y)
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ from astropy.stats import sigma_clipped_stats
 from matplotlib import pyplot as plt
 from lcocommissioning.common.Image import Image
 import logging
+import astropy.time as astt
 
 _logger = logging.getLogger(__name__)
 
@@ -121,7 +122,14 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
         shotnoises.append(shotnoise)
         level1s.append(level1)
         level2s.append(level2)
-        exptimes.append(flat1.primaryheader['EXPTIME'])
+        utstop  = astt.Time('2000-01-01T' + flat1.primaryheader['UTSTOP'], scale="utc", format=None).to_datetime()
+        utstart = astt.Time('2000-01-01T' + flat1.primaryheader['UTSTART'], scale="utc", format=None).to_datetime()
+        calculatedTexp = (utstop - utstart).total_seconds()
+        if calculatedTexp < 0:
+            calculatedTexp += 24 * 3600
+        headertexp = float (flat1.primaryheader['EXPTIME'])
+        _logger.info ("Calculated vs requested Texp: % 7.3f vs % 7.3f" % (calculatedTexp,headertexp))
+        exptimes.append(calculatedTexp + args.texpdelta)
 
     del bias1
     del bias2

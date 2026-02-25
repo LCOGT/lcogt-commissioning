@@ -62,8 +62,10 @@ def parseCommandLine():
     parser.add_argument('--out', type=str, help="Output file")
     parser.add_argument('inputfiles', type=str, nargs="+", help="FITS files to process")
 
-    parser.add_argument('--where', type=str, default='center', choices=['center', 'top', 'bottom', 'block'], help="FITS files to process")
+    parser.add_argument('--where', type=str, default='block', choices=['center', 'top', 'bottom', 'block'], help="FITS files to process")
+    parser.add_argument('--period', type=int, default=2, help="Signal period in seconds")
     parser.add_argument('--width', type=int, default=16)
+   
     parser.add_argument('--loglevel', dest='log_level', default='DEBUG', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
 
@@ -81,7 +83,7 @@ def SimpleregionAnalysis(args):
         for fitsfile in args.inputfiles:
             fracsec, mean, std= AnalyseFitsFile(fitsfile, where=args.where, width=args.width)
 
-            log.info (f"{fitsfile}  {fracsec} {mean} {std}")
+            log.info (f"Simple Regioan analysis {fitsfile}  {fracsec} {mean} {std}")
             outputfile.write (f"{fitsfile}  {fracsec} {mean} {std}\n")
 
 
@@ -99,14 +101,23 @@ def BlockAveAnalysis(args, ext='SCI'):
 
     idx = 0
     for fitsfile in args.inputfiles:
-        log.debug (fitsfile)
+        
         f = fits.open (fitsfile)
-        meanarray[idx, :,:] = block_reduce(f[ext].data, args.width, func=np.mean)
+        meanarray[idx, :,:] = block_reduce(f[ext].data, args.width, func=np.median)
         stdarray[idx, :,:] = block_reduce(f[ext].data, args.width, func=np.std)
         dateobs = f[ext].header['DATE-OBS']
+        utstart = f[ext].header['UTSTART']
+        utstop = f[ext].header['UTSTOP']
+        log.debug (utstop)
+        utstart = time.Time (f'2000-01-01T{utstart}',  scale='utc')
+        utstop = time.Time (f'2000-01-01T{utstop}',  scale='utc')
+        exptime = (utstop-utstart).to_value ('sec')
+        if exptime < 0:
+            exptime += 24 * 3600
         timeobj = time.Time (dateobs, format='isot', scale='utc')
-        fracsec[idx] = timeobj.to_datetime().microsecond/1000000.
+        fracsec[idx] = timeobj.to_datetime().microsecond/1000000 + timeobj.to_datetime().second % args.period
         f.close()
+        log.debug (f'BlockAveAnalysis {fitsfile} fracsec {fracsec[idx]:5.3f} exptime {exptime:5.3f}')
         idx = idx+1
 
     outf = fits.PrimaryHDU(meanarray)

@@ -222,7 +222,7 @@ def graphresults(
     allexptimes,
     alldateobs,
     args,
-    maxlinearity=40000,
+    maxlinearity=160000,
 ):
 
     adurange = 1 << args.adubits
@@ -603,6 +603,13 @@ def parseCommandLine():
         "--makepng",
         action="store_true",
         help="Create a png output image of noise, gain, and ptc.",
+    )
+
+    parser.add_argument(
+        "--texpdelta",
+        default = 0.0,
+        type=float,
+        help="Fixed value to add to Texp to compensatate for shutter mismatch'"
     )
 
     args = parser.parse_args()
