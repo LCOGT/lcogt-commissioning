@@ -1,2 +1,17 @@
+2.1.13 Aug 2 2015 
+* minor bug fixes, dependabot merges
+
+2.1.12 June 8 2025
+* Bug fix: wrong read of NAXIS
+
+2.1.11 June 06 2025
+* Bug fix w.r.t missing ignoreov and table sorting ... why did this work before?
+
+2.1.10 May 30 2025
+* also filter old graphs on kb and fs cameras out in web app
+
+2.1.9 May 29 2025 
+ * Exclude also kb cameras from report generation
+
 2.1.2 Dec 12 2022
 * Modifications to the handling of sq?? camera data in noisegaincrawler app.

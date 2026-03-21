@@ -27,11 +27,11 @@ def find_files_and_invoke_noisegain(date, args, camera=None, cameratype=None):
                         if database is not None:
                             database.close()
                         return
-            log.info("{} {} # files: {}".format(camera, date, len(files)))
-            try:
-                do_noisegain_for_fileset(files, database, args, frameidtranslationtable=files)
-            except Exception as e:
-                log.error(f'While doing noisegain for file set: {e}')
+            log.info(f"{camera} {date} # files: {len(files)}")
+            #try:
+            do_noisegain_for_fileset(files, database, args, frameidtranslationtable=files)
+            #except Exception as e:
+            #    log.error(f'While doing noisegain for file set: {e}')
             if database is not None:
                 database.close()
 
@@ -41,7 +41,7 @@ def parseCommandLine():
         description='Crawl LCO archive tyo measure noise, gain from paitrs of biases and darks',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('--cameratype', type=str, nargs='+', default=['fa', 'fs', 'kb', 'ep', 'sq'],
+    parser.add_argument('--cameratype', type=str, nargs='+', default=['fa', 'ep', 'sq'],
                         help='Type of cameras to parse')
     parser.add_argument('--instrument', type=str, default=None,
                         help='Individual camera to request')
@@ -70,6 +70,11 @@ def parseCommandLine():
     parser.add_argument('--showimages', action='store_true', help="Interactively show difference flat and bias images.")
     parser.add_argument('--ignoretemp', action='store_true',
                         help="ignore if actual temperature differs from set point temperature. Reject by default.")
+    
+    
+    parser.add_argument(
+        "--ignoreov", action="store_true", help="ignore overscan definition"
+    )
     parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
 

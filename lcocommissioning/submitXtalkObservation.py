@@ -243,7 +243,7 @@ def parseCommandLine():
 
     if ('auto' in args.targetname):
         # automatically find the best target
-        args.targetname = common.get_auto_target(common.goodXTalkTargets, args.site, args.start, moonseparation=60)
+        args.targetname = common.get_auto_target(common.goodXTalkTargets, args.site, args.start, moonseparation=30)
         if args.targetname is None:
             sys.exit(1)
 

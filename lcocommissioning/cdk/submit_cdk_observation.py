@@ -41,7 +41,7 @@ def create_cdk_request_configuration(args):
 
     if args.stackexptime >0:
         configuration['extra_params']['sub_expose'] = True
-        configuration['extra_params']['sub_expose_time'] = (int) (args.stackexptime*1000)
+        configuration['extra_params']['sub_exposure_time'] = (int) (args.stackexptime*1000)
 
     if args.exp_cnt:
         configuration['type'] = 'EXPOSE'
@@ -135,7 +135,7 @@ def parseCommandLine():
 
                               help='If set, observe at meridian only in drifting sky mode.')
     parser.add_argument('--title', default="Delta Rho commissioning", help="Descriptive title for observation request")
-    parser.add_argument('--proposalid', default="DeltaRho Commissioning", help="proposal ID")
+    parser.add_argument('--proposalid', default="LCOEngineering", help="proposal ID")
     parser.add_argument('--site', default='elp', choices=['ogg', 'elp', 'cpt','tfn','coj','lsc'],
                         help="To which site to submit")
 

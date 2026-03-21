@@ -5,6 +5,7 @@ from astropy.stats import sigma_clipped_stats
 from matplotlib import pyplot as plt
 from lcocommissioning.common.Image import Image
 import logging
+import astropy.time as astt
 
 _logger = logging.getLogger(__name__)
 
@@ -42,10 +43,10 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     if maxy is None:
         maxy = (int)(flat1.shape[0] * 5 // 8)
 
-    flat1lvl,_,_ = sigma_clipped_stats(flat1[miny:maxy, minx:maxx], sigma=10)
-    flat2lvl,_,_ = sigma_clipped_stats(flat2[miny:maxy, minx:maxx], sigma=10)
-    bias1lvl,_,_ = sigma_clipped_stats(bias1[miny:maxy, minx:maxx], sigma=10)
-    bias2lvl,_,_ = sigma_clipped_stats(bias2[miny:maxy, minx:maxx], sigma=10)
+    flat1lvl,_,_ = sigma_clipped_stats(flat1[miny:maxy, minx:maxx], sigma=5)
+    flat2lvl,_,_ = sigma_clipped_stats(flat2[miny:maxy, minx:maxx], sigma=5)
+    bias1lvl,_,_ = sigma_clipped_stats(bias1[miny:maxy, minx:maxx], sigma=5)
+    bias2lvl,_,_ = sigma_clipped_stats(bias2[miny:maxy, minx:maxx], sigma=5)
 
     avgbiaslevel =  (bias1lvl + bias2lvl) / 2.
     leveldifference = abs(flat1lvl - flat2lvl)
@@ -56,8 +57,8 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     # Measure noise of flat and bias differential images
     deltaflat = (flat1 - flat2)[miny:maxy, minx:maxx]
     deltabias = (bias1 - bias2)[miny:maxy, minx:maxx]
-    _,_,biasnoise = sigma_clipped_stats(deltabias, sigma=10)
-    _,_,flatnoise = sigma_clipped_stats(deltaflat, sigma=10)
+    _,_,biasnoise = sigma_clipped_stats(deltabias, sigma=5)
+    _,_,flatnoise = sigma_clipped_stats(deltaflat, sigma=5)
     _logger.debug(
         f" Levels (flat,flat,bias,bias), and noise (flat, bias): {minx}:{maxx},{miny}:{maxy} {flat1lvl} {flat2lvl} {bias1lvl} {bias2lvl}\n\t-> {flatlevel} {flatnoise}f rms {biasnoise} brms")
 
@@ -121,7 +122,14 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
         shotnoises.append(shotnoise)
         level1s.append(level1)
         level2s.append(level2)
-        exptimes.append(flat1.primaryheader['REQTIME'])
+        utstop  = astt.Time('2000-01-01T' + flat1.primaryheader['UTSTOP'], scale="utc", format=None).to_datetime()
+        utstart = astt.Time('2000-01-01T' + flat1.primaryheader['UTSTART'], scale="utc", format=None).to_datetime()
+        calculatedTexp = (utstop - utstart).total_seconds()
+        if calculatedTexp < 0:
+            calculatedTexp += 24 * 3600
+        headertexp = float (flat1.primaryheader['EXPTIME'])
+        _logger.info ("Calculated vs requested Texp: % 7.3f vs % 7.3f" % (calculatedTexp,headertexp))
+        exptimes.append(calculatedTexp + args.texpdelta)
 
     del bias1
     del bias2

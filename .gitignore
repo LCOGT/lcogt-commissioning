@@ -1,4 +1,5 @@
 /gainhistory/
+/localdata/
 /venv/
 /darkcurrent.sqlite
 /noisegain.sqlite

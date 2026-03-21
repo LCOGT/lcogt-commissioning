@@ -12,6 +12,7 @@ import astropy.time as astt
 from astropy.table import Table
 from astropy.io import ascii
 import math
+import json
 
 from lcocommissioning.common import lco_archive_utilities
 from lcocommissioning.common.ccd_noisegain import dosingleLevelGain
@@ -49,17 +50,23 @@ def sortinputfitsfiles(
 
     sortedlistofFiles = {}
     filemetrics = {}
-    listoffiles = sorted(listoffiles)
+    listoffiles.sort(['FILENAME'])
     # random.shuffle(listoffiles)
     for filecandidate in listoffiles:
+        filename = str(filecandidate["FILENAME"])
         # First stage: go through the images and derive the metrics from them to pair.
         # TODO: avoid opening all biases, it is pointless, need only 2!
 
+        if ("bias" in sortedlistofFiles):
+            if (len(sortedlistofFiles["bias"]) == 2) and ("b00" in filename):
+                _logger.debug(f'Already have two bias frames, skipping further bias candidate {filename}.')
+                continue              
+                
         if useaws:
             hdu = lco_archive_utilities.download_from_archive(filecandidate["frameid"])
         else:
-            print("Candidates: ", filecandidate)
-            filecandidate = {"FILENAME": filecandidate}
+            _logger.info (f"Candidate:  {filename}")
+            filecandidate = {"FILENAME": filename}
             fitsfilepath = str(filecandidate["FILENAME"])
             hdu = fits.open(fitsfilepath)
 
@@ -85,7 +92,7 @@ def sortinputfitsfiles(
 
         if abs(tempdiff) > 2:
             hdu.close()
-            _logger.warning(
+            _logger.info(
                 "rejecting file {}: CCD temp is not near set point, delta = {:5.2f}".format(
                     filecandidate, tempdiff
                 )
@@ -96,7 +103,7 @@ def sortinputfitsfiles(
             if "bias" not in sortedlistofFiles:
                 sortedlistofFiles["bias"] = []
             if len(sortedlistofFiles["bias"]) < 2:
-                sortedlistofFiles["bias"].append(str(filecandidate["FILENAME"]))
+                sortedlistofFiles["bias"].append(filename)
 
         else:  # it is (interpreted as) a flat
             if sortby == "exptime":
@@ -106,26 +113,27 @@ def sortinputfitsfiles(
 
             if sortby == "filterlevel":
                 filter = findkeywordinhdul(hdu, "FILTER")
-                naxis1 = findkeywordinhdul(hdu, "NAXIS1")
-                naxis2 = findkeywordinhdul(hdu, "NAXIS2")
+               
 
-                if (filter is not None) and ("b00" not in filecandidate["FILENAME"]):
+                if (filter is not None) and ("b00" not in filename):
                     image = Image(
                         hdu, overscancorrect=useoverscan, alreadyopenedhdu=True
                     )
                     if image.data is None:
                         level = -1
                     else:
-                        level = np.mean(
+                        naxis1 = image.data[0].shape[1]
+                        naxis2 = image.data[0].shape[0]
+                        level = np.nanmean(
                             image.data[0][
                                 naxis2 // 4 : naxis2 * 3 // 4,
                                 naxis1 // 4 : naxis1 * 3 // 4,
                             ]
                         )
-                    _logger.debug(
-                        f"Input file metrics {filecandidate} {filter} {level} {useoverscan}"
+                    _logger.info(
+                        f'Input file metrics {filename} filter:{filter} light level: {level: 8.1f} naxis 1/2: {naxis1} {naxis2} oversacn corrected: {useoverscan}'
                     )
-                    filemetrics[str(filecandidate["FILENAME"])] = (filter, level)
+                    filemetrics[filename] = (filter, level)
 
         hdu.close()
 
@@ -200,6 +208,11 @@ def sortinputfitsfiles(
     _logger.debug(sortedlistofFiles)
     return sortedlistofFiles
 
+def find_nearest(array, value):
+    delta = np.abs(array - value)
+    idx = delta.argmin()
+    print ("Index " ,  idx, delta)
+    return idx
 
 def graphresults(
     alllevels,
@@ -209,7 +222,7 @@ def graphresults(
     allexptimes,
     alldateobs,
     args,
-    maxlinearity=40000,
+    maxlinearity=160000,
 ):
 
     adurange = 1 << args.adubits
@@ -309,8 +322,17 @@ def graphresults(
         p = np.poly1d(z)
         ax1.plot(texp_sorted, p(texp_sorted), "-", label=f"fit: {p}")
 
+        midlevel = np.max (levels) / 2.
+        mp_idx = max (0, find_nearest(levels, midlevel)-1)
+        print ("Midlevel",  mp_idx,levels[mp_idx]) 
+        mp_level = levels[mp_idx]
+        mp_texp = exptimes[mp_idx]
+        mp_flux = mp_level / mp_texp
+        #linearity residual
+        LR = 100 * (1 - mp_flux / ( levels / exptimes ) )
+
         ax2.plot(
-            levels, (levels / p(exptimes) - 1) * 100, ".", label="extension %s" % ext
+            levels, LR, ".", label="ext %s" % ext
         )
 
     ax1.legend()
@@ -358,7 +380,7 @@ def do_noisegain_for_fileset(
     alldateobs = {}
 
     _logger.info(
-        "Sifting through the input files and finding viable flat pair candidates"
+        f"Sifting through the input files and finding viable flat pair candidates {inputlist}"
     )
     sortedinputlist = sortinputfitsfiles(
         inputlist,
@@ -369,10 +391,8 @@ def do_noisegain_for_fileset(
         useoverscan=not args.ignoreov,
     )
     _logger.info(
-        "Found {} viable sets for input. Starting noise gain calculation.".format(
-            len(sortedinputlist)
-        )
-    )
+        f"Found {len(sortedinputlist)} viable sets for input.\n {json.dumps(sortedinputlist, indent=4)}")
+    
 
     bias1_fname = sortedinputlist["bias"][0]
     bias2_fname = sortedinputlist["bias"][1]
@@ -384,8 +404,8 @@ def do_noisegain_for_fileset(
         bias2_frameid = frameidfromname(
             sortedinputlist["bias"][1], frameidtranslationtable
         )
-        print("Bias1 id", bias1_fname, bias1_frameid)
-        print("Bias2 id", bias2_fname, bias2_frameid)
+        _logger.info(f"Bias1 id {bias1_fname} -> {bias1_frameid}")
+        _logger.info(f"Bias2 id {bias2_fname} -> {bias2_frameid}")
 
     bias1 = (
         fits.open(bias1_fname)
@@ -404,11 +424,10 @@ def do_noisegain_for_fileset(
             if len(sortedinputlist[pair_ii]) == 2:
                 flat_1_fname = sortedinputlist[pair_ii][0]
                 flat_2_fname = sortedinputlist[pair_ii][1]
-                print(f"\nNoise / Gain measurement based on metric {pair_ii}")
-                print(
-                    f" Flat names {os.path.basename(flat_1_fname)} {os.path.basename(flat_2_fname)}"
+                _logger.info(f"\nNoise / Gain measurement based on metric {pair_ii}")
+                _logger.info(f" Flat names {os.path.basename(flat_1_fname)} {os.path.basename(flat_2_fname)}"
                 )
-                print(
+                _logger.info(
                     f" Bias names {os.path.basename(bias1_fname)} {os.path.basename(bias2_fname)}"
                 )
 
@@ -586,6 +605,13 @@ def parseCommandLine():
         help="Create a png output image of noise, gain, and ptc.",
     )
 
+    parser.add_argument(
+        "--texpdelta",
+        default = 0.0,
+        type=float,
+        help="Fixed value to add to Texp to compensatate for shutter mismatch'"
+    )
+
     args = parser.parse_args()
     args.useaws = False
 
@@ -600,6 +626,8 @@ def parseCommandLine():
         if not os.path.isfile(args.fitsfile[ii]):
             _logger.error("File %s does not exist. Giving up." % (args.fitsfile[ii]))
             sys.exit(0)
+
+    args.fitsfile = Table(data=[np.asarray(args.fitsfile)], names=['FILENAME', ])
 
     return args
 

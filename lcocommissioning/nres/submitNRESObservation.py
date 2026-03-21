@@ -9,8 +9,8 @@ import lcocommissioning.common.common as common
 
 _logger = logging.getLogger(__name__)
 
-defaultconstraints = {"max_airmass": 2.5,
-                      "min_lunar_distance": 45.0, }
+default_constraints = {"max_airmass": 3,
+                      "min_lunar_distance": 1.0, }
 
 
 def createNRESRequestsConfiguration(args):
@@ -75,7 +75,7 @@ def createRequest(args):
     }
 
     nresconfiguration['target'] = target
-    nresconfiguration['constraints'] = common.default_constraints
+    nresconfiguration['constraints'] = default_constraints
     request['configurations'].append(nresconfiguration)
     requestgroup['requests'].append(request)
     return requestgroup

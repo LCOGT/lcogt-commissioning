@@ -230,6 +230,7 @@ def simpledateformat ():
     plt.setp(plt.gca().xaxis.get_minorticklabels(), rotation=45)
     plt.setp(plt.gca().xaxis.get_majorticklabels(), rotation=45)
     plt.gca().grid(which='minor')
+    
 def dateformat(starttime=None, endtime=None):
     """ Utility to prettify a plot with dates.
     """

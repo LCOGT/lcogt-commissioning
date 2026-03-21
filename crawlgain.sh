@@ -11,7 +11,7 @@ DB_PORT="${DB_PORT:-5432}"
 DB_NAME="${DB_NAME:-lcogt-commissioning}"
 DB_USER="${DB_USER:-lcogt-commissioning}"
 DB_PASS="${DB_PASS:-undefined}"
-NDAYS="${NDAYS:-2}"
+NDAYS="${NDAYS:-1}"
 
 # SQLAlchemy database connection string
 DATABASE="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
@@ -30,8 +30,6 @@ CRAWLNOISEGAIN_ARGS=(
 
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fa" --readmode="full_frame"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fa" --readmode="central_2k_2x2"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fs" --readmode="default"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="kb" --readmode="default"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_SLOW"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_FAST"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="sq" --readmode="full_frame"
