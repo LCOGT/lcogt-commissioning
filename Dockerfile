@@ -1,5 +1,4 @@
-FROM python:3.10
-MAINTAINER Las Cumbres Observatory <webmaster@lco.global>
+FROM python:3.11
 # Configure application working directory
 WORKDIR /lco/noisegainreport
 
@@ -9,10 +8,9 @@ RUN apt-get update -y \
         && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Python dependencies (libraries)
-COPY requirements.txt .
 RUN pip --no-cache-dir install --upgrade pip \
-        && pip install --upgrade --force-reinstall setuptools\
-        && pip --no-cache-dir install -r requirements.txt --upgrade
+        && pip install --upgrade --force-reinstall setuptools
+        
 # Install application code
 COPY . .
-RUN python setup.py install
+RUN pip install .
