@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lcocommissioning"
-version = "2.1.15"
+version = "2.2.1"
 description = "Tool to characterize CCD detectors and other commissioning tasks for the LCO observatory."
 authors = [
     {name = "Daniel Harbeck", email = "dharbeck@lco.global"}
