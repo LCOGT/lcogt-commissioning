@@ -15,7 +15,7 @@ from multiprocessing import Pool
 log = logging.getLogger(__name__)
 
 
-def rampfunction (fractStartTime, dt05, amplitude, bias):
+def rampfunction (fractStartTime,  dt05, amplitude, bias):
     """
 
     :param fractStarttime: fraction of the exposure start time in seconds
@@ -23,9 +23,9 @@ def rampfunction (fractStartTime, dt05, amplitude, bias):
     :return:
     """
     # triable is the absolute value of a sawtooth
-    frequency = 0.5
+    global period 
     deltaphase = 2* np.pi *dt05
-    retval =  amplitude * np.abs(signal.sawtooth(2 * np.pi * frequency * fractStartTime + deltaphase)) + bias
+    retval =  amplitude * np.abs(signal.sawtooth(2 * np.pi * fractStartTime / period + deltaphase)) + bias
     return retval
 
 def maketestplots ():
@@ -41,13 +41,16 @@ def maketestplots ():
 #maketestplots()
 #exit(0)
 
-def do_gpsfitting (fractime, lightlevel, std, x,y, outpng, period):
+def do_gpsfitting (fractime, lightlevel, std, x,y, outpng, myperiod):
+    global period
+    period = myperiod
     bounds = [[-period/2, 0,-1000],[0,200000,200000]]
     try:
         (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime, lightlevel, bounds=bounds, )
         delta = np.abs (lightlevel - rampfunction(fractime, paramset[0], amplitude = paramset[1], bias = paramset[2]))
         good = (delta < np.std (delta) * 4) & (lightlevel > 10)
         (paramset, istat) = scipy.optimize.curve_fit(rampfunction, fractime[good], lightlevel[good], bounds=bounds, )
+        paramset[0] = paramset[0] / period # XXXXX Verify, but I think we need to correct the delay.
         perr = np.sqrt(np.diag(istat))
        
         if outpng is not None:
@@ -56,7 +59,7 @@ def do_gpsfitting (fractime, lightlevel, std, x,y, outpng, period):
             bad = np.logical_not(good)
             plt.plot (fractime[bad], lightlevel[bad], 'x', c='grey', )
             plt.plot (fractime[good], lightlevel[good], '.',  c='black', label="data")
-            plt.plot (_x,rampfunction(_x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
+            plt.plot (_x,rampfunction(_x, paramset[0]*period, amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
             plt.legend()
             plt.xlabel("Fractional UTSTART [s]")
             plt.ylabel ("Illumination Level [ADU]")
@@ -65,7 +68,7 @@ def do_gpsfitting (fractime, lightlevel, std, x,y, outpng, period):
 
         return (paramset,istat,x,y)
     except:
-        log.warning ("fitting exception caught")
+        log.exception ("fitting exception caught")
     return (None,None,x,y)
 
 
@@ -79,38 +82,6 @@ def getTestdata (testdeltaT=0, n=100, Amplitude=480*0.7, bias=500, ron=3.1, npix
     std = np.sqrt (test_measurements + ron**2) / np.sqrt(npixels)
     print (std)
     return (testdata_time, test_measurements, std)
-
-def readMeasurementData (fname):
-    data = None
-    with open (fname) as input:
-        data = ascii.read(input.read(), delimiter=' ',guess=False, format='no_header')
-    return data
-
-
-def readsimplefile(filename):
-    data = readMeasurementData(filename)
-
-    fractime = data['col2'].data
-    mean = data['col3'].data
-    std = data['col4'].data
-
-    #fractime,mean, std = getTestdata(testdeltaT=0.3,n=30)
-
-    paramset, pcov = do_gpsfitting(fractime,mean, std=std)
-    perr = np.sqrt(np.diag(pcov))
-
-    print (f"paramters: {paramset}\nErrors: {perr}")
-    plt.figure()
-
-    x = np.arange(0,1,0.01)
-
-    plt.errorbar (fractime, mean,yerr=std, fmt='.', label="data")
-    plt.plot (x,rampfunction(x, paramset[0], amplitude = paramset[1], bias = paramset[2]), '-', label=f"dt = {paramset[0]: 6.4f} +/- {perr[0]: 6.4f}s")
-    plt.legend()
-    plt.savefig ("gpscorrelation.pdf")
-    plt.close()
-
-
 
 def processfits(fitsname, makepng=False, title="", period=1, x=None, y=None):
     basename = fitsname[:-5]
@@ -130,9 +101,9 @@ def processfits(fitsname, makepng=False, title="", period=1, x=None, y=None):
         for yy in range (dimY):
             mean = f[0].data[:,yy,xx]
             std  = f[1].data[:,yy,xx]
-            outpng=f"gpsfit_{xx}_{yy}.pdf" if makepng else None
+            outpng=f"{basename}_gpsfit_{xx}_{yy}.pdf" if makepng else None
             if (x is not None) and (y is not None) and (xx == x)  and (yy == y):
-                 outpng=f"gpsfit_{xx}_{yy}.pdf" 
+                 outpng=f"{basename}_gpsfit_{xx}_{yy}.pdf" 
             myargs.append ( (fracsec,mean,std,xx,yy,outpng,period) )
 
             #paramset, pcov,x,y = do_gpsfitting(fracsec,mean, std, xx,yy, outpng)
@@ -160,8 +131,6 @@ def processfits(fitsname, makepng=False, title="", period=1, x=None, y=None):
     min = np.min (dt)
     max = np.max (dt)
 
-
-
     plt.figure()
     plt.imshow(dt, cmap='viridis', aspect='equal', vmin=min, vmax=max , origin='lower')
     plt.colorbar()
@@ -173,15 +142,15 @@ def processfits(fitsname, makepng=False, title="", period=1, x=None, y=None):
     row = row *binning + binning/2.
 
     fit =np.polyfit (row, meandt, 1)
-    fit = np.poly1d (fit)
-    for i in range(3):
-        residual =  (meandt -fit (row))
+    poly = np.poly1d (fit)
+    for i in range(2):
+        residual =  (meandt -poly (row))
         good = np.abs(residual) < 3 * np.std (residual)
         fit = np.polyfit (row[good], meandt[good], 1)
-        fit = np.poly1d (fit)
+        poly = np.poly1d (fit)
 
-    plt.plot (row, meandt,'.')
-    plt.plot (row, fit(row), label=fit)
+    plt.plot (row, meandt,'.', label="Data")
+    plt.plot (row, poly(row), label=str(fit))
     plt.legend()
     plt.xlabel ("Row number")
     plt.ylabel ("Delay of start of exposure [s]")
@@ -195,15 +164,15 @@ def processfits(fitsname, makepng=False, title="", period=1, x=None, y=None):
     col = col *binning + binning/2.
 
     fit =np.polyfit (col, meandt, 1)
-    fit = np.poly1d (fit)
+    poly = np.poly1d (fit)
     for i in range(3):
-        residual =  (meandt -fit (col))
+        residual =  (meandt -poly (col))
         good = np.abs(residual) < 3 * np.std (residual)
         fit = np.polyfit (row[good], meandt[good], 1)
-        fit = np.poly1d (fit)
+        poly = np.poly1d (fit)
 
     plt.plot (col, meandt,'.')
-    plt.plot (col, fit(col), label=fit)
+    plt.plot (col, poly(col), label=str(fit))
     plt.legend()
     plt.xlabel ("Col number")
     plt.ylabel ("Delay of start of exposure [s]")
