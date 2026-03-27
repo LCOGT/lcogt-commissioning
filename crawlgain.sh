@@ -30,6 +30,8 @@ CRAWLNOISEGAIN_ARGS=(
 
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fa" --readmode="full_frame"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fa" --readmode="central_2k_2x2"
+time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="full_frame"
+time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="central_2k_2x2"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_SLOW"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_FAST"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="sq" --readmode="full_frame"

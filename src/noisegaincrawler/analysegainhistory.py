@@ -31,7 +31,7 @@ endtime.replace(day=1)
 
 fareadmodes = [['full_frame', None], ['central_2k_2x2', ]]
 
-epreadmodes = [['MUSCAT_SLOW',], ['MUSCAT_FAST', ] ]
+epreadmodes = [['MUSCAT_SLOW',], ['MUSCAT_FAST', ], ['full_frame',],  ['central_2k_2x2',] ]
 
 sqreadmodes = [['full_frame', 'default', 'central30x30'], ]
 
@@ -127,7 +127,7 @@ def renderHTMLPage(args, cameras, filenames):
 
         message = message + " <h2> %s </h2>\n" % (camera)
         for readmode in readmodes:
-            _logger.info (f"Processing readmode: {readmode}")
+            _logger.info (f"Rendering readmode: {readmode}")
             if readmode is not None:
                 readmode = [x if x is not None else 'None' for x in readmode]
 
@@ -151,7 +151,7 @@ def renderHTMLPage(args, cameras, filenames):
 
 
 def make_plots_for_camera(camera, args, database):
-    ''' Crate a list of plots for all cameras matching pattern and retuirn a list of filenames of the resulting plots.
+    ''' Create a list of plots for all cameras matching pattern and retuirn a list of filenames of the resulting plots.
     '''
 
     filenames = []
@@ -174,8 +174,12 @@ def make_plots_for_camera(camera, args, database):
 
     for readmode in readmodes:
         dataset = database.getMeasurementsForCamera(camera, levelratio=0.02, filters=goodfilters, readmode=readmode)
+        _logger.info(f"Datasset for  readmode: {readmode}, dataset: {dataset}")
         if dataset is None:
-            return
+            continue
+        if len(dataset) == 0:      
+            continue
+       
         extensions = sorted(set(dataset['extension']))
         print (extensions)
         if readmode is not None:
@@ -391,7 +395,7 @@ def main():
     for camera in cameras:
         filenames += make_plots_for_camera(camera, args, database)
 
-    renderHTMLPage(args, sorted(cameras), filenames)
+    #renderHTMLPage(args, sorted(cameras), filenames)
     database.close()
 
 

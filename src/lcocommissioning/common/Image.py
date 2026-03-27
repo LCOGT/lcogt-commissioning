@@ -153,7 +153,7 @@ class Image(object):
             return 0
 
         if  hdu.header.get(biassecheader) in ('UNKNOWN', 'N/A'):
-            _log.error(f"Bias Section is undefined for extension {hdu}")
+            _log.debug(f"Bias Section is undefined for extension {hdu}")
             return 0
 
         biassecslice = self.fitssection_to_slice(overkeyword)
