@@ -99,7 +99,7 @@ def healthz():
     return 'Healthy!\n'
 
 def main():
-    app.run(port=8080, debug=True)
+    app.run(port=5000, debug=False, host='0.0.0.0', threaded=True)
     pass
 
 if __name__ == '__main__':

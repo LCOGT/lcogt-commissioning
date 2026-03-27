@@ -1,9 +1,9 @@
-FROM python:3.11
+FROM python:3.12
 # Configure application working directory
 WORKDIR /lco/noisegainreport
 
 RUN apt-get update -y \
-        && apt-get install --no-install-recommends -y less vim\
+        && apt-get install --no-install-recommends -y less vim libpq-dev\
         && apt-get clean -y \
         && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
