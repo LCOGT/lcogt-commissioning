@@ -131,7 +131,7 @@ def sortinputfitsfiles(
                             ]
                         )
                     _logger.info(
-                        f'Input file metrics {filename} filter:{filter} light level: {level: 8.1f} naxis 1/2: {naxis1} {naxis2} oversacn corrected: {useoverscan}'
+                        f'Input file metrics {filename} filter:{filter} light level: {level: 8.1f} naxis 1/2: {naxis1} {naxis2} overscan corrected: {useoverscan}'
                     )
                     filemetrics[filename] = (filter, level)
 
@@ -380,7 +380,7 @@ def do_noisegain_for_fileset(
     alldateobs = {}
 
     _logger.info(
-        f"Sifting through the {len(inputlist)} input files of readmode {args.readmode} and finding viable flat pair candidates {inputlist}"
+        f"Sifting through the {len(inputlist)} input files of readmode {args.readmode} and finding viable flat pair candidates"
     )
     sortedinputlist = sortinputfitsfiles(
         inputlist,

@@ -174,7 +174,7 @@ def make_plots_for_camera(camera, args, database):
 
     for readmode in readmodes:
         dataset = database.getMeasurementsForCamera(camera, levelratio=0.02, filters=goodfilters, readmode=readmode)
-        _logger.info(f"Datasset for  readmode: {readmode}, dataset: {dataset}")
+        _logger.info(f"Datasset for  readmode: {readmode}, dataset: {len(dataset)} entries")
         if dataset is None:
             continue
         if len(dataset) == 0:      

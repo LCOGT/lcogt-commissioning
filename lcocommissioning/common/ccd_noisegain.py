@@ -129,7 +129,9 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
             calculatedTexp += 24 * 3600
         headertexp = float (flat1.primaryheader['EXPTIME'])
         _logger.info ("Calculated vs requested Texp: % 7.3f vs % 7.3f" % (calculatedTexp,headertexp))
-        exptimes.append(calculatedTexp + args.texpdelta)
+        texpdelta = args.texpdelta if 'texpdelta' in args else 0
+
+        exptimes.append(calculatedTexp + texpdelta)
 
     del bias1
     del bias2
