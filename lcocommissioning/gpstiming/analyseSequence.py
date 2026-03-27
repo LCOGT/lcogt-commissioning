@@ -108,7 +108,6 @@ def BlockAveAnalysis(args, ext='SCI'):
         dateobs = f[ext].header['DATE-OBS']
         utstart = f[ext].header['UTSTART']
         utstop = f[ext].header['UTSTOP']
-        log.debug (utstop)
         utstart = time.Time (f'2000-01-01T{utstart}',  scale='utc')
         utstop = time.Time (f'2000-01-01T{utstop}',  scale='utc')
         exptime = (utstop-utstart).to_value ('sec')

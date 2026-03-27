@@ -11,6 +11,11 @@ The original scripts provided by Rachel Street were tuned for the old 3D cube fi
  Note: The scripts explained below are updated; scripts not mentioned here have not been vetted yet and 
  is vestigial code 
 
+
+The buidl system was moved to pyproject.toml March 2026
+use pip install -e . instrad of python setup.py develop / install
+
+
 noisegainmef.py
 ===
 

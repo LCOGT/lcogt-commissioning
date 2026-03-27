@@ -48,7 +48,7 @@ lco_MuSCAT_sites = ['ogg']
 lco_nres_sites = nres_instruments.keys()
 
 lco_sinistro1m_cameras = ['fa02', 'fa03', 'fa04', 'fa05', 'fa06', 'fa07', 'fa08', 'fa11', 'fa12', 'fa14', 'fa15',
-                          'fa16', 'fa19', ]
+                          'fa16', 'fa19', 'ep51']
 
 archon_readout_modes = ["full_frame", "central_2k_2x2"]
 
@@ -181,7 +181,7 @@ def send_request_to_portal(requestgroup, dosubmit=False, url="https://observe.lc
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as exc:
-        print('API call failed: {}'.format(response.content))
+        print(f'API call failed: {json.dumps(json.loads(response.content),indent=2)}')
         return
 
     requestgroup_dict = response.json()  # The API will return the newly submitted requestgroup as json
@@ -214,8 +214,11 @@ def submit_request_group(observation, dosubmit=False):
                 )
             )
         except Exception:
+            json_object = json.loads(response.content)['non_field_errors']
+
+            json_formatted_str = json.dumps(json_object, indent=2)
             _log.error(
-                'Failed to submit request group: error code {}: {}'.format(response.status_code, response.content))
+                'Failed to submit request group: error code {}: {}'.format(response.status_code, json_formatted_str ))
     else:
         _log.info("Not submitting block since CONFIRM  is not set")
 

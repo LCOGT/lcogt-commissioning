@@ -83,6 +83,7 @@ def parseCommandLine():
                         format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
 
     args.sortby = "filterlevel"
+   
     if args.ndays is not None:
         log.info (f"Determining dates from ndays argument {args.ndays}")
         args.dates = ArchiveDiskCrawler.get_last_n_days(args.ndays)

@@ -380,7 +380,7 @@ def do_noisegain_for_fileset(
     alldateobs = {}
 
     _logger.info(
-        f"Sifting through the input files and finding viable flat pair candidates {inputlist}"
+        f"Sifting through the {len(inputlist)} input files of readmode {args.readmode} and finding viable flat pair candidates {inputlist}"
     )
     sortedinputlist = sortinputfitsfiles(
         inputlist,
@@ -391,7 +391,7 @@ def do_noisegain_for_fileset(
         useoverscan=not args.ignoreov,
     )
     _logger.info(
-        f"Found {len(sortedinputlist)} viable sets for input.\n {json.dumps(sortedinputlist, indent=4)}")
+        f"Found {len(sortedinputlist)} viable sets for readmode {args.readmode}.\n {json.dumps(sortedinputlist, indent=4)}")
     
 
     bias1_fname = sortedinputlist["bias"][0]

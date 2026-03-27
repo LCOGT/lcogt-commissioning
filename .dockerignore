@@ -7,3 +7,4 @@ temp
 *.sqlite
 venv
 .venv
+.git

@@ -245,6 +245,7 @@ def parseCommandLine():
         # automatically find the best target
         args.targetname = common.get_auto_target(common.goodXTalkTargets, args.site, args.start, moonseparation=30)
         if args.targetname is None:
+            print("Could not find a suitable target for the given time and site. Please specify a target name or change the time/site.")
             sys.exit(1)
 
     try:

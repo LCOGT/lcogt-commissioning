@@ -40,7 +40,7 @@ def isHoliday(date, holidays):
 
 
 def submit_RTI_block(site, enclosure, telescope, starttime, endtime, reason, submit=False):
-    print('Will submit:  ', starttime, '  to  ', endtime, '  at  ', site, enclosure, telescope, '  where downtime is', (endtime-starttime   ).seconds/60, 'minutes long.')
+    print(f'{"Will" if submit else "Would"} submit:  {starttime}  to  {endtime}  at  {site} {enclosure} {telescope}  where downtime is {(endtime-starttime).seconds/60} minutes long.')
     if submit:
         data = {
                     'site': site,
@@ -58,7 +58,7 @@ def submit_RTI_block(site, enclosure, telescope, starttime, endtime, reason, sub
                 
         response.raise_for_status()
 
-def define_RTI_blocks (site, templatetimes, startdate, enddate, holidays):
+def define_RTI_blocks (site, templatetimes, startdate, enddate, holidays, submit=False):
     totaltime = 0
     datetosubmit = startdate
     while datetosubmit <= enddate:
@@ -79,7 +79,9 @@ def define_RTI_blocks (site, templatetimes, startdate, enddate, holidays):
             starttime = datetime.datetime(year=datetosubmit.year, month=datetosubmit.month, day=datetosubmit.day,
                                           hour=starttime.hour, minute=starttime.minute, second=starttime.second)
             endtime = starttime + datetime.timedelta(minutes=30)
-            print (f"{datetosubmit} - Submitting RTI block for {datetosubmit.strftime('%a')} {starttime} to {endtime}")
+            submit_RTI_block(site, 'clma', '2m0a', starttime, endtime, 'RTI', submit=submit)
+            #print (f"{datetosubmit} - Simulating RTI block for {datetosubmit.strftime('%a')} {starttime} to {endtime}")
+
             totaltime += 30
         datetosubmit += datetime.timedelta(days=1)
 
@@ -91,7 +93,7 @@ def define_RTI_blocks (site, templatetimes, startdate, enddate, holidays):
 if __name__ == "__main__":
     for site in ['coj', 'ogg']:
         template_times_ogg = readslots(site,)
-        define_RTI_blocks(site, template_times_ogg, startdate, enddate, holidays)
+        define_RTI_blocks(site, template_times_ogg, startdate, enddate, holidays, submit=False)
         pass
     
     #submit_RTI_block('lsc', 'aqwb', '0m4a', now, endtime, 'Daniel Test', submit=True)

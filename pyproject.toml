@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "lcocommissioning"
+version = "2.2.3"
+description = "Tool to characterize CCD detectors and other commissioning tasks for the LCO observatory."
+authors = [
+    {name = "Daniel Harbeck", email = "dharbeck@lco.global"}
+]
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+
+
+
+dependencies = [
+    "Flask==2.3.2",
+    "astropy==5.3.3",
+    "boto3==1.21.5",
+    "opensearch-py==2.1",
+    "ephem==4.1.5",
+    "gunicorn[gevent]==20.0.4",
+    "matplotlib==3.10.8",
+    "numpy==1.24",
+    "peakutils==1.3.3",
+    "psycopg2-binary==2.9.6",
+    "pytest==7.0.1",
+    "python-vxi11==0.9",
+    "requests==2.33.0",
+    "scipy==1.10",
+    "sep==1.2.1",
+    "sqlalchemy==1.3.16",
+    "sqlalchemy_utils==0.36.1",
+    "packaging>=22.0",
+    "opensearch_dsl"
+]
+urls = {Homepage = "https://github.com/LCOGT/lcogt-commissioning"}
+
+[project.scripts]
+submitNRESObservation = "lcocommissioning.nres.submitNRESObservation:main"
+plot_nres_spec = "lcocommissioning.nres.plot_nres_1d:main"
+noisegainmef = "lcocommissioning.noisegainrawmef:main"
+submitXtalkObservation = "lcocommissioning.submitXtalkObservation:main"
+analysegainhistory = "noisegaincrawler.analysegainhistory:main"
+crawlnoisegain = "noisegaincrawler.crawl_noisegain:main"
+submitNamedModeTest = "lcocommissioning.submitNameModeTest:main"
+sinistrocrosstalk = "lcocommissioning.crosstalk:main"
+focuscurve = "lcocommissioning.focus.focuscurve:main"
+effocus = "lcocommissioning.focus.ef_focuscalibration:main"
+focusstack = "lcocommissioning.focus.focustrends:main"
+submit_floyds_calibration = "lcocommissioning.floyds.submitFloydsCalibration:main"
+submit_floyds_observation = "lcocommissioning.floyds.submitFloydsObservation:main"
+submit_muscat_observation = "lcocommissioning.muscat.submitMuscatObservation:main"
+submit_cdk_observation = "lcocommissioning.cdk.submit_cdk_observation:main"
+get_sbigframe = "lcocommissioning.sbig.get_sbig_frame:main"
+get_qhyframe = "lcocommissioning.cmostest.getqhyccdframe:main"
+get_archonframe = "lcocommissioning.archon.archonexpose:main"
+elongation_assessment = "lcocommissioning.cdk.elongation_assessment:main"
+muscat_focus = "lcocommissioning.muscat.muscat_focus:main"
+deltarhofocus = "lcocommissioning.cdk.deltarhofocuscurve:main"
+webapp = "noisegaincrawler.webapp:main"
+
+
+[tool.setuptools]
+zip-safe = false
+packages=["lcocommissioning", "noisegaincrawler"]
+
+
+
+
