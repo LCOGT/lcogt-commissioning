@@ -6,6 +6,7 @@
 /darkhistory/
 definedb.sh
 lcocommissioning/darkhistory/
+testdata
 
 *.pdf
 *.png

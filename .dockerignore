@@ -8,3 +8,4 @@ temp
 venv
 .venv
 .git
+definedb.sh

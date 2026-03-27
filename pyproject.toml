@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lcocommissioning"
-version = "2.2.3"
+version = "2.2.6"
 description = "Tool to characterize CCD detectors and other commissioning tasks for the LCO observatory."
 authors = [
     {name = "Daniel Harbeck", email = "dharbeck@lco.global"}
@@ -67,8 +67,10 @@ webapp = "noisegaincrawler.webapp:main"
 
 [tool.setuptools]
 zip-safe = false
-packages=["lcocommissioning", "noisegaincrawler"]
+#packages=["lcocommissioning", "noisegaincrawler"]
 
+[tool.setuptools.packages.find]
+include = ["lcocommissioning*", "noisegaincrawler*"]
 
 
 
