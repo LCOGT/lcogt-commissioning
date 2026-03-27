@@ -111,7 +111,7 @@ class noisegaindb():
                          'diffnoise', 'level1', 'level2', 'readmode'])
 
         t['dateobs'] = t['dateobs'].astype(str)
-        t['dateobs'] = astt.Time(t['dateobs'], scale='utc', format=None).to_datetime()
+        t['dateobs'] = astt.Time(t['dateobs'], scale='utc', format='isot').to_datetime()
         t['gain'] = t['gain'].astype(float)
         t['level'] = t['level'].astype(float)
         t['diffnoise'] = t['diffnoise'].astype(float)
