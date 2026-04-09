@@ -9,8 +9,11 @@ import os.path
 import numpy as np
 import argparse
 import astropy.time as astt
+import astropy.stats
+from astropy.stats import sigma_clip
 from astropy.table import Table
 from astropy.io import ascii
+from astropy.modeling import models, fitting
 import math
 import json
 
@@ -130,6 +133,9 @@ def sortinputfitsfiles(
                                 naxis1 // 4 : naxis1 * 3 // 4,
                             ]
                         )
+                        if (level == 0):
+                            level = -1
+                        
                     _logger.info(
                         f'Input file metrics {filename} filter:{filter} light level: {level: 8.1f} naxis 1/2: {naxis1} {naxis2} overscan corrected: {useoverscan}'
                     )
@@ -226,6 +232,8 @@ def graphresults(
 ):
 
     adurange = 1 << args.adubits
+
+    # plot flux vs dateobs to check for any temporal trends in the data
     plt.figure()
     for ext in alllevels:
         myexptimes = np.asarray(allexptimes[ext])
@@ -246,6 +254,7 @@ def graphresults(
     plt.savefig(f"ptc_{args.readmode}_dateobs_flux.png", bbox_inches="tight")
     plt.close()
 
+    # plot flux vs level to check for any trends in the data 
     plt.figure()
     for ext in alllevels:
         flux = np.asarray(alllevels[ext]) / np.asarray(allexptimes[ext])
@@ -253,41 +262,64 @@ def graphresults(
         print(level, flux)
         plt.plot(level, flux, "o", label="extension %s data" % (ext))
     plt.legend()
-    plt.ylabel(("Time vs Flux [ADU/s]"))
+    plt.ylabel(("Flux [ADU/s]"))
     plt.xlabel("Level  [ADU]")
-    plt.title(args.readmode)
+    plt.title(f"Flux vs Level - {args.readmode}")
     plt.savefig(f"ptc_{args.readmode}_level_flux.png", bbox_inches="tight")
     plt.close()
 
-    _logger.debug("Plotting gain vs level")
+    
+    # plot gain vs level to check for any trends in the data and identify the linearity regime
     plt.figure()
+    f, (ax1, ax2) = plt.subplots(2, 1, gridspec_kw={"height_ratios": [1, 1]})
     for ext in alllevels:
         gains = np.asarray(allgains[ext])
         levels = np.asarray(alllevels[ext])
-        statdata = gains[(levels > 10) & (levels < maxlinearity) & (gains < 20)]
-        bestgain = np.mean(statdata)
-        for iter in range(2):
-            if len(statdata >= 3):
-                mediangain = np.median(statdata)
-                stdgain = np.std(statdata)
-                goodgains = np.abs(statdata - mediangain) < 1 * stdgain
-                bestgain = np.mean(statdata[goodgains])
+        sortedlevels = np.sort(levels)
+        noises = np.asarray(allnoises[ext])
+        good = (levels >100) & (levels < maxlinearity) & (gains < 20)
+        gaindata = gains[(levels > 100) & (levels < maxlinearity) & (gains < 20)]
+        noisedata = noises[(levels > 100) & (levels < maxlinearity) & (gains < 20)] 
+        bestgain, med, gainstddev = astropy.stats.sigma_clipped_stats(gaindata, sigma=3, maxiters=3)
+        bestnoise, med, noisestddev = astropy.stats.sigma_clipped_stats(noisedata, sigma=3, maxiters=3)
+      
+        fit = fitting.LinearLSQFitter()
+        or_fit = fitting.FittingWithOutlierRemoval(fit, sigma_clip, niter=3, sigma=3.0)
+        line_init = models.Linear1D()
+        fitted_gain_line, mask = or_fit(line_init, levels[good], gains[good], )
+        filtered_levels = np.ma.masked_array(levels[good], mask=mask)
+        filtered_gains = np.ma.masked_array(gains[good], mask=mask)
+        bestgain = fitted_gain_line.intercept.value
 
-        plt.plot(alllevels[ext], allgains[ext], "o", label="extension %s data" % (ext))
-        plt.hlines(
-            bestgain,
-            0,
-            np.max(alllevels[ext]),
-            label="Ext %d gain: %5.2f e-/ADU" % (ext, bestgain),
-        )
-        print("Best gain for ext %d: %5.2f" % (ext, bestgain))
+        ax1.plot(levels, gains, "ko", fillstyle = "none", )
+        ax1.plot(filtered_levels, filtered_gains, "ko", label=f"extension {ext} Gain" )
+        ax1.plot(sortedlevels, fitted_gain_line(sortedlevels), "-", label=f"extension {ext} fit: gain = {bestgain:.2f} e-/ADU")
 
-    plt.ylim([0, 7])
+        line_init = models.Linear1D()
+        fitted_noise_line, mask = or_fit(line_init, levels[good], noises[good], )
+        filtered_levels = np.ma.masked_array(levels[good], mask=mask)
+        filtered_noises = np.ma.masked_array(noises[good], mask=mask)
+        bestnoise = fitted_noise_line.intercept.value
+                
+        ax2.plot(levels, noises, "ko", )
+        ax2.plot(filtered_levels, filtered_noises, "ko", label=f"extension {ext} Noise" )
+        ax2.plot(sortedlevels, fitted_noise_line(sortedlevels), "-", label=f"extension {ext} fit: noise = {bestnoise:.2f} e-")
 
-    plt.legend()
-    plt.xlabel(("Exposure level [ADU]"))
-    plt.ylabel("Gain [e-/ADU]")
-    plt.title(args.readmode)
+        print(f"Best gain for ext {ext}: {bestgain:.2f} e-/ADU, best noise: {bestnoise:.2f} e-")
+
+    ax1.set_ylim([0, 7])
+    ax1.set_xlim([1, 1.1 * adurange])
+    ax1.legend()
+    
+    ax1.set_ylabel("Gain [e-/ADU]")
+    ax1.set_title(f"Gain & Readnoise {args.readmode}")
+    
+    ax2.set_ylim([0, 20])
+    ax2.set_xlim([1, 1.1 * adurange])
+    ax2.legend()
+    ax2.set_ylabel("Readnoise [e-]")
+    ax2.set_xlabel(("Exposure level [ADU]"))
+
     plt.savefig(f"ptc_{args.readmode}_levelgain.png", bbox_inches="tight")
     plt.close()
 
@@ -305,6 +337,7 @@ def graphresults(
     plt.savefig(f"ptc_{args.readmode}_ptc.png", bbox_inches="tight")
     plt.close()
 
+
     _logger.info("Plotting level vs exptime")
     plt.figure()
     f, (ax1, ax2) = plt.subplots(2, 1, gridspec_kw={"height_ratios": [2, 1]})
@@ -312,17 +345,21 @@ def graphresults(
 
         exptimes = np.asarray(allexptimes[ext])
         levels = np.asarray(alllevels[ext])
+        texp_sorted = np.sort(exptimes)     
+        good = (exptimes >= 2) &(levels > 0)
 
-        ax1.plot(exptimes, levels, ".", label="extension %s" % ext)
+        fit = fitting.LinearLSQFitter()
+        or_fit = fitting.FittingWithOutlierRemoval(fit, sigma_clip, niter=3, sigma=3.0)
+        line_init = models.Linear1D()
+        fitted_line, mask = or_fit(line_init, exptimes[good], levels[good], )
+        filtered_texp = np.ma.masked_array(exptimes[good], mask=mask)
+        filtered_levels = np.ma.masked_array(levels[good], mask=mask)
 
-        print(exptimes, levels)
-        texp_sorted = np.sort(exptimes)
-        good = (levels < maxlinearity) & (exptimes >= 1)
-        z = np.polyfit(exptimes[good], levels[good], 1)
-        p = np.poly1d(z)
-        ax1.plot(texp_sorted, p(texp_sorted), "-", label=f"fit: {p}")
+        ax1.plot(exptimes, levels, "ko", fillstyle = "none",)
+        ax1.plot(filtered_texp, filtered_levels, "ko", label=f"extension {ext}")
+        ax1.plot(texp_sorted, fitted_line(texp_sorted), "-", label=f"fit: {fitted_line.slope.value:.2f} ADU/s *texp + {fitted_line.intercept.value:.2f} ADU")
 
-        midlevel = np.max (levels) / 2.
+        midlevel = np.max (filtered_levels) / 2.
         mp_idx = max (0, find_nearest(levels, midlevel)-1)
         print ("Midlevel",  mp_idx,levels[mp_idx]) 
         mp_level = levels[mp_idx]
@@ -332,7 +369,7 @@ def graphresults(
         LR = 100 * (1 - mp_flux / ( levels / exptimes ) )
 
         ax2.plot(
-            levels, LR, ".", label="ext %s" % ext
+            levels[good], LR[good], ".", label=f"ext {ext}"
         )
 
     ax1.legend()
