@@ -1,6 +1,6 @@
 rm *.png
 mkdir plots
-readmode="full_frame"
+readmode="full_frame_lownoise"
 sortby="filterlevel"
 noisegainmef --readmode $readmode --sortby $sortby --makepng --minx  500 --maxx 1500 --miny 500 --maxy 1500  $@
 for filename in *.png; do mv "$filename" "plots/${filename%%.*}_ll.png"; done;

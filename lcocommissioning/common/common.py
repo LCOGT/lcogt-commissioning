@@ -10,7 +10,7 @@ from astropy.coordinates import SkyCoord
 
 _log = logging.getLogger(__name__)
 # LCO Request submission definitions
-VALHALLA_URL = os.getenv('VALHALLA_URL', 'http://internal-observation-portal.lco.gtn')
+VALHALLA_URL = os.getenv('VALHALLA_URL', 'https://observe-internal.lco.earth')
 VALHALLA_API_TOKEN = os.getenv('VALHALLA_API_TOKEN', '')
 
 # LCO sites
@@ -206,6 +206,7 @@ def submit_request_group(observation, dosubmit=False):
             exit(1)
         headers = {'Authorization': 'Token {token}'.format(token=VALHALLA_API_TOKEN)}
         response = requests.post(VALHALLA_URL + '/api/schedule/', json=observation, headers=headers)
+        _log.debug (response)
         try:
             response.raise_for_status()
             _log.info(
@@ -214,11 +215,9 @@ def submit_request_group(observation, dosubmit=False):
                 )
             )
         except Exception:
-            json_object = json.loads(response.content)['non_field_errors']
-
-            json_formatted_str = json.dumps(json_object, indent=2)
+            content= response.content
             _log.error(
-                'Failed to submit request group: error code {}: {}'.format(response.status_code, json_formatted_str ))
+                f'Failed to submit request group: error code {response.status_code}:\n {response.content}')
     else:
         _log.info("Not submitting block since CONFIRM  is not set")
 

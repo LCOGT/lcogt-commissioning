@@ -383,7 +383,7 @@ def graphresults(
     plt.suptitle(f"{args.readmode}\n")
     # ax1.set_ylim([0, 65000])
     # ax2.set_xlim([0, 65000])
-    # ax2.set_ylim([-5,5])
+    ax2.set_ylim([-2,2])
     plt.savefig(f"ptc_{args.readmode}_texplevel.png", bbox_inches="tight")
     plt.close()
 

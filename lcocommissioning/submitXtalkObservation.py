@@ -36,8 +36,8 @@ def create_request_for_star_scheduler(context):
     if context.dome != "None":
         location['enclosure'] = context.dome
 
-    if context.instrument != "None":
-        location['instrument'] = context.instrument
+    #if context.instrument != "None":
+    #    location['instrument'] = context.instrument
     ## Location completed
 
     requestgroup = {"name": context.title,
@@ -73,12 +73,15 @@ def create_request_for_star_scheduler(context):
             configuration = {
                 'type': 'EXPOSE',
                 'instrument_type': context.insttype,
+                
                 'target': target,
                 'constraints': common.default_constraints,
                 'acquisition_config': {},
                 'guiding_config': {},
                 'instrument_configs': [],
             }
+            if context.instrument != "None":
+                    configuration['instrument_name']= context.instrument
 
             configuration['instrument_configs'].append(
                 {
