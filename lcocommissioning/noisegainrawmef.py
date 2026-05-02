@@ -559,7 +559,10 @@ def do_noisegain_for_fileset(
         t["flatnoise"] = allshotnoises[ext]
         t["exptime"] = allexptimes[ext]
         t["dateobs"] = alldateobs[ext]
-        ascii.write(t, f"ptc_data_{ext}.dat", overwrite=True)
+        try:
+            ascii.write(t, f"ptc_data_{ext}.dat", overwrite=True)
+        except Exception as e:
+            _logger.debug(f"Error writing PTC data for extension {ext}: {e}")
 
     if args.makepng:
         graphresults(
