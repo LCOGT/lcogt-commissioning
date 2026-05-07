@@ -21,6 +21,7 @@ from lcocommissioning.common import lco_archive_utilities
 from lcocommissioning.common.ccd_noisegain import dosingleLevelGain
 from lcocommissioning.common.noisegaindb_orm import NoiseGainMeasurement, noisegaindb
 from lcocommissioning.common.Image import Image
+from lcocommissioning.common.logging_config import setup_logging
 import matplotlib.pyplot as plt
 from astropy.io import fits
 
@@ -659,10 +660,7 @@ def parseCommandLine():
     args = parser.parse_args()
     args.useaws = False
 
-    logging.basicConfig(
-        level=getattr(logging, args.log_level.upper()),
-        format="%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s",
-    )
+    setup_logging(args.log_level)
 
     for ii in range(len(args.fitsfile)):
         if args.opt_imagepath is not None:

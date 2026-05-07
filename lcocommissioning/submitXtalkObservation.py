@@ -6,6 +6,7 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord, Angle
 import datetime as dt
 import lcocommissioning.common.common as common
+from lcocommissioning.common.logging_config import setup_logging
 
 _log = logging.getLogger(__name__)
 
@@ -231,9 +232,7 @@ def parseCommandLine():
                         help='Set the debug level')
 
     args = parser.parse_args()
-
-    logging.basicConfig(level=getattr(logging, args.log_level.upper()),
-                        format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
+    setup_logging(args.log_level)
 
     if args.start is None:
         args.start = dt.datetime.utcnow()
