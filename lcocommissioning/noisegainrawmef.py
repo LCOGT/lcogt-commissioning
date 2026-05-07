@@ -431,11 +431,11 @@ def do_noisegain_for_fileset(
         f"Found {len(sortedinputlist)} viable sets for readmode {args.readmode}.\n {json.dumps(sortedinputlist, indent=4)}")
     
 
-    if len (sortedinputlist["bias"]) >1:
+    if 'bias' in sortedinputlist and len (sortedinputlist["bias"]) >1:
         bias1_fname = sortedinputlist["bias"][0]
         bias2_fname = sortedinputlist["bias"][1]
     else:
-        _logger.warning(f'Not enough bias frames found to perform noise/gain measurement, f{len(sortedinputlist["bias"])}; skipping')
+        _logger.warning(f'Not enough bias frames found to perform noise/gain measurement, skipping')
         return
     
     if frameidtranslationtable is not None:
