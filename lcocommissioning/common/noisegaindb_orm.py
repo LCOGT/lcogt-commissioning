@@ -119,7 +119,7 @@ class noisegaindb():
         t['level1'] = t['level1'].astype(float)
         t['level2'] = t['level2'].astype(float)
 
-        print("Unique items: {} {}".format(set(t['readmode']), set(t['filter'])))
+        _logger.debug("Unique items: {} {}".format(set(t['readmode']), set(t['filter'])))
 
         if levelratio is not None:
             t = t[abs((t['level1'] - t['level2']) / t['level']) < levelratio]
