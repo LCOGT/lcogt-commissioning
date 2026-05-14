@@ -447,8 +447,8 @@ def do_noisegain_for_fileset(
         bias2_frameid = frameidfromname(
             sortedinputlist["bias"][1], frameidtranslationtable
         )
-        _logger.info(f"Bias1 id {bias1_fname} -> {bias1_frameid}")
-        _logger.info(f"Bias2 id {bias2_fname} -> {bias2_frameid}")
+        _logger.debug(f"Bias1 id {bias1_fname} -> {bias1_frameid}")
+        _logger.debug(f"Bias2 id {bias2_fname} -> {bias2_frameid}")
 
     bias1 = (
         fits.open(bias1_fname)
