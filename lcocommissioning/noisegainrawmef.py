@@ -137,7 +137,7 @@ def sortinputfitsfiles(
                         if (level == 0):
                             level = -1
                         
-                    _logger.info(
+                    _logger.debug(
                         f'Input file metrics {filename} filter:{filter} light level: {level: 8.1f} naxis 1/2: {naxis1} {naxis2} overscan corrected: {useoverscan}'
                     )
                     filemetrics[filename] = (filter, level)
