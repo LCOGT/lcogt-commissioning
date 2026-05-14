@@ -1,6 +1,8 @@
 import errno
 import os
 import matplotlib
+
+from lcocommissioning.common.logging_config import setup_logging
 matplotlib.use('Agg')
 from astropy.io import ascii
 import matplotlib.pyplot as plt
@@ -49,8 +51,7 @@ def parseCommandLine():
     parser.add_argument('--ncpu', default=1, type=int)
     args = parser.parse_args()
 
-    logging.basicConfig(level=getattr(logging, args.log_level.upper()),
-                        format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
+    setup_logging(args.log_level)
 
     if not aws_enabled():
         if (args.outputdir is not None) and (not os.path.exists(args.outputdir)):

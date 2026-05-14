@@ -3,6 +3,7 @@ import logging
 import os
 from lcocommissioning.common.lco_archive_utilities import ArchiveDiskCrawler, get_frames_for_noisegainanalysis, \
     filename_to_archivepath_dict
+from lcocommissioning.common.logging_config import setup_logging
 from lcocommissioning.common.noisegaindb_orm import noisegaindb
 from lcocommissioning.noisegainrawmef import do_noisegain_for_fileset
 
@@ -79,13 +80,12 @@ def parseCommandLine():
                         help='Set the debug level')
 
     args = parser.parse_args()
-    logging.basicConfig(level=getattr(logging, args.log_level.upper()),
-                        format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
-
+    setup_logging(args.log_level)
+   
     args.sortby = "filterlevel"
    
     if args.ndays is not None:
-        log.info (f"Determining dates from ndays argument {args.ndays}")
+        log.debug (f"Determining dates from ndays argument {args.ndays}")
         args.dates = ArchiveDiskCrawler.get_last_n_days(args.ndays)
     else:
         args.dates = args.date
@@ -99,7 +99,7 @@ def main():
 
     if args.cameratype is None:
         args.cameratype = args.camera[0:2]
-    log.info (f"These are the dates to process: {args.dates}")
+    log.debug (f"These are the dates to process: {args.dates}")
     for date in args.dates:
         for ct in args.cameratype:
             log.debug ("Processing from date, cameratype, camera {} {} {}".format (date, args.cameratype, args.instrument))

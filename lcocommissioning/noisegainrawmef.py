@@ -417,7 +417,7 @@ def do_noisegain_for_fileset(
     allexptimes = {}
     alldateobs = {}
 
-    _logger.info(
+    _logger.debug(
         f"Sifting through the {len(inputlist)} input files of readmode {args.readmode} and finding viable flat pair candidates"
     )
     sortedinputlist = sortinputfitsfiles(
@@ -429,7 +429,8 @@ def do_noisegain_for_fileset(
         useoverscan=not args.ignoreov,
     )
     _logger.info(
-        f"Found {len(sortedinputlist)} viable sets for readmode {args.readmode}.\n {json.dumps(sortedinputlist, indent=4)}")
+        f"Found {len(sortedinputlist)} viable sets for readmode {args.readmode}.")
+    _logger.debug(f"Sorted input list: {json.dumps(sortedinputlist, indent=4)}")
     
 
     if 'bias' in sortedinputlist and len (sortedinputlist["bias"]) >1:
@@ -466,10 +467,10 @@ def do_noisegain_for_fileset(
             if len(sortedinputlist[pair_ii]) == 2:
                 flat_1_fname = sortedinputlist[pair_ii][0]
                 flat_2_fname = sortedinputlist[pair_ii][1]
-                _logger.info(f"\nNoise / Gain measurement based on metric {pair_ii}")
-                _logger.info(f" Flat names {os.path.basename(flat_1_fname)} {os.path.basename(flat_2_fname)}"
+                _logger.debug(f"\nNoise / Gain measurement based on metric {pair_ii}")
+                _logger.debug(f" Flat names {os.path.basename(flat_1_fname)} {os.path.basename(flat_2_fname)}"
                 )
-                _logger.info(
+                _logger.debug(
                     f" Bias names {os.path.basename(bias1_fname)} {os.path.basename(bias2_fname)}"
                 )
 
