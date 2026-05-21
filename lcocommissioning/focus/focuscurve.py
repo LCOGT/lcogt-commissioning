@@ -5,6 +5,7 @@ import sys
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+from lcocommissioning.common.logging_config import setup_logging
 from scipy import optimize
 
 from lcocommissioning.common.SourceCatalogProvider import getImageFWHM
@@ -69,14 +70,14 @@ def overplot_fit(func, paramset):
 
 
 def main():
-    logging.basicConfig(level=getattr(logging, 'INFO'),
-                        format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
+    setup_logging("INFO")
+
 
     error_string = None
     focuslist = []
     fwhmlist = []
     for image in sys.argv[1:]:
-        focus, fwhm = getImageFWHM(image, minarea=5)
+        focus, fwhm, theta, ell = getImageFWHM(image, minarea=5)
         if np.isfinite(fwhm):
             focuslist.append(focus)
             fwhmlist.append(fwhm)

@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits
 from astropy.io.fits import ImageHDU, CompImageHDU
+from lcocommissioning.common.logging_config import setup_logging
 from scipy import optimize
 from lcocommissioning.common.lco_archive_utilities import get_auto_focus_frames, download_from_archive
 from lcocommissioning.common.SourceCatalogProvider import SEPSourceCatalogProvider
@@ -173,14 +174,15 @@ def parseCommandLine():
 
     group.add_argument ('--files', type=str, nargs='+')
     group.add_argument ('--requestid', type=int, nargs='?')
-
+    
+    parser.add_argument('--fabinning', default=2, type=int,
+                        help='Binning in the fa cameras.')
     parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
 
     args = parser.parse_args()
-
-    logging.basicConfig(level=getattr(logging, args.log_level.upper()),
-                        format='%(asctime)s.%(msecs).03d %(levelname)7s: %(module)20s: %(message)s')
+    
+    setup_logging(args.log_level)
 
 
 
@@ -199,9 +201,6 @@ def main():
         inputlist = get_auto_focus_frames(args.requestid)
         efimages = [i['id'] for i in inputlist if (("ef" in i['basename']) and ("x00" in i['basename']))]
         faimages = [i['id'] for i in inputlist if (("fa" in i['basename']) and ("x00" in i['basename']))]
-
-    print (efimages)
-    print (faimages)
 
     focuslist = []
     fwhmlist = []
@@ -222,10 +221,12 @@ def main():
     fafwhmlist = []
     fafocuslist = []
 
-    for image in faimages:
-        focus, fwhm, theta, ell, siteid, encid = getImageData(image, minarea=5, deblend=0.5, archive = args.requestid is not None)
-        fafwhmlist.append(fwhm)
-        fafocuslist.append(focus)
+    fa_minarea = 25 ** (1/args.fabinning)
+    for image in faimages: 
+        focus, fwhm, theta, ell, siteid, encid = getImageData(image, minarea=fa_minarea, deblend=0.5, archive = args.requestid is not None)
+        if np.isfinite(fwhm):
+            fafwhmlist.append(fwhm)
+            fafocuslist.append(focus)
 
     # make it all nice numpy arrays.
     focuslist = np.asarray(focuslist)
