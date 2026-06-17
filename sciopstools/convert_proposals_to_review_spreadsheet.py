@@ -128,6 +128,8 @@ def convertproposals(input_tsv):
         instrument = canonical_instrument(aperture, family, camera)
         if instrument is None:
             continue
+        if instrument == 'NRES':
+            continue
 
         key = (semester, instrument, mode)
         if key not in seen_semester_cols:
@@ -147,7 +149,7 @@ def convertproposals(input_tsv):
     semesters = sorted({semester for semester, _instrument, _mode in semester_columns}, key=semester_sort_key)
 
     output_headers = [
-        "Category",
+       # "Category",
         "Prop ID",
         "Rank",
         "Title",
@@ -156,12 +158,12 @@ def convertproposals(input_tsv):
         "PI email",
         "Open Access",
         "long term?",
-        "Student?",
+        "Totals",
     ]
 
     telescope_order = ["2m", "1m", "0m4"]
 
-    for semester in semesters:
+    for semester in semesters[:1]:
         for group in telescope_order:
             output_headers.append(f"Hours ({semester} {group})")
             output_headers += [
@@ -195,6 +197,7 @@ def convertproposals(input_tsv):
         out = {h: "" for h in output_headers}
 
         out["Category"] = ""
+        out["Totals"] = ""
         out["Prop ID"] = row.get("Proposal ID", "")
         out["Rank"] = row.get("Rank", "")
         out["Title"] = row.get("Title", "")
@@ -243,7 +246,7 @@ def convertproposals(input_tsv):
         for semester in semesters:
             if any(semester_totals[(semester, group)] for group in telescope_order):
                 last_active_semester = semester
-        out["long term?"] = last_active_semester if "long-term" in tags else ""
+        out["long term?"] = last_active_semester 
 
         out["Proposal Code"] = ""
         out["Memberships"] = ""
@@ -254,8 +257,8 @@ def convertproposals(input_tsv):
 
     data = StringIO()
     
-    writer = csv.DictWriter(data, fieldnames=output_headers, dialect='excel-tab', lineterminator="\n")
-    #writer.writeheader()
+    writer = csv.DictWriter(data, fieldnames=output_headers, dialect='excel-tab', lineterminator="\n", extrasaction='ignore')
+    writer.writeheader()
     writer.writerows(output_rows)
     
     return data.getvalue()
