@@ -14,8 +14,6 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 
-
-
 dependencies = [
     "Flask==2.3.2",
     "astropy==8.0.0rc2",
@@ -67,10 +65,10 @@ webapp = "noisegaincrawler.webapp:main"
 
 [tool.setuptools]
 zip-safe = false
-#packages=["lcocommissioning", "noisegaincrawler"]
+#packages=["lcocommissioning", "noisegaincrawler", "sciopstools"]
 
 [tool.setuptools.packages.find]
-include = ["lcocommissioning*", "noisegaincrawler*"]
+include = ["lcocommissioning*", "noisegaincrawler*", "sciopstools*"]
 
 
 
