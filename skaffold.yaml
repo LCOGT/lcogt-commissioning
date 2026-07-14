@@ -1,0 +1,37 @@
+apiVersion: skaffold/v4beta10
+kind: Config
+metadata:
+  name: lcogt-commissioning
+build:
+  tagPolicy:
+    gitCommit:
+      variant: Tags
+  artifacts:
+    - image: lcogt-commissioning
+      custom:
+        buildCommand: skaffold-builder-buildx
+        dependencies:
+          dockerfile:
+            path: Dockerfile
+manifests:
+  kustomize:
+    paths:
+      - k8s/local-dev/
+deploy:
+  kubectl: {}
+  logs:
+    prefix: podAndContainer
+---
+apiVersion: skaffold/v4beta10
+kind: Config
+metadata:
+  name: lcogt-commissioning-deps
+manifests:
+  kustomize:
+    paths:
+      - k8s/local-dev/deps/
+deploy:
+  kubectl: {}
+  logs:
+    prefix: podAndContainer
+
