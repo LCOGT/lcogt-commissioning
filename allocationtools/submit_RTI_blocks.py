@@ -10,8 +10,8 @@ import matplotlib.dates as mdates
 
 downtime_url = "http://downtime.lco.gtn"
 thetoken = os.getenv('DOWNTIME_TOKEN')
-startdate = datetime.date(2026, 2, 1)
-enddate = datetime.date(2026, 7, 31)
+startdate = datetime.date(2026, 8, 3)
+enddate = datetime.date(2027, 1, 30)
 
 
 valid_weekdays = { 'coj': [0, 1, 2, 3, 4, 5 ],  # Mon-Sa
@@ -22,8 +22,12 @@ holidays = {
     "springbreak2026": {
         'start': datetime.date(2026, 3, 30),
         'end': datetime.date(2026, 4, 11),
+    },
+    "winterbreak2026": {
+        'start': datetime.date(2026, 12, 24),
+        'end': datetime.date(2027, 1, 3),
     }
-}
+    }
 
 def readslots(site,):
     filename = f"allocationtools/reduced_startdates_{site}.csv"

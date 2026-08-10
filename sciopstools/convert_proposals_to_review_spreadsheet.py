@@ -176,18 +176,18 @@ def convertproposals(input_tsv):
                 f"{semester} {group} comment",
             ]
 
-    output_headers += [
-        "TAC grade",
-        "TAC priority",
-        "Priority algorithm",
-        "Final Priority",
-        "Manual Change",
-        "Rank (final)",
-        "Proposal Code",
-        "RR/TC requests valid?",
-        "Comment",
-        "Memberships",
-    ]
+    # output_headers += [
+    #     "TAC grade",
+    #     "TAC priority",
+    #     "Priority algorithm",
+    #     "Final Priority",
+    #     "Manual Change",
+    #     "Rank (final)",
+    #     "Proposal Code",
+    #     "RR/TC requests valid?",
+    #     "Comment",
+    #     "Memberships",
+    # ]
 
     output_rows = []
 
