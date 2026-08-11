@@ -10,3 +10,4 @@ venv
 .git
 definedb.sh
 temp
+.vscode

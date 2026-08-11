@@ -183,3 +183,4 @@ nohup.out
 .devenv
 .direnv
 .pre-commit-config.yaml
+.vscode

@@ -78,7 +78,7 @@ def aws_enabled():
 
 
 def write_to_storage_backend(directory, filename, data, binary=True):
-    _logger.info (f"writing object {filename}")
+    _logger.debug (f"writing object {filename}")
     if aws_enabled():
         # AWS S3 Bucket upload
         client = boto3.client('s3')
@@ -92,7 +92,7 @@ def write_to_storage_backend(directory, filename, data, binary=True):
             _logger.exception(f"While storing object {filename} into backend.")
     else:
         fullpath = os.path.join(directory, filename)
-        _logger.info (f'writing to file system {fullpath}')
+        _logger.debug (f'writing to file system {fullpath}')
         with open(fullpath, 'wb' if binary else 'w') as fileobj:
             fileobj.write(data)
             return True
