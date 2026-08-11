@@ -28,16 +28,17 @@ CRAWLNOISEGAIN_ARGS=(
     "--database=${DATABASE}"
 )
 
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fa" --readmode="full_frame"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fa" --readmode="central_2k_2x2"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="full_frame"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="central_2k_2x2"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_SLOW"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_FAST"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="sq" --readmode="full_frame"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="sq" --readmode="central30x30"
+/usr/bin/time  crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fa" --readmode="full_frame"
+/usr/bin/time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fa" --readmode="central_2k_2x2"
+/usr/bin/time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="full_frame"
+/usr/bin/time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="central_2k_2x2"
+/usr/bin/time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_SLOW"
+/usr/bin/time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_FAST"
+# Ommit the full frame mode since it does not ad new information and consumes a lot of memory.
+#time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="sq" --readmode="full_frame"
+/usr/bin/time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="sq" --readmode="central30x30"
 
-time analysegainhistory --database="${DATABASE}"
+/usr/bin/time analysegainhistory --database="${DATABASE}"
 
 # This script doesn't check any exit codes to confirm successful operation,
 # so we won't bother either, and just always assume the best and exit with
