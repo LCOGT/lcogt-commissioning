@@ -389,6 +389,14 @@ def graphresults(
     plt.close()
 
 
+def extensionlabel(index, args):
+    """Human readable label for a result index. With quadrant splitting, four consecutive result
+    indices belong to one image extension."""
+    if getattr(args, "quadrants", False):
+        return f"{index // 4}_Q{index % 4 + 1}"
+    return f"{index}"
+
+
 def frameidfromname(fname, filelist):
     """Tool to look up a lco archive frame id for a filename."""
     return filelist[filelist["FILENAME"] == fname]["frameid"][0]
@@ -524,7 +532,7 @@ def do_noisegain_for_fileset(
                         identifier = "%s-%s-%s" % (
                             os.path.basename(sortedinputlist[pair_ii][0]),
                             os.path.basename(sortedinputlist[pair_ii][1]),
-                            extension,
+                            extensionlabel(extension, args),
                         )
                         m = NoiseGainMeasurement(
                             name=identifier,
@@ -566,7 +574,7 @@ def do_noisegain_for_fileset(
         t["exptime"] = allexptimes[ext]
         t["dateobs"] = alldateobs[ext]
         try:
-            ascii.write(t, f"ptc_data_{ext}.dat", overwrite=True)
+            ascii.write(t, f"ptc_data_{extensionlabel(ext, args)}.dat", overwrite=True)
         except Exception as e:
             _logger.debug(f"Error writing PTC data for extension {ext}: {e}")
 
@@ -649,6 +657,14 @@ def parseCommandLine():
         "--makepng",
         action="store_true",
         help="Create a png output image of noise, gain, and ptc.",
+    )
+
+    parser.add_argument(
+        "--quadrants",
+        action="store_true",
+        help="Split each image extension into its four quadrants and measure noise and gain for each "
+        "quadrant separately. Results are reported/stored in the order lower left, lower right, "
+        "upper left, upper right per input extension. Overrides --minx/--maxx/--miny/--maxy.",
     )
 
     parser.add_argument(

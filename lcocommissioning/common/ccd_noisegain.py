@@ -80,9 +80,29 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     return (gain, readnoise, flatlevel, flatnoise, (flat1lvl - avgbiaslevel), (flat2lvl - avgbiaslevel))
 
 
+def quadrantboundaries(data):
+    """
+    Split an image into its four quadrants.
+
+    :param data: 2d numpy array
+    :return: list of (label, (y0,y1,x0,x1)) tuples, ordered lower left, lower right, upper left, upper right.
+    """
+    naxis2, naxis1 = data.shape[0], data.shape[1]
+    ymid = naxis2 // 2
+    xmid = naxis1 // 2
+    return [("Q1", (0, ymid, 0, xmid)),
+            ("Q2", (0, ymid, xmid, naxis1)),
+            ("Q3", (ymid, naxis2, 0, xmid)),
+            ("Q4", (ymid, naxis2, xmid, naxis1)), ]
+
+
 def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2: HDUList, args, overscancorrect=True):
     """
     Calculate for each extension the noise and gain and print the result to console.
+
+    If args.quadrants is set, each extension is split into its four quadrants and the noise / gain
+    measurement is done and reported for each quadrant separately. The returned lists then contain
+    four entries per input extension, in the order lower left, lower right, upper left, upper right.
 
     :param fbias1: astropy.fits object
     :param fbias2:
@@ -107,31 +127,54 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
     level2s = []
     exptimes = []
 
+    dosplitquadrants = getattr(args, 'quadrants', False)
+
     for ii in range(len(flat1.data)):
-        (gain, noise, level, shotnoise, level1, level2) = noisegainextension(flat1.data[ii], flat2.data[ii],
-                                                                             bias1.data[ii], bias2.data[ii],
-                                                                             showImages=args.showimages,
-                                                                             minx=args.minx, maxx=args.maxx,
-                                                                             miny=args.miny, maxy=args.maxy, )
 
-        print(f"  Extension {ii}  Level: {level:7.1f}  Gain {gain:5.3f} e-/ADU  Noise {noise:5.2f} e-")
+        if dosplitquadrants:
+            regions = quadrantboundaries(flat1.data[ii])
+        else:
+            regions = [(None, None), ]
 
-        gains.append(gain)
-        levels.append(level)
-        noises.append(noise)
-        shotnoises.append(shotnoise)
-        level1s.append(level1)
-        level2s.append(level2)
-        utstop  = astt.Time('2000-01-01T' + flat1.primaryheader['UTSTOP'], scale="utc", format=None).to_datetime()
-        utstart = astt.Time('2000-01-01T' + flat1.primaryheader['UTSTART'], scale="utc", format=None).to_datetime()
-        calculatedTexp = (utstop - utstart).total_seconds()
-        if calculatedTexp < 0:
-            calculatedTexp += 24 * 3600
-        headertexp = float (flat1.primaryheader['EXPTIME'])
-        _logger.debug ("Calculated vs requested Texp: % 7.3f vs % 7.3f" % (calculatedTexp,headertexp))
-        texpdelta = args.texpdelta if 'texpdelta' in args else 0
+        for quadrantname, boundaries in regions:
 
-        exptimes.append(calculatedTexp + texpdelta)
+            if boundaries is None:
+                f1, f2, b1, b2 = flat1.data[ii], flat2.data[ii], bias1.data[ii], bias2.data[ii]
+                minx, maxx, miny, maxy = args.minx, args.maxx, args.miny, args.maxy
+                label = f"Extension {ii}"
+            else:
+                y0, y1, x0, x1 = boundaries
+                f1 = flat1.data[ii][y0:y1, x0:x1]
+                f2 = flat2.data[ii][y0:y1, x0:x1]
+                b1 = bias1.data[ii][y0:y1, x0:x1]
+                b2 = bias2.data[ii][y0:y1, x0:x1]
+                # the user defined statistics window does not apply to a quadrant; use the quadrant's center.
+                minx = maxx = miny = maxy = None
+                label = f"Extension {ii} {quadrantname}"
+
+            (gain, noise, level, shotnoise, level1, level2) = noisegainextension(f1, f2, b1, b2,
+                                                                                 showImages=args.showimages,
+                                                                                 minx=minx, maxx=maxx,
+                                                                                 miny=miny, maxy=maxy, )
+
+            print(f"  {label}  Level: {level:7.1f}  Gain {gain:5.3f} e-/ADU  Noise {noise:5.2f} e-")
+
+            gains.append(gain)
+            levels.append(level)
+            noises.append(noise)
+            shotnoises.append(shotnoise)
+            level1s.append(level1)
+            level2s.append(level2)
+            utstop  = astt.Time('2000-01-01T' + flat1.primaryheader['UTSTOP'], scale="utc", format=None).to_datetime()
+            utstart = astt.Time('2000-01-01T' + flat1.primaryheader['UTSTART'], scale="utc", format=None).to_datetime()
+            calculatedTexp = (utstop - utstart).total_seconds()
+            if calculatedTexp < 0:
+                calculatedTexp += 24 * 3600
+            headertexp = float (flat1.primaryheader['EXPTIME'])
+            _logger.debug ("Calculated vs requested Texp: % 7.3f vs % 7.3f" % (calculatedTexp,headertexp))
+            texpdelta = args.texpdelta if 'texpdelta' in args else 0
+
+            exptimes.append(calculatedTexp + texpdelta)
 
     del bias1
     del bias2
