@@ -69,7 +69,7 @@ def sortinputfitsfiles(
         if useaws:
             hdu = lco_archive_utilities.download_from_archive(filecandidate["frameid"])
         else:
-            _logger.info (f"Candidate:  {filename}")
+            _logger.debug (f"Candidate:  {filename}")
             filecandidate = {"FILENAME": filename}
             fitsfilepath = str(filecandidate["FILENAME"])
             hdu = fits.open(fitsfilepath)
@@ -347,7 +347,7 @@ def graphresults(
         exptimes = np.asarray(allexptimes[ext])
         levels = np.asarray(alllevels[ext])
         texp_sorted = np.sort(exptimes)     
-        good = (exptimes >= 2) &(levels > 0)
+        good = (exptimes >= 1) &(levels > 0)
 
         fit = fitting.LinearLSQFitter()
         or_fit = fitting.FittingWithOutlierRemoval(fit, sigma_clip, niter=3, sigma=3.0)

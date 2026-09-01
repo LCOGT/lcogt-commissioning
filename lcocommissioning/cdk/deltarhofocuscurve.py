@@ -266,7 +266,7 @@ def main():
             ellipticitylist.append (ellipitictydict[image][section])
         focuslist = np.asarray(focuslist)
         ellipticitylist = np.asarray(ellipticitylist)
-        print ("Focus input: {}\ Ellipticity: {}".format (np.round(focuslist,3), np.round (ellipticitylist,3)))
+        print ("Focus input: {} Ellipticity: {}".format (np.round(focuslist,3), np.round (ellipticitylist,3)))
 
        
         return_package = None
@@ -300,7 +300,7 @@ def main():
             thetalist.append (thetadict[image][section])
         focuslist = np.asarray(focuslist)
         thetalist = np.asarray(thetalist)
-        print ("Focus input: {}\ Theta: {}".format (np.round(focuslist,3), np.round (thetalist,3)))
+        print ("Focus input: {} Theta: {}".format (np.round(focuslist,3), np.round (thetalist,3)))
 
        
         return_package = None

@@ -55,7 +55,7 @@ telescopedict = {
 focus_temp_reference_points  = {
     '1m0': 15,
     '0m4': 15,
-   
+    '2m0': 10,
     }
 
 

@@ -292,7 +292,7 @@ def fit_fwhm(fwhmcat):
         if np.sum(good) > 10:
             medianfwhm = np.median(fwhmcat[good])
         else:
-            log.debug("Not enough sources left in array. aborting")
+            log.warning("Not enough sources left in array. aborting")
             continue
     return medianfwhm
 
