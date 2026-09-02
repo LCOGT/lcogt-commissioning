@@ -88,7 +88,7 @@ def create_mask(image, extenstion, fluxmin, fluxmax):
     """
 
     region = image.getccddata(extenstion)
-    log.debug("Input datacube min max %f %f " % (region.min(), region.max()))
+    log.debug(f"Input datacube min max {region.min()} {region.max()}")
     maskidx = statistics.select_pixels_in_flux_range(region, fluxmin, fluxmax)
     if len(maskidx) == 0:
         log.warning("No pixels in selected flux range!")
@@ -137,7 +137,7 @@ def multicrossanalysis(args):
 
     plt.figure(1)
     plt.rcParams['font.size'] = 10.0
-    plotord = [2, 3, 1, 4]
+    plotord = [3, 4, 1, 2]
 
     pinit = [0.0, 0.0]
     coeffs = {}
@@ -179,9 +179,9 @@ def multicrossanalysis(args):
         plt.xticks(rotation=15)
 
         if source_extension != args.opt_quadrant + 1:
-            plt.axis([0, 65000, -50.0, 50.0])
+            plt.axis([0, 2**18, -50.0, 50.0])
         else:
-            plt.axis([0, 65000, 0, 65000])
+            plt.axis([0, 2**18, 0, 2**18])
         plt.title('Quadrant ' + str(source_extension))
 
         if source_extension != args.opt_quadrant + 1:

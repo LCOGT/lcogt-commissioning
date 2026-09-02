@@ -7,7 +7,7 @@ from numpy import array, where, nan, isnan, logical_not
 from numpy import median, zeros, arange, intersect1d, fft
 from matplotlib import pyplot
 from sys import argv, exit
-from scipy import meshgrid, stats
+from scipy import stats
 from astropy.io import fits
 
 ###################################

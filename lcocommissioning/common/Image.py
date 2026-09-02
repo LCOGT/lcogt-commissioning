@@ -4,6 +4,8 @@ import re
 import numpy as np
 from astropy.io import fits
 
+from lcocommissioning.common.common import quadrantboundaries
+
 _log = logging.getLogger(__name__)
 
 
@@ -48,6 +50,11 @@ class Image(object):
         Sinsitro frames that were taken as datacubes will be munged later so that the
         output images are consistent
         """
+
+        self.skycorrect = skycorrect
+        self.gaincorrect = gaincorrect
+        self.overscancorrect = overscancorrect
+
         if alreadyopenedhdu:
             hdulist = filename
         else:
@@ -135,13 +142,33 @@ class Image(object):
         if not alreadyopenedhdu:
             hdulist.close()
 
-    def getccddata(self, extension):
+    def getccddata(self, extension, simulatext=True):
         """
         Returns the data as define by DATASEC in ehader
         :param extension:
         :return:
         """
-        retdata = self.data[extension]  # , sect[2]-1:sect[3]-1, sect[0]-1:sect[1]-1]
+        retdata = None
+        if self.data.shape[0] > 1:
+            retdata = self.data[extension]
+        elif simulatext:
+            extensions = quadrantboundaries(self.data[0])
+            
+            label, boundaries = extensions[extension]
+            _log.debug (f"Simulating MEF extension {extension} on flat image {self.data.shape}: {label}, {boundaries}")
+            y0, y1, x0, x1 = boundaries
+            retdata = self.data[0,y0:y1, x0:x1]
+
+            if self.skycorrect:
+                imagepixels = retdata[20:-20, 20:-20]
+                skylevel = np.median(imagepixels)
+                std = np.std(imagepixels - skylevel)
+                skylevel = np.median(imagepixels[np.abs(imagepixels - skylevel) < 3 * std])
+                retdata = retdata - skylevel
+
+        else:
+            _log.warning("Image has only one extension, returning full image data")
+            retdata = self.data
         return retdata
 
     def get_overscan_from_hdu(self, hdu, sig_rej=2, biassecheader='BIASSEC'):

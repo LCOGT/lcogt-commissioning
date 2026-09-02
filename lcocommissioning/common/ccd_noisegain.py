@@ -7,6 +7,8 @@ from lcocommissioning.common.Image import Image
 import logging
 import astropy.time as astt
 
+from lcocommissioning.common.common import quadrantboundaries
+
 _logger = logging.getLogger(__name__)
 
 # Utils to calculate CCD noise and gain from two flats and two biases.
@@ -78,22 +80,6 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
         plt.show()
 
     return (gain, readnoise, flatlevel, flatnoise, (flat1lvl - avgbiaslevel), (flat2lvl - avgbiaslevel))
-
-
-def quadrantboundaries(data):
-    """
-    Split an image into its four quadrants.
-
-    :param data: 2d numpy array
-    :return: list of (label, (y0,y1,x0,x1)) tuples, ordered lower left, lower right, upper left, upper right.
-    """
-    naxis2, naxis1 = data.shape[0], data.shape[1]
-    ymid = naxis2 // 2
-    xmid = naxis1 // 2
-    return [("ll", (0, ymid, 0, xmid)),
-            ("lr", (0, ymid, xmid, naxis1)),
-            ("ul", (ymid, naxis2, 0, xmid)),
-            ("ur", (ymid, naxis2, xmid, naxis1)), ]
 
 
 def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2: HDUList, args, overscancorrect=True):

@@ -250,3 +250,21 @@ def dateformat(starttime=None, endtime=None):
     plt.setp(plt.gca().xaxis.get_minorticklabels(), rotation=45)
     plt.setp(plt.gca().xaxis.get_majorticklabels(), rotation=45)
     plt.gca().grid(which='minor')
+
+
+
+
+def quadrantboundaries(data):
+    """
+    Split an image into its four quadrants.
+
+    :param data: 2d numpy array
+    :return: list of (label, (y0,y1,x0,x1)) tuples, ordered lower left, lower right, upper left, upper right.
+    """
+    naxis2, naxis1 = data.shape[0], data.shape[1]
+    ymid = naxis2 // 2
+    xmid = naxis1 // 2
+    return [("ll", (0, ymid, 0, xmid)),
+            ("lr", (0, ymid, xmid, naxis1)),
+            ("ul", (ymid, naxis2, 0, xmid)),
+            ("ur", (ymid, naxis2, xmid, naxis1)), ]
