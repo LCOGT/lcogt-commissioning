@@ -247,7 +247,7 @@ def graphresults(
             "o",
             label="extension %s data[Texp=3s]" % (ext),
         )
-    plt.legend()
+    plt.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), ncol=1)
     plt.ylabel(("Flux [ADU/s]"))
     plt.xlabel("DATE-OBS")
     plt.gcf().autofmt_xdate()
@@ -262,7 +262,7 @@ def graphresults(
         level = np.asarray(alllevels[ext])
         print(level, flux)
         plt.plot(level, flux, "o", label="extension %s data" % (ext))
-    plt.legend()
+    plt.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), ncol=1)
     plt.ylabel(("Flux [ADU/s]"))
     plt.xlabel("Level  [ADU]")
     plt.title(f"Flux vs Level - {args.readmode}")
@@ -310,14 +310,14 @@ def graphresults(
 
     ax1.set_ylim([0, 7])
     ax1.set_xlim([1, 1.1 * adurange])
-    ax1.legend()
+    ax1.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), ncol=1)
     
     ax1.set_ylabel("Gain [e-/ADU]")
     ax1.set_title(f"Gain & Readnoise {args.readmode}")
     
     ax2.set_ylim([0, 20])
     ax2.set_xlim([1, 1.1 * adurange])
-    ax2.legend()
+    ax2.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), ncol=1)
     ax2.set_ylabel("Readnoise [e-]")
     ax2.set_xlabel(("Exposure level [ADU]"))
 
@@ -329,7 +329,7 @@ def graphresults(
     plt.figure()
     for ext in alllevels:
         plt.loglog(alllevels[ext], allshotnoises[ext], ".", label="extension %s" % ext)
-    plt.legend()
+    plt.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), ncol=1)
     plt.xlim([1, 1.1 * adurange])
     plt.ylim([1, 3 * math.sqrt(adurange)])
     plt.xlabel("Exposure Level [ADU]")
@@ -373,7 +373,7 @@ def graphresults(
             levels[good], LR[good], ".", label=f"ext {ext}"
         )
 
-    ax1.legend()
+    ax1.legend(loc="center left", bbox_to_anchor=(1.0, 0.5), ncol=1)
     ax1.xaxis.tick_top()
     ax1.xaxis.set_label_position("bottom")
     ax1.set_xlabel("Exposure time [s]")
@@ -390,10 +390,11 @@ def graphresults(
 
 
 def extensionlabel(index, args):
+    labels = ['ll','lr','ul','ur']
     """Human readable label for a result index. With quadrant splitting, four consecutive result
     indices belong to one image extension."""
     if getattr(args, "quadrants", False):
-        return f"{index // 4}_Q{index % 4 + 1}"
+        return f"{index // 4}_{labels[index % 4]}"
     return f"{index}"
 
 

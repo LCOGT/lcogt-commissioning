@@ -90,10 +90,10 @@ def quadrantboundaries(data):
     naxis2, naxis1 = data.shape[0], data.shape[1]
     ymid = naxis2 // 2
     xmid = naxis1 // 2
-    return [("Q1", (0, ymid, 0, xmid)),
-            ("Q2", (0, ymid, xmid, naxis1)),
-            ("Q3", (ymid, naxis2, 0, xmid)),
-            ("Q4", (ymid, naxis2, xmid, naxis1)), ]
+    return [("ll", (0, ymid, 0, xmid)),
+            ("lr", (0, ymid, xmid, naxis1)),
+            ("ul", (ymid, naxis2, 0, xmid)),
+            ("ur", (ymid, naxis2, xmid, naxis1)), ]
 
 
 def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2: HDUList, args, overscancorrect=True):
@@ -149,7 +149,7 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
                 b1 = bias1.data[ii][y0:y1, x0:x1]
                 b2 = bias2.data[ii][y0:y1, x0:x1]
                 # the user defined statistics window does not apply to a quadrant; use the quadrant's center.
-                minx = maxx = miny = maxy = None
+                minx, maxx, miny, maxy = args.minx, args.maxx, args.miny, args.maxy
                 label = f"Extension {ii} {quadrantname}"
 
             (gain, noise, level, shotnoise, level1, level2) = noisegainextension(f1, f2, b1, b2,
