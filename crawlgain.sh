@@ -30,8 +30,8 @@ CRAWLNOISEGAIN_ARGS=(
 
 time  crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fa" --readmode="full_frame"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="fa" --readmode="central_2k_2x2"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="full_frame"
-time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="central_2k_2x2"
+time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --quadrants --readmode="full_frame"
+time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --quadrants --readmode="central_2k_2x2"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_SLOW"
 time crawlnoisegain "${CRAWLNOISEGAIN_ARGS[@]}" --useaws --cameratype="ep" --readmode="MUSCAT_FAST"
 # Ommit the full frame mode since it does not ad new information and consumes a lot of memory.

@@ -201,6 +201,8 @@ def main():
         inputlist = get_auto_focus_frames(args.requestid)
         efimages = [i['id'] for i in inputlist if (("ef" in i['basename']) and ("x00" in i['basename']))]
         faimages = [i['id'] for i in inputlist if (("fa" in i['basename']) and ("x00" in i['basename']))]
+        if len (faimages) == 0:
+            faimages = [i['id'] for i in inputlist if (("ep" in i['basename']) and ("x00" in i['basename']))]
 
     focuslist = []
     fwhmlist = []

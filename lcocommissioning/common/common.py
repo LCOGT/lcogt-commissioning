@@ -91,8 +91,8 @@ listofchachedcoordiantes = {
     'HR4468': [174.1704723071, -9.8022475661]
 }
 
-default_constraints = {"max_airmass": 2,
-                       "min_lunar_distance": 30.0, }
+default_constraints = {"max_airmass": 3.75,
+                       "min_lunar_distance": 14.0, }
 
 
 def get_ephem_obj_for_site(sitecode, dateobs):

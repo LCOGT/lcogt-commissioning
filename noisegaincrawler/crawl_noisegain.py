@@ -72,6 +72,13 @@ def parseCommandLine():
     parser.add_argument('--ignoretemp', action='store_true',
                         help="ignore if actual temperature differs from set point temperature. Reject by default.")
     
+    parser.add_argument(
+            "--quadrants",
+            action="store_true",
+            help="Split each image extension into its four quadrants and measure noise and gain for each "
+            "quadrant separately. Results are reported/stored in the order lower left, lower right, "
+            "upper left, upper right per input extension. Overrides --minx/--maxx/--miny/--maxy.",
+        )
     
     parser.add_argument(
         "--ignoreov", action="store_true", help="ignore overscan definition"
