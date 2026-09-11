@@ -1,3 +1,5 @@
+2.2.11 Sept 11 2026
+* Include virtual quadrants for certain Sophia cameras
 
 2.2.1 March 26 2026
 * Refactor to use pyproject.toml and a src/ package layout

@@ -13,6 +13,7 @@ from scipy.signal import medfilt
 from astropy.stats import sigma_clipped_stats
 
 from common.Image import Image
+from lcocommissioning.common.common import quadrantboundaries
 log = logging.getLogger(__name__)
 
 
@@ -99,18 +100,32 @@ def plot_quadrant_ffts(params):
     image = Image(args.fitsfile[0], gaincorrect=False, overscancorrect=False, skycorrect=False)
     log.info ("Working on image {}".format (args.fitsfile))
 
-    plotord = [ 1, 3, 4, 2 ]
-    plotord = [1]
-    fig = plt.figure(2)
-    for q,qid in enumerate(plotord):
+    plotord = [ 3, 4, 1, 2 ]
+    #plotord = [1]
+    dosplitquadrants = True
 
-        quad_image = (image.data[q] - np.mean (image.data[q]))[0:-1,:]
-        ax = plt.subplot(2,2,q+1)
+    fig = plt.figure(2)
+    if dosplitquadrants:
+        regions = quadrantboundaries(image.data[0])
+    else:
+        regions = [(None, None), ]
+
+    for q, (quadname, region) in enumerate(regions):
+        print (q,quadname,region)
+        if region is None:
+            data  = image.data[0]
+        else:
+            y0, y1, x0, x1 = region
+            data = image.data[0][y0:y1, x0:x1]
+
+        quad_image = (data - np.mean(data))
+        print (quad_image.shape)
+        ax = plt.subplot(2,2,plotord[q])
         plt.subplots_adjust(left=0.125, bottom=0.1, right=0.9, top=0.9,\
             wspace=0.4,hspace=0.4)
 
         fig = plot_image_fft(fig,quad_image, samplerate=args.pr)
-        plt.title('Quadrant '+str(q+1))
+        plt.title(f'Quadrant {quadname}')
     plotname = path.join( "fft.png")
     plt.savefig(plotname, dpi=400)
     plt.close(2)

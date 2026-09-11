@@ -56,6 +56,7 @@ def main():
     parser = argparse.ArgumentParser(description="Trim MUSCAT compressed FITS calibrations.")
     parser.add_argument("input_fits_fz", help="Input compressed FITS file (.fits.fz)")
     parser.add_argument("-o", "--output", help="Output filename (.fits.fz). If omitted, auto-generated.")
+    parser.add_argument("-notrim", action="store_true", help="Do not trim the image, just update date and filename.")
     args = parser.parse_args()
 
     with fits.open(args.input_fits_fz) as hdul:
@@ -64,7 +65,7 @@ def main():
 
         side = "left" if instrume in TRIM_LEFT else "right"
         print ("instrume:", instrume, "-> trimming", side, "side")
-        trimmed = trim_image(hdul[img_idx].data, side)
+        trimmed = trim_image(hdul[img_idx].data, side) if not args.notrim else hdul[img_idx].data
 
         primary_header = hdul[0].header.copy()
         image_header = hdul[img_idx].header.copy()
