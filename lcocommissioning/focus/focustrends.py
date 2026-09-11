@@ -216,6 +216,7 @@ def get_focusStackData(args):
 
     t = t[good] if np.sum(good) > 0 else None
     log.info(f"Number of sanitized records: {len(t)} / {fullsize}")
+    t.write(f"sanitized_focus_data_{site}_{enc}_{tel}.dat", format="ascii.csv",overwrite=True)
     return t
 
 

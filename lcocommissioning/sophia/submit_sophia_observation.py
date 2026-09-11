@@ -137,7 +137,7 @@ def parseCommandLine():
 
                               help='If set, observe at meridian only in drifting sky mode.')
     parser.add_argument('--title', default="Sophia commissioning", help="Descriptive title for observation request")
-    parser.add_argument('--proposalid', default="LCOEngineering", help="proposal ID")
+    parser.add_argument('--proposalid', default="ENG2026B-001", help="proposal ID")
     parser.add_argument('--site', default='elp', choices=['elp', 'cpt','tfn','coj','lsc'],
                         help="To which site to submit")
 
@@ -153,7 +153,7 @@ def parseCommandLine():
 
     parser.add_argument('--defocus', type=float, default=0.0, help="Amount to defocus star.")
 
-    parser.add_argument('--filter', default='rp', nargs="*", choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zs', 'Y',  'U','B', 'V', 'I'],
+    parser.add_argument('--filter', default='rp ', nargs="*", choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zs', 'Y',  'U','B', 'V', 'I'],
                         help="Select optical element filter")
 
     parser.add_argument('--exptime', dest='exp_time', type=float, default=10,
