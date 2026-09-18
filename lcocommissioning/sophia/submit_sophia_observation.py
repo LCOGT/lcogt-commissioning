@@ -1,6 +1,7 @@
 ''' Tool to directly submit observation for Delta Rho Commissioning.'''
 import argparse
 import datetime as dt
+import itertools
 import json
 import logging
 import sys
@@ -12,7 +13,7 @@ import lcocommissioning.common.common as common
 _log = logging.getLogger(__name__)
 
 def create_cdk_request_configuration(args):
-
+    print ((args.filter, args.defocus, args.exp_time))
     configuration = {
         'type': None,
         'instrument_type': '1M0-SCICAM-SINISTRO',
@@ -20,7 +21,7 @@ def create_cdk_request_configuration(args):
         'acquisition_config': {},
         'instrument_configs': [ {
             'exposure_count': 1 if args.exp_cnt is None else args.exp_cnt,
-            'exposure_time': args.exp_time,
+            'exposure_time': exptime,
             'mode': 'full_frame' if args.readmode is None else args.readmode,
             'optical_elements': {
                 'filter': filter,
@@ -28,12 +29,12 @@ def create_cdk_request_configuration(args):
             'extra_params': {
                 'bin_x': 1,
                 'bin_y': 1,
-                'defocus': args.defocus,
+                'defocus': defocus,
                 'offset_ra': args.offsetRA,
                 'offset_dec': args.offsetDec,
             }
 
-        } for filter in args.filter ],
+        } for filter,defocus,exptime in itertools.product(args.filter, args.defocus, args.exp_time) ],
         'extra_params' : {}
 
     }
@@ -138,10 +139,12 @@ def parseCommandLine():
                               help='If set, observe at meridian only in drifting sky mode.')
     parser.add_argument('--title', default="Sophia commissioning", help="Descriptive title for observation request")
     parser.add_argument('--proposalid', default="ENG2026B-001", help="proposal ID")
+
     parser.add_argument('--site', default='elp', choices=['elp', 'cpt','tfn','coj','lsc'],
                         help="To which site to submit")
 
     parser.add_argument('--dome', default='doma', choices=['doma', 'domb', 'domc'])
+    parser.add_argument('--tel', dest="telescope", default=None, help="Telescope to use for the observation")
 
     parser.add_argument('--start', default=None, type=str,
                         help="Time to start observation. If not given, defaults to \"NOW\". Specify as YYYYMMDD HH:MM")
@@ -151,13 +154,13 @@ def parseCommandLine():
 
     # parser.add_argument('--dither', action='store_true', help='Dither the exposure in a 5 point pattern.')
 
-    parser.add_argument('--defocus', type=float, default=0.0, help="Amount to defocus star.")
+    parser.add_argument('--defocus', type=float, default=[0.0], nargs="*",  help="Amount to defocus star.")
 
     parser.add_argument('--filter', default='rp ', nargs="*", choices=['opaque', 'w', 'up', 'gp', 'rp', 'ip', 'zs', 'Y',  'U','B', 'V', 'I'],
                         help="Select optical element filter")
 
-    parser.add_argument('--exptime', dest='exp_time', type=float, default=10,
-                        help='Exposure time')
+    parser.add_argument('--exptimes', type=float, dest='exp_time',  default=[10.0], nargs="*",
+                        help='Exposure time[s]')
 
     parser.add_argument('--ipp', type=float, default=1.0, help="ipp value")
 
@@ -236,7 +239,7 @@ def ammend_request_for_direct_submission(cdk_request, args):
     if args.filltime:
         end_time += dt.timedelta(seconds=args.filltime)
     if args.exp_cnt:
-        end_time += dt.timedelta(seconds=args.exp_cnt * (float(args.exp_time) + READOUTTIME))
+        end_time += dt.timedelta(seconds=args.exp_cnt * (float(np.sum(args.exp_time)) + len(args.exp_time) * READOUTTIME))
 
     data = {
         'name': args.title,

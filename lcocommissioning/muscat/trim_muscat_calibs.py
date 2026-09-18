@@ -8,8 +8,8 @@ from astropy.io import fits
 
 
 # Hardcoded output date settings
-OUTPUT_DATE_TAG = "20260602"  # YYYYMMDD for filename
-OUTPUT_DATE_OBS = "2026-06-02T15:00:00.000"  # DATE-OBS header value
+OUTPUT_DATE_TAG = "20260917"  # YYYYMMDD for filename
+OUTPUT_DATE_OBS = "2026-09-17T20:00:00.000"  # DATE-OBS header value
 
 TRIM_LEFT= []
 
@@ -56,7 +56,7 @@ def main():
     parser = argparse.ArgumentParser(description="Trim MUSCAT compressed FITS calibrations.")
     parser.add_argument("input_fits_fz", help="Input compressed FITS file (.fits.fz)")
     parser.add_argument("-o", "--output", help="Output filename (.fits.fz). If omitted, auto-generated.")
-    parser.add_argument("-notrim", action="store_true", help="Do not trim the image, just update date and filename.")
+    parser.add_argument("--notrim", action="store_true", help="Do not trim the image, just update date and filename.")
     args = parser.parse_args()
 
     with fits.open(args.input_fits_fz) as hdul:
