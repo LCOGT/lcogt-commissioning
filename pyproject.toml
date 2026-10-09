@@ -61,6 +61,7 @@ get_archonframe = "lcocommissioning.archon.archonexpose:main"
 elongation_assessment = "lcocommissioning.cdk.elongation_assessment:main"
 muscat_focus = "lcocommissioning.muscat.muscat_focus:main"
 deltarhofocus = "lcocommissioning.cdk.deltarhofocuscurve:main"
+flatcomp = "lcocommissioning.flatfield_comparison:main"
 webapp = "noisegaincrawler.webapp:main"
 
 

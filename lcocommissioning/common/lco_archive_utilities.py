@@ -5,6 +5,7 @@ import logging
 import os
 
 import numpy as np
+from numpy import rec
 import requests
 from astropy.io import fits
 from astropy.table import Table
@@ -119,16 +120,16 @@ def make_opensearch(index, filters, queries=None, exclusion_filters=None, range_
 
 
 def get_frames_for_noisegainanalysis(dayobs, site=None, cameratype=None, camera=None, readmode='full_frame',
-                                     obstype=['BIAS', 'SKYFLAT'], opensearch_url='https://opensearch.lco.global'):
+                                     obstype=['BIAS', 'SKYFLAT'], rlevel = None, filter=None, isMaster=False, opensearch_url='https://opensearch.lco.global'):
     """ Queries for a list of processed LCO images that are viable to get a photometric zeropoint in the griz bands measured.
 
         Selection criteria are by DAY-OBS, site, by camera type (fs,fa,kb), what filters to use, and minimum exposure time.
         Only day-obs is a mandatory fields, we do not want to query the entire archive at once.
      """
-    log.debug("Starting opensearch query")
-    query_filters = [{'DAY-OBS': dayobs}, {'RLEVEL': 0}, {'CONFMODE': readmode}]
+    
+    query_filters = [{'DAY-OBS': dayobs}, {'RLEVEL': 0 if not rlevel else rlevel}, ]
     range_filters = []
-    terms_filters = [{'OBSTYPE': obstype}]
+    terms_filters = [{'OBSTYPE': obstype}, {'CONFMODE': readmode}]
     prefix_filters = []
 
     if site is not None:
@@ -137,17 +138,21 @@ def get_frames_for_noisegainanalysis(dayobs, site=None, cameratype=None, camera=
         query_filters.append({'INSTRUME': camera})
     if cameratype is not None:
         prefix_filters.append({'INSTRUME': cameratype})
-
+    if isMaster:
+        query_filters.append({'ISMASTER': True})
+    if filter is not None:
+        terms_filters.append({'FILTER': filter})
+    
+    
     queries = []
     records = make_opensearch('fitsheaders', query_filters, queries, exclusion_filters=None,
                               opensearch_url=opensearch_url,
                               range_filters=range_filters, prefix_filters=prefix_filters,
                               terms_filters=terms_filters).scan()
     records_sanitized = [[record['filename'], record['SITEID'], record['INSTRUME'], record['RLEVEL'], record['DAY-OBS'],
-                          record['frameid']] for record in records]
+                          record['frameid'],  record['FILTER'], record['CONFMODE']] for record in records]
 
-    t = Table(np.asarray(records_sanitized), names=('FILENAME', 'SITEID', 'INSTRUME', 'RLEVEL', 'DAY-OBS', 'frameid'))
-
+    t = Table(np.asarray(records_sanitized), names=('FILENAME', 'SITEID', 'INSTRUME', 'RLEVEL', 'DAY-OBS', 'frameid', 'FILTER', 'CONFMODE'))
     return t
 
 
@@ -240,10 +245,10 @@ def download_from_archive(frameid):
 if __name__ == '__main__':
 
     camera = 'fa15'
-    dates = ArchiveDiskCrawler.get_last_n_days(1)
+    dates = ArchiveDiskCrawler.get_last_n_days(3)
 
     for dayobs in dates:
-        listofframes = get_frames_for_noisegainanalysis(dayobs, cameratype='fa')
+        listofframes = get_frames_for_noisegainanalysis(dayobs, camera='ep60')
         filelist = filename_to_archivepath_dict(listofframes)
         print("{} {} ".format(dayobs, filelist.keys()))
 
