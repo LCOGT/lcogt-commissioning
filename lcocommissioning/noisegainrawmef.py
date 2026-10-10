@@ -20,7 +20,7 @@ import json
 from lcocommissioning.common import lco_archive_utilities
 from lcocommissioning.common.ccd_noisegain import dosingleLevelGain
 from lcocommissioning.common.noisegaindb_orm import NoiseGainMeasurement, noisegaindb
-from lcocommissioning.common.Image import Image
+from lcocommissioning.common.Image import ImageRegionReader
 from lcocommissioning.common.logging_config import setup_logging
 import matplotlib.pyplot as plt
 from astropy.io import fits
@@ -120,22 +120,14 @@ def sortinputfitsfiles(
                
 
                 if (filter is not None) and ("b00" not in filename):
-                    image = Image(
-                        hdu, overscancorrect=useoverscan, alreadyopenedhdu=True
+                    # Read only the central region used for the level; full frames can be very large.
+                    image = ImageRegionReader(hdu, overscancorrect=useoverscan)
+                    _, naxis2, naxis1 = image.shape
+                    level = np.nanmean(
+                        image.region(0, naxis2 // 4, naxis2 * 3 // 4, naxis1 // 4, naxis1 * 3 // 4)
                     )
-                    if image.data is None:
+                    if (level == 0):
                         level = -1
-                    else:
-                        naxis1 = image.data[0].shape[1]
-                        naxis2 = image.data[0].shape[0]
-                        level = np.nanmean(
-                            image.data[0][
-                                naxis2 // 4 : naxis2 * 3 // 4,
-                                naxis1 // 4 : naxis1 * 3 // 4,
-                            ]
-                        )
-                        if (level == 0):
-                            level = -1
                         
                     _logger.debug(
                         f'Input file metrics {filename} filter:{filter} light level: {level: 8.1f} naxis 1/2: {naxis1} {naxis2} overscan corrected: {useoverscan}'

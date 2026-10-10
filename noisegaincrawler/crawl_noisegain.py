@@ -1,8 +1,9 @@
 import argparse
 import logging
 import os
+import sys
 from lcocommissioning.common.lco_archive_utilities import ArchiveDiskCrawler, get_frames_for_noisegainanalysis, \
-    filename_to_archivepath_dict
+    filename_to_archivepath_dict, OpenSearchQueryError
 from lcocommissioning.common.logging_config import setup_logging
 from lcocommissioning.common.noisegaindb_orm import noisegaindb
 from lcocommissioning.noisegainrawmef import do_noisegain_for_fileset
@@ -107,10 +108,20 @@ def main():
     if args.cameratype is None:
         args.cameratype = args.camera[0:2]
     log.debug (f"These are the dates to process: {args.dates}")
+    failed = []
     for date in args.dates:
         for ct in args.cameratype:
             log.debug ("Processing from date, cameratype, camera {} {} {}".format (date, args.cameratype, args.instrument))
-            find_files_and_invoke_noisegain(date, args, camera=args.instrument, cameratype=ct)
+            try:
+                find_files_and_invoke_noisegain(date, args, camera=args.instrument, cameratype=ct)
+            except OpenSearchQueryError:
+                # Already logged with details; skip this date / camera type and carry on with the others.
+                failed.append(f"{date} {ct}")
+
+    if failed:
+        log.error(f"Archive query failed for {len(failed)} date / camera type combinations, these were not processed: "
+                  f"{', '.join(failed)}")
+        sys.exit(1)
     log.info("All Done")
 
 if __name__ == '__main__':

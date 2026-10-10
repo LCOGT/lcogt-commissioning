@@ -258,10 +258,10 @@ def quadrantboundaries(data):
     """
     Split an image into its four quadrants.
 
-    :param data: 2d numpy array
+    :param data: 2d numpy array, or its shape as (naxis2, naxis1) tuple
     :return: list of (label, (y0,y1,x0,x1)) tuples, ordered lower left, lower right, upper left, upper right.
     """
-    naxis2, naxis1 = data.shape[0], data.shape[1]
+    naxis2, naxis1 = data if isinstance(data, tuple) else data.shape[:2]
     ymid = naxis2 // 2
     xmid = naxis1 // 2
     return [("ll", (0, ymid, 0, xmid)),

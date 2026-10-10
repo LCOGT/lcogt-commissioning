@@ -191,7 +191,8 @@ class Image(object):
         overscanlevel = np.mean(ovpixels[np.abs(ovpixels - overscanlevel) < sig_rej * std])
         return overscanlevel
 
-    def fitssection_to_slice(self, keyword):
+    @staticmethod
+    def fitssection_to_slice(keyword):
         integers = [int(n) for n in re.split(',|:', keyword[1:-1])]
         return integers
 
@@ -216,3 +217,68 @@ class Image(object):
         extension_info = fits_hdulist.info(False)
         return fits.HDUList([fits_hdulist[ext[0]] for ext in extension_info if
                              ((ext[1] in name) and (fits_hdulist[ext[0]].data is not None))])
+
+
+class ImageRegionReader(object):
+    """ Read rectangular regions of the trimmed and overscan corrected science extensions of a fits file.
+
+    reader.region(ext, y0, y1, x0, x1) returns the same pixels as Image(...).data[ext, y0:y1, x0:x1], but only the
+    requested region is read via the HDU's .section, i.e., for compressed images only the overlapping tiles are
+    decompressed, and the full image data are never loaded into (and cached by) the HDU. Use this instead of Image
+    when only parts of large images are needed.
+    """
+
+    def __init__(self, hdulist, overscancorrect=False, trim=True):
+        self.overscancorrect = overscancorrect
+
+        # Same header merging as Image, but on a copy so the input hdulist is not modified.
+        self.primaryheader = hdulist[0].header.copy()
+        if len(hdulist) == 2:
+            for card in hdulist[1].header:
+                if len(card) > 0:
+                    self.primaryheader.append((card, hdulist[1].header[card]))
+
+        # Unlike Image.get_extensions_by_name, select by header only; accessing hdu.data would load the full image.
+        self.sci_extensions = [hdu for hdu in hdulist if hdu.name in ('SCI', 'SPECTRUM', 'COMPRESSED_IMAGE')
+                               and hdu.header.get('NAXIS', 0) > 0]
+        if len(self.sci_extensions) == 0:
+            _log.warning("No SCI extenstion found in image. Forcing primary .")
+            self.sci_extensions = [hdulist[0]]
+
+        # Assumption is that all extensions have same dimensions.
+        header = self.sci_extensions[0].header
+        datasec = header.get('DATASEC')
+        if (datasec is None) or not trim:
+            self.cs = [1, header['NAXIS1'], 1, header['NAXIS2']]
+        else:
+            self.cs = Image.fitssection_to_slice(datasec)
+        self.shape = (len(self.sci_extensions), self.cs[3] - self.cs[2] + 1, self.cs[1] - self.cs[0] + 1)
+        self._overscan = {}
+
+    def overscan(self, extension):
+        if not self.overscancorrect:
+            return 0.
+        if extension not in self._overscan:
+            self._overscan[extension] = self._get_overscan_from_hdu(self.sci_extensions[extension])
+        return self._overscan[extension]
+
+    def region(self, extension, y0, y1, x0, x1):
+        """ Return trimmed, overscan corrected pixels [y0:y1, x0:x1] (in trimmed coordinates) of an extension."""
+        y0, y1 = max(0, y0), min(self.shape[1], y1)
+        x0, x1 = max(0, x0), min(self.shape[2], x1)
+        oy, ox = self.cs[2] - 1, self.cs[0] - 1
+        pixels = self.sci_extensions[extension].section[oy + y0:oy + y1, ox + x0:ox + x1]
+        return (pixels - self.overscan(extension)).astype(np.float32)
+
+    @staticmethod
+    def _get_overscan_from_hdu(hdu, sig_rej=2, biassecheader='BIASSEC'):
+        """ Same as Image.get_overscan_from_hdu, but reads only the overscan pixels."""
+        overkeyword = hdu.header.get(biassecheader)
+        if overkeyword is None or overkeyword in ('UNKNOWN', 'N/A'):
+            return 0
+        biassecslice = Image.fitssection_to_slice(overkeyword)
+        ovpixels = hdu.section[biassecslice[2] + 1:biassecslice[3] - 1, biassecslice[0] + 1: biassecslice[1] - 1]
+        overscanlevel = np.median(ovpixels)
+        std = np.std(ovpixels)
+        overscanlevel = np.mean(ovpixels[np.abs(ovpixels - overscanlevel) < sig_rej * std])
+        return overscanlevel

@@ -3,7 +3,7 @@ import numpy as np
 from astropy.io.fits import HDUList
 from astropy.stats import sigma_clipped_stats
 from matplotlib import pyplot as plt
-from lcocommissioning.common.Image import Image
+from lcocommissioning.common.Image import ImageRegionReader
 import logging
 import astropy.time as astt
 
@@ -36,14 +36,7 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     :return:  (gain, readnoise) in e-/ADU, e-
     """
 
-    if minx is None:
-        minx = (int)(flat1.shape[1] * 3 // 8)
-    if maxx is None:
-        maxx = (int)(flat1.shape[1] * 5 // 8)
-    if miny is None:
-        miny = (int)(flat1.shape[0] * 3 // 8)
-    if maxy is None:
-        maxy = (int)(flat1.shape[0] * 5 // 8)
+    minx, maxx, miny, maxy = statisticswindow(flat1.shape[0], flat1.shape[1], minx, maxx, miny, maxy)
 
     flat1lvl,_,_ = sigma_clipped_stats(flat1[miny:maxy, minx:maxx], sigma=5)
     flat2lvl,_,_ = sigma_clipped_stats(flat2[miny:maxy, minx:maxx], sigma=5)
@@ -56,9 +49,9 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     if (leveldifference > flatlevel * 0.1):
         _logger.warning("flat level difference % 8f is large compared to level % 8f. Result will be questionable" % (
             leveldifference, flat1lvl - bias1lvl))
-    # Measure noise of flat and bias differential images
-    deltaflat = (flat1 - flat2)[miny:maxy, minx:maxx]
-    deltabias = (bias1 - bias2)[miny:maxy, minx:maxx]
+    # Measure noise of flat and bias differential images. Cut out the window first to not create full size temporaries.
+    deltaflat = flat1[miny:maxy, minx:maxx] - flat2[miny:maxy, minx:maxx]
+    deltabias = bias1[miny:maxy, minx:maxx] - bias2[miny:maxy, minx:maxx]
     _,_,biasnoise = sigma_clipped_stats(deltabias, sigma=5)
     _,_,flatnoise = sigma_clipped_stats(deltaflat, sigma=5)
     _logger.debug(
@@ -82,6 +75,16 @@ def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=No
     return (gain, readnoise, flatlevel, flatnoise, (flat1lvl - avgbiaslevel), (flat2lvl - avgbiaslevel))
 
 
+def statisticswindow(naxis2, naxis1, minx=None, maxx=None, miny=None, maxy=None):
+    """ Statistics window (minx, maxx, miny, maxy) as used by noisegainextension for an image of the given size:
+    user defined limits where given, otherwise the central 2/8th square."""
+    minx = naxis1 * 3 // 8 if minx is None else minx
+    maxx = naxis1 * 5 // 8 if maxx is None else maxx
+    miny = naxis2 * 3 // 8 if miny is None else miny
+    maxy = naxis2 * 5 // 8 if maxy is None else maxy
+    return minx, maxx, miny, maxy
+
+
 def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2: HDUList, args, overscancorrect=True):
     """
     Calculate for each extension the noise and gain and print the result to console.
@@ -100,10 +103,12 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
     :return:
     """
 
-    bias1 = Image(fbias1, overscancorrect=overscancorrect, alreadyopenedhdu=True)
-    bias2 = Image(fbias2, overscancorrect=overscancorrect, alreadyopenedhdu=True)
-    flat1 = Image(fflat1, overscancorrect=overscancorrect, alreadyopenedhdu=True)
-    flat2 = Image(fflat2, overscancorrect=overscancorrect, alreadyopenedhdu=True)
+    # Only the statistics windows are read from the images; reading the full frames of all four images at once
+    # requires several GB of memory for large detectors.
+    bias1 = ImageRegionReader(fbias1, overscancorrect=overscancorrect)
+    bias2 = ImageRegionReader(fbias2, overscancorrect=overscancorrect)
+    flat1 = ImageRegionReader(fflat1, overscancorrect=overscancorrect)
+    flat2 = ImageRegionReader(fflat2, overscancorrect=overscancorrect)
 
     gains = []
     levels = []
@@ -114,34 +119,26 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
     exptimes = []
 
     dosplitquadrants = getattr(args, 'quadrants', False)
+    _, naxis2, naxis1 = flat1.shape
 
-    for ii in range(len(flat1.data)):
+    for ii in range(flat1.shape[0]):
 
         if dosplitquadrants:
-            regions = quadrantboundaries(flat1.data[ii])
+            regions = quadrantboundaries((naxis2, naxis1))
         else:
-            regions = [(None, None), ]
+            regions = [(None, (0, naxis2, 0, naxis1)), ]
 
-        for quadrantname, boundaries in regions:
-
-            if boundaries is None:
-                f1, f2, b1, b2 = flat1.data[ii], flat2.data[ii], bias1.data[ii], bias2.data[ii]
-                minx, maxx, miny, maxy = args.minx, args.maxx, args.miny, args.maxy
-                label = f"Extension {ii}"
-            else:
-                y0, y1, x0, x1 = boundaries
-                f1 = flat1.data[ii][y0:y1, x0:x1]
-                f2 = flat2.data[ii][y0:y1, x0:x1]
-                b1 = bias1.data[ii][y0:y1, x0:x1]
-                b2 = bias2.data[ii][y0:y1, x0:x1]
-                # the user defined statistics window does not apply to a quadrant; use the quadrant's center.
-                minx, maxx, miny, maxy = args.minx, args.maxx, args.miny, args.maxy
-                label = f"Extension {ii} {quadrantname}"
+        for quadrantname, (y0, y1, x0, x1) in regions:
+            # the user defined statistics window is relative to the extension or quadrant; default is its center.
+            wminx, wmaxx, wminy, wmaxy = statisticswindow(y1 - y0, x1 - x0, args.minx, args.maxx, args.miny, args.maxy)
+            window = (y0 + wminy, y0 + wmaxy, x0 + wminx, x0 + wmaxx)
+            f1, f2, b1, b2 = [image.region(ii, *window) for image in (flat1, flat2, bias1, bias2)]
+            label = f"Extension {ii}" if quadrantname is None else f"Extension {ii} {quadrantname}"
 
             (gain, noise, level, shotnoise, level1, level2) = noisegainextension(f1, f2, b1, b2,
                                                                                  showImages=args.showimages,
-                                                                                 minx=minx, maxx=maxx,
-                                                                                 miny=miny, maxy=maxy, )
+                                                                                 minx=0, maxx=f1.shape[1],
+                                                                                 miny=0, maxy=f1.shape[0], )
 
             print(f"  {label}  Level: {level:7.1f}  Gain {gain:5.3f} e-/ADU  Noise {noise:5.2f} e-")
 
