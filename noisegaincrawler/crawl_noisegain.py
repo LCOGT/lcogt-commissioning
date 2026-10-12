@@ -40,7 +40,7 @@ def find_files_and_invoke_noisegain(date, args, camera=None, cameratype=None):
 
 def parseCommandLine():
     parser = argparse.ArgumentParser(
-        description='Crawl LCO archive tyo measure noise, gain from paitrs of biases and darks',
+        description='Crawl LCO archive to measure noise, gain from pairs of biases and flats',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--cameratype', type=str, nargs='+', default=['fa', 'ep', 'sq'],
@@ -52,7 +52,7 @@ def parseCommandLine():
         'Optionally, specify the location of statistics window. All units in pixels with an FITS image extension')
     group.add_argument('--minx', type=int, default=None, help="minimum x.")
     group.add_argument('--maxx', type=int, default=None, help="maximum x.")
-    group.add_argument('--miny', type=int, default=None, help="miniumm y.")
+    group.add_argument('--miny', type=int, default=None, help="minimum y.")
     group.add_argument('--maxy', type=int, default=None, help="maximum y.")
 
     mutex = parser.add_mutually_exclusive_group()

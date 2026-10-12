@@ -86,7 +86,7 @@ def parseCommandLine():
 
     parser.add_argument('--targetname', default='auto', type=str,
                         help='Name of star for Floyds test observation. if none is given, or auto, Software will try to'
-                             ' find a cataloged flux stadnard star. Name must resolve via Simbad; if resolve failes,'
+                             ' find a cataloged flux standard star. Name must resolve via Simbad; if resolve fails,'
                              ' program will exit.')
     parser.add_argument('--pm', type=float, nargs=2, default = None, help="proper motion RA DEC in marcsec / year")
     requiredNamed = parser.add_argument_group('required named arguments')
@@ -141,7 +141,7 @@ def parseCommandLine():
             args.pm = common.listofpm[args.targetname]
         else:
             args.pm = [0,0]
-    print(f"Resolved target {args.targetname} at corodinates {args.radec} deg w/ pm= {args.pm} marcsec/yr")
+    print(f"Resolved target {args.targetname} at coordinates {args.radec} deg w/ pm= {args.pm} marcsec/yr")
     return args
 
 

@@ -35,7 +35,7 @@ class lcoimagerpropertydatabase:
 
     def checkifalreadyused(self, fitsimage, tablename):
 
-        """ Check if a noisegain measurement based on two flat field expsoures already exists or not"""
+        """ Check if a noisegain measurement based on two flat field exposures already exists or not"""
 
         with self.conn:
             query = 'select name from {} where (name like %?%)'.format(tablename)

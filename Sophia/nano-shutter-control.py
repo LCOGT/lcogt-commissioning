@@ -3,18 +3,18 @@ import time
 import network
 
 
-# Configure for anti-bouncing for input signal. hardwired TTL shodl be short. Physical button ~ 20ms. 
+# Configure for anti-bouncing for input signal. hardwired TTL should be short. Physical button ~ 20ms. 
 ANTI_BOUNCE_TIME_MS=20
 
 # Define the GPIO pin you are using (e.g., GPIO 14)
 #
-# *** Note: this is the logical pin number, not hte hardware pin number. Refer to the pinout diagram to translate to the physical pin.
+# *** Note: this is the logical pin number, not the hardware pin number. Refer to the pinout diagram to translate to the physical pin.
 #
 # GPIO Pin 14 is physical pin #19
 
 PIN_NUMBER = 14
 
-#Network conenction timeout
+#Network connection timeout
 network_dhcp_timeout_seconds = 10
 
 
@@ -50,7 +50,7 @@ else:
     shutter_target_ip = None
 
 
-# Inigtialize IRQ handling for TTL signal pin
+# Initialize IRQ handling for TTL signal pin
 
 shutter_ttl_pin = Pin(PIN_NUMBER, mode=Pin.IN, pull=Pin.PULL_UP) # Using pull-up for a button
 shutter_ttl_state_changed = False

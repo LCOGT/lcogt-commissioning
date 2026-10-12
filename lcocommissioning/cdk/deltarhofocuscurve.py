@@ -40,7 +40,7 @@ def focus_curve_fit(xdata, ydata, func=sqrtfit):
 
     # TODO: Verification that we have enough points.
 
-    # TODO: Boundaries and intial guess externally driven by context.
+    # TODO: Boundaries and initial guess externally driven by context.
     initial_guess = [3, 0, 60, 0.5] if func == sqrtfit else None
     bounds = [[2, -0.1, 0, 0.4], [6, 0.1, 100, _LIMIT_EXPONENT_U]] if func == sqrtfit else [-math.inf, math.inf]
     # for fa:
@@ -82,7 +82,7 @@ def overplot_fit(func, paramset, ax):
 
 def anaylse_deltarho_tilt(bestfits):
 
-    # Get rid of focus zeropint, not relevant for us
+    # Get rid of focus zeropoint, not relevant for us
     focuszeropoint = bestfits[4]
     for ii in bestfits.keys():
         bestfits[ii] = bestfits[ii] - focuszeropoint

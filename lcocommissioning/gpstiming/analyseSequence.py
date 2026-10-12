@@ -83,7 +83,7 @@ def SimpleregionAnalysis(args):
         for fitsfile in args.inputfiles:
             fracsec, mean, std= AnalyseFitsFile(fitsfile, where=args.where, width=args.width)
 
-            log.info (f"Simple Regioan analysis {fitsfile}  {fracsec} {mean} {std}")
+            log.info (f"Simple region analysis {fitsfile}  {fracsec} {mean} {std}")
             outputfile.write (f"{fitsfile}  {fracsec} {mean} {std}\n")
 
 

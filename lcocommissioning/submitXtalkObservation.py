@@ -201,9 +201,9 @@ def parseCommandLine():
     parser.add_argument('--readmode', choices=common.archon_readout_modes.append('default'),
                         default=common.archon_readout_modes[0])
     parser.add_argument('--targetname', default='auto', type=str,
-                        help='Name of star for X talk measurement. Will be resolved via simbad. If resolve failes, '
-                             'program will exit.\n If name is auto, which is te default, a viable target will be choosen for you.')
-    parser.add_argument('--title', default="Sinsitro commissioning: X talk")
+                        help='Name of star for X talk measurement. Will be resolved via simbad. If resolve fails, '
+                             'program will exit.\n If name is auto, which is the default, a viable target will be chosen for you.')
+    parser.add_argument('--title', default="Sinistro commissioning: X talk")
     parser.add_argument('--start', default=None,
                         help="Time to start x-talk calibration. If not given, defaults to \"NOW\". Specify as YYYYMMDD HH:MM")
 
@@ -215,7 +215,7 @@ def parseCommandLine():
                         help="dithering is in + pattern inste4ad of x pattern. Do not use for xtalk observations.")
     parser.add_argument('--defocus', type=float, default=6.0, help="Amount to defocus star.")
     parser.add_argument('--exp-times', nargs="*", type=float, default=[2, 4, 6, 12], help="List of exposure times")
-    parser.add_argument('--exp-cnt', type=int, default=1, help="How often to reapeat each exposure")
+    parser.add_argument('--exp-cnt', type=int, default=1, help="How often to repeat each exposure")
     parser.add_argument('--binning', type=int, default=None)
     parser.add_argument('--ipp', type=float, default=1.0, help="ipp value")
     parser.add_argument('--filter', type=str, default='rp', help="Filter")
@@ -226,7 +226,7 @@ def parseCommandLine():
     parser.add_argument('--CONFIRM', dest='opt_confirmed', action='store_true',
                         help='If set, observation will be submitted. If omitted, nothing will be submitted.')
     parser.add_argument('--direct', action='store_true',
-                        help='If set, submit directly insgtead of via scheduler')
+                        help='If set, submit directly instead of via scheduler')
     parser.add_argument('--proposal', default='LCOEngineering')
     parser.add_argument('--loglevel', dest='log_level', default='INFO', choices=['DEBUG', 'INFO', 'WARN'],
                         help='Set the debug level')
@@ -257,7 +257,7 @@ def parseCommandLine():
         print("Resolving target name failed, giving up")
         sys.exit(1)
 
-    print("Resolved target %s at corodinates %s %s" % (args.targetname, args.radec.ra, args.radec.dec))
+    print("Resolved target %s at coordinates %s %s" % (args.targetname, args.radec.ra, args.radec.dec))
 
     global sinistro_1m_quadrant_offsets
     sinistro_1m_quadrant_offsets = {0: [-args.ditherthrow, args.ditherthrow],

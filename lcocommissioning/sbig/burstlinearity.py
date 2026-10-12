@@ -77,7 +77,7 @@ def combinedarks (listofdarks):
     for i, data in enumerate(listofdarks):
         #dark,_,_ = astropy.stats.sigma_clipped_stats(data.data[0][:,-50:-1])
         a[i, :, :] = data.data[0][:, :] #- dark
-        #_logger.info (f"dark oversan: {dark}")
+        #_logger.info (f"dark overscan: {dark}")
     stacked_data = a.sum(axis=0) / len(listofdarks)
     
     if overscanragion:
@@ -97,7 +97,7 @@ def getlevelforimage (image, masterdark):
 
 
     #imageov,_,_ = astropy.stats.sigma_clipped_stats(image[:,-50:-10])
-    #_logger.info (f"Oversscan: {imageov}")
+    #_logger.info (f"Overscan: {imageov}")
     if overscanragion:
         imageov, mean, std = astropy.stats.sigma_clipped_stats (image[overscanragion])
     else:

@@ -12,7 +12,7 @@ from lcocommissioning.common.common import quadrantboundaries
 _logger = logging.getLogger(__name__)
 
 # Utils to calculate CCD noise and gain from two flats and two biases.
-# This module is concerened only with astropy.fits objects, and not their generation.
+# This module is concerned only with astropy.fits objects, and not their generation.
 
 
 def noisegainextension(flat1, flat2, bias1, bias2, minx=None, maxx=None, miny=None, maxy=None, showImages=False):
@@ -99,7 +99,6 @@ def dosingleLevelGain(fbias1: HDUList, fbias2: HDUList, fflat1: HDUList, fflat2:
     :param fflat2:
     :param args:
     :param overscancorrect:
-    :param alreadyopenhdu: if True, treat the input files as FITS hdu. Otherwise, trweat them as filenames.
     :return:
     """
 

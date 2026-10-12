@@ -9,7 +9,7 @@ Install [Nix](https://github.com/LCOGT/public-wiki/wiki/Install-Nix) if you have
 not already.
 
 If you have [direnv](https://github.com/LCOGT/public-wiki/wiki/Install-direnv)
-installed, the shell will automatically activate and deactive anytime you change
+installed, the shell will automatically activate and deactivate anytime you change
 directories. You may have to grant permissions initially with:
 
 ```sh

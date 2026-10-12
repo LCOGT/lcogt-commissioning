@@ -1,5 +1,5 @@
 '''
-Tool to copy gain history data from one database to another, in particular to support hte migration from local sqlite to online postgress.
+Tool to copy gain history data from one database to another, in particular to support the migration from local sqlite to online PostgreSQL.
 '''
 import argparse
 import logging

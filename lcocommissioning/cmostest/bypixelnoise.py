@@ -5,10 +5,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from  scipy import stats
 
-''' Derive per pixel staistics: 
+''' Derive per pixel statistics: 
    output image of mean value per pixel
    output image of std deviation per pixel
-   output histrogram of noise per pixel'''
+   output histogram of noise per pixel'''
 plt.style.use("ggplot")
 
 
@@ -94,7 +94,7 @@ def main():
 
 
 
-    # look at the per pxiel distribution for a dedicated pixel
+    # look at the per pixel distribution for a dedicated pixel
 
     maxy, maxx = np.unravel_index(np.argmax (stdimage), stdimage.shape)
     miny, minx = np.unravel_index(np.argmin (stdimage), stdimage.shape)

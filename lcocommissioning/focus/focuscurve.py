@@ -34,7 +34,7 @@ def focus_curve_fit(xdata, ydata, func=sqrtfit):
 
     # TODO: Verification that we have enough points.
 
-    # TODO: Boundaries and intial guess externally driven by context.
+    # TODO: Boundaries and initial guess externally driven by context.
     initial_guess = [2, 0, 1, 0.6] if func == sqrtfit else None
     bounds = [[0, -3, 0, 0.5], [5, 3, 5, _LIMIT_EXPONENT_U]] if func == sqrtfit else [-math.inf, math.inf]
 

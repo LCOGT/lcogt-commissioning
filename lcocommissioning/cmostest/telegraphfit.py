@@ -32,7 +32,7 @@ def np_gaussian(x, A, x0, sigma):
 
 def np_tripple_gaussian_function(x, A, x0,sigma, leftscale, rightscale,  delta):
     """Tri-modal distribution
-    x: varible
+    x: variable
     A: amplitude at center
     B: fraction of center amplitude in side lobes
     x0: center of central peak
@@ -102,7 +102,7 @@ def plotLHFunction (x, params, inputname):
 
 
 def findditributionparamters(xvec, popt):
-    """ derive the RTN coefficients for a series of readouts based on a maximum likelyhood fit.
+    """ derive the RTN coefficients for a series of readouts based on a maximum likelihood fit.
         popt: 0-> overall scale
               1 -> x0
               2 -> sigma
@@ -122,7 +122,7 @@ def findditributionparamters(xvec, popt):
 
 def findx0(xvec, A, sigma, leftscale,rightscale, delta,leftscale2,rightscale2,delta2):
     """ Given a certain trimodal distribution, find the most likely value for series of values drawn from that distribution.
-    For CMOS RTS: If we have the same exposure level on a given pixel, and N readouts, what is the most likely occurance?
+    For CMOS RTS: If we have the same exposure level on a given pixel, and N readouts, what is the most likely occurrence?
     """
 
     def lnprob(paramters, mydata):
@@ -136,7 +136,7 @@ def findx0(xvec, A, sigma, leftscale,rightscale, delta,leftscale2,rightscale2,de
 
 
 def readdistribution(file):
-    """ Rwead a serices of pixel values from a text file. One value per line. """
+    """ Read a series of pixel values from a text file. One value per line. """
     return np.asarray(np.loadtxt(file))
 
 
@@ -212,7 +212,7 @@ def fitbinneddata (data, numbins=20):
     return popt_5
 
 def fitandplot_binneddata(data, label, numbins=15, color = 'black',  fitcolor='black', legend=None):
-    """ Derive RTS paramters for a given pixel based on a sqeuince of readouts. This is based on fitting gaussians to a binned data sample
+    """ Derive RTS parameters for a given pixel based on a sequence of readouts. This is based on fitting gaussians to a binned data sample
         Returns a popt set of coefficients .
     """
     popt = fitbinneddata(data, numbins)

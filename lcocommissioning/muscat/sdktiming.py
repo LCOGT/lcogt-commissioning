@@ -38,7 +38,7 @@ def analyselogfile(T):
     exptimemeas = T['measend'] - T['measstart']
     exptimereq = T['expend'] - T['expstart']
     starttime = T['measstart']
-    # Exp start vs measer start
+    # Exp start vs measured start
     plt.figure()
     for camera in cameras:
         ctimedelta = timedelta[camera==T['cameraid']]

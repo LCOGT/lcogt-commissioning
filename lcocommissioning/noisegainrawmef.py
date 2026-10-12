@@ -595,7 +595,7 @@ def parseCommandLine():
     )
     group.add_argument("--minx", type=int, default=None, help="minimum x.")
     group.add_argument("--maxx", type=int, default=None, help="maximum x.")
-    group.add_argument("--miny", type=int, default=None, help="miniumm y.")
+    group.add_argument("--miny", type=int, default=None, help="minimum y.")
     group.add_argument("--maxy", type=int, default=None, help="maximum y.")
 
     parser.add_argument(
@@ -615,8 +615,8 @@ def parseCommandLine():
         type=str,
         default="exptime",
         choices=["exptime", "filterlevel"],
-        help="Automatically group flat fiel;ds by exposure time (great if using dome flas, or lab flats)."
-        ", or by measured light level (great when using sky flats, but more computing intensive",
+        help="Automatically group flat fields by exposure time (great if using dome flats, or lab flats)"
+        ", or by measured light level (great when using sky flats, but more computing intensive)",
     )
     parser.add_argument("--readmode", default="full_frame")
     parser.add_argument("--adubits", default=18)
@@ -664,7 +664,7 @@ def parseCommandLine():
         "--texpdelta",
         default = 0.0,
         type=float,
-        help="Fixed value to add to Texp to compensatate for shutter mismatch'"
+        help="Fixed value to add to Texp to compensate for shutter mismatch"
     )
 
     args = parser.parse_args()

@@ -39,10 +39,10 @@ def createMuscatRequestConfiguration(args):
     }
 
     if args.selfguide:
-        # several implemtnations tried out:
-        # initially: one channal as guider camera:
+        # several implementations tried out:
+        # initially: one channel as guider camera:
         #configuration['guiding_config']['mode'] = f'MUSCAT_{args.selfguide.upper()}'
-        # or: self-guide with an appropiate channel.
+        # or: self-guide with an appropriate channel.
         configuration['guiding_config']['mode'] = 'OFF'
 
     if args.exp_cnt:
@@ -132,7 +132,7 @@ def parseCommandLine():
     repeatgroup.add_argument('--exp-cnt', type=int, help="How often to repeat each exposure")
     repeatgroup.add_argument('--filltime', type=float, help="How long to repeat Muscat exposures (seconds)")
 
-    parser.add_argument('--selfguide',  action='store_true', help="Is set, facillity guider OFF and encourage Muscat self-guiding using an appropiate channel")
+    parser.add_argument('--selfguide',  action='store_true', help="If set, facility guider OFF and encourage Muscat self-guiding using an appropriate channel")
     parser.add_argument('--readmode', type=str, default='MUSCAT_FAST', choices=['MUSCAT_FAST', 'MUSCAT_SLOW'])
     parser.add_argument('--scheduler', action='store_true',
                         help='If set, submit to scheduler instead of trying a direct submission.')
@@ -182,7 +182,7 @@ def ammend_request_for_direct_submission(muscat, args):
     """ Need to fill in some extra fields for a direct submission"""
     SLEWTIME = 180
     READOUTTIME = 6 if 'FAST' in args.readmode else 46
-    # Calculate the4 end tim efor this reuquest
+    # Calculate the end time for this request
     endtime = args.start + dt.timedelta(seconds=SLEWTIME)
     if args.filltime:
         endtime += dt.timedelta(seconds=args.filltime)

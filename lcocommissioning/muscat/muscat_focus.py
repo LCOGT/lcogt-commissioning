@@ -94,7 +94,7 @@ def overplot_fit(func, paramset, color=None):
 def getImageData(imagename, minarea=20, deblend=0.5, archive=False):
     """ Measure the FWHM of an image, tuned to get a reasonable FWHM also for defocussed images.
     """
-    _log.info(f"Getting image datga for image {imagename}")
+    _log.info(f"Getting image data for image {imagename}")
     if archive:
         hdul = download_from_archive(imagename)
     else:
@@ -164,7 +164,7 @@ def getImageData(imagename, minarea=20, deblend=0.5, archive=False):
 
 
 def sort_input_images(inputlist):
-    ''' Sort the input image list by camera. Return a dictionary {cameraname -> [listof iamges]}'''
+    ''' Sort the input image list by camera. Return a dictionary {cameraname -> [listof images]}'''
     cameraregex = '.*[012]m.*-([feas][apfkq]\d\d)-.*'
 
     returndict = {}

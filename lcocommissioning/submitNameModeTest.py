@@ -99,10 +99,10 @@ def createRequestsForStar(context):
 
 def parseCommandLine():
     parser = argparse.ArgumentParser(
-        description='Submiot a named mode observation request to POND')
+        description='Submit a named mode observation request to POND')
 
     parser.add_argument('--name', default='auto', type=str,
-                        help='Name of target.. Will be resolved via simbad. If resolve failes, program will exit.')
+                        help='Name of target.. Will be resolved via simbad. If resolve fails, program will exit.')
     parser.add_argument('--defocus', type=float, default=0.0, help="Amount to defocus star.")
     parser.add_argument('--site',  choices=common.lco_1meter_sites, required=True,
                         help="To which site to submit")
@@ -138,7 +138,7 @@ def parseCommandLine():
         try:
             args.start = dt.datetime.strptime(args.start, "%Y%m%d %H:%M")
         except ValueError:
-            _logger.error("Invalidt start time argument: ", args.start)
+            _logger.error("Invalid start time argument: %s", args.start)
             exit(1)
 
     if ('auto' in args.name):
@@ -153,7 +153,7 @@ def parseCommandLine():
         print("Resolving target name failed, giving up")
         exit(1)
 
-    print("Resolved target %s at corodinates %s %s" % (args.name, args.radec.ra, args.radec.dec))
+    print("Resolved target %s at coordinates %s %s" % (args.name, args.radec.ra, args.radec.dec))
     return args
 
 

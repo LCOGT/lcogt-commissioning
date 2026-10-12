@@ -134,7 +134,7 @@ class archonexposure:
         self.fetchlog()
 
     def savereadconfigparam (self, paramname):
-        log.warning("Readback is disfunctional, i.e., backplane memory is not yet updated from state machine. Readback can be invalid. ")
+        log.warning("Readback is dysfunctional, i.e., backplane memory is not yet updated from state machine. Readback can be invalid. ")
         nexp_p = list(self.archon.find_parameter_in_configuration(self.archon.cfg, paramname))
         result = self.archon.read_configuration_line(nexp_p[0])
         return result
@@ -195,7 +195,7 @@ class archonexposure:
 
 
     def contniuousreadout (self, extraheader = None, filename = None, exptimems=0, nframes = 100):
-        """ Read out cotninuously and add up to a data cube"""
+        """ Read out continuously and add up to a data cube"""
 
 
 
@@ -281,7 +281,7 @@ class archonexposure:
         lastframe, buf, framew, frameh, samplemode, timestamp = self.archon.newest()
         log.info('waiting for next frame to be ready; current frame # is %d, buffer %d' % (lastframe, buf))
 
-        ### Readout one frame from detctor
+        ### Readout one frame from detector
         self.saveupdateconfigparam('Readouts', 'Readouts=1')
 
         waittime = 0

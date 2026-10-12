@@ -55,7 +55,7 @@ class QHYCCD:
             self.qhyccd.GetQHYCCDReadModeName(self.cam, c_uint(readmode), readmodename)
             _logger.info(f"\treadmode #{readmode} : {readmodename.value.decode('UTF-8')} ")
 
-    """ Relase camera and close sdk """
+    """ Release camera and close sdk """
 
     def close(self):
         self.qhyccd.CloseQHYCCD(self.cam)
@@ -113,14 +113,14 @@ class QHYCCD:
 
         settempsupported = self.qhyccd.IsQHYCCDControlAvailable(self.cam, CONTROL_ID.CONTROL_COOLER)
         if settempsupported != ERR.QHYCCD_SUCCESS:
-            print("Setting temeprature is not supported on this camera.")
+            print("Setting temperature is not supported on this camera.")
             return
 
         ret = self.qhyccd.SetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_COOLER, self.setpoint)
         if ret == ERR.QHYCCD_SUCCESS:
             print(f"Set temperature control to {temperature}")
         else:
-            print(f"Setting temeprature failed with error {ret}")
+            print(f"Setting temperature failed with error {ret}")
 
     def getTemp(self):
         ret = self.qhyccd.GetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_CURTEMP)
@@ -136,9 +136,9 @@ class QHYCCD:
         else:
             ret = self.qhyccd.SetQHYCCDParam(self.cam, CONTROL_ID.CONTROL_SensorChamberCycle_PUMP, onoff)
             if ret != ERR.QHYCCD_SUCCESS:
-                _logger.error(f"Error while  toggling SensorchamberCyclePUmp {ret}")
+                _logger.error(f"Error while  toggling SensorChamberCycle pump {ret}")
             else:
-                _logger.info(f"Turned SnesorchamberCyclePump to {onoff.value}")
+                _logger.info(f"Turned SensorChamberCycle pump to {onoff.value}")
 
     def getRH(self):
         ret = self.qhyccd.GetQHYCCDParam(self.cam, CONTROL_ID.CAM_HUMIDITY)
@@ -276,7 +276,7 @@ def main():
                     lab.expose(exptime=60, overhead=0, block=True)
 
                 if args.nburstcycles is None:
-                    # This is a conventional exposure where we ensure the LED is on befor we open the shutter and stays on until shutter closes.
+                    # This is a conventional exposure where we ensure the LED is on before we open the shutter and stays on until shutter closes.
                     _logger.info ("Starting conventional shutter-defined exposure")
                     lab.expose(exptime=exptime, overhead=2, block=False)
                     time.sleep (0.25)
@@ -313,7 +313,7 @@ def parseCommandLine():
     actions.add_argument("--gettemp", action="store_true", help="get CCD target temperature")
     actions.add_argument("--testled", action="store_true", help="testled")
 
-    actions.add_argument("--chamberpump", type=bool, help="cycle detector chaber decissitant")
+    actions.add_argument("--chamberpump", type=bool, help="cycle detector chamber desiccant")
 
 
     parser.add_argument("--prewarmled", action="store_true", help="testled")

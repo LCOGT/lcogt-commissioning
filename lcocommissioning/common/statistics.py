@@ -203,7 +203,7 @@ def calcdeltastddev(DataArray,sigClip,niter):
 # EXCLUDEPOINTS
 def excludepoints(DataArray,npts):
     '''Function to calculate the stddev of an a array of values both before and after
-    excluding the top npts outlyers'''
+    excluding the top npts outliers'''
     
     mean = DataArray.mean(dtype='float64')
     stddev = DataArray.std(dtype='float64')

@@ -87,7 +87,7 @@ def convert_request_for_direct_submission(nres, args):
     ACQUISITIONTIME = 300
 
     READOUTTIME = 60
-    # Calculate the4 end tim efor this reuquest
+    # Calculate the end time for this request
     endtime = args.start + dt.timedelta(seconds=SLEWTIME + ACQUISITIONTIME)
     endtime += dt.timedelta(seconds=args.expcnt * (args.exptime + READOUTTIME))
 
@@ -116,7 +116,7 @@ def parseCommandLine():
 
     parser.add_argument('--targetname', type=str, default=None,
                         help='Name of star for NRES test observation. if none is given, or auto, Software will try to'
-                             ' find a cataloged flux stadnard star. Name must resolve via Simbad; if resolve failes,'
+                             ' find a cataloged flux standard star. Name must resolve via Simbad; if resolve fails,'
                              ' program will exit.')
 
     parser.add_argument('--site', choices=common.lco_nres_sites, default=None,
@@ -128,7 +128,7 @@ def parseCommandLine():
     parser.add_argument('--expcnt', type=int, dest="expcnt", default=1)
     parser.add_argument('--exptime', type=float, default=120)
     parser.add_argument('--forcewcs', action='store_true',
-                        help='Force WCSW based acquistion')
+                        help='Force WCSW based acquisition')
     parser.add_argument('--defocus', type=float, default=0)
     parser.add_argument('--window', default=3, type=int, help="scheduling window length")
     parser.add_argument('--ipp', default=1.0, help="IPP priority for block")
@@ -184,7 +184,7 @@ def parseCommandLine():
         print("Resolving target name failed, giving up {}".format(e))
         exit(1)
 
-    print("Resolved target %s at corodinates %s %s" % (args.targetname, args.radec.ra, args.radec.dec))
+    print("Resolved target %s at coordinates %s %s" % (args.targetname, args.radec.ra, args.radec.dec))
     return args
 
 

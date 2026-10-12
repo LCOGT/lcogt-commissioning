@@ -26,7 +26,7 @@ class restcam:
         self.bin_x = 1
         self.bin_y = 1
 
-    """ Relase camera and close sdk """
+    """ Release camera and close sdk """
     def close(self):
         pass
 
@@ -211,14 +211,14 @@ def main():
             imagename=f"{args.outputpath}/restcam-{datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%S')}.{suffix}.fits"
             if args.flat and lab is not None:
                 if args.nburstcycles is None:
-                    # This is a conventional exposure where we ensure the LED is on befor we open the shutter and stays on until shutter closes.
+                    # This is a conventional exposure where we ensure the LED is on before we open the shutter and stays on until shutter closes.
                     _logger.info ("Starting conventional shutter-defined exposure")
                     lab.expose(exptime = exptime, overhead = 2, block=False, voltage=args.ledvoltage)
                 else:
                     # Here we open the shutter, and then turn the LED on for a determined amount of time. it takes a few seconds from requesting an exposure
                     # until the shutter actually opens. Hence we are putting the LED con command into a background thread that starts its working day with sleeping.
 
-                    _logger.info (f"Starting frequencey generator defined exposure for {args.nburstcycles} cycles.")
+                    _logger.info (f"Starting frequency generator defined exposure for {args.nburstcycles} cycles.")
                     th =threading.Thread ( target=lab.expose_burst, kwargs={'exptime':exptime, 'ncycles':args.nburstcycles, 'overhead':7, 'voltage':args.ledvoltage, 'block':False})
                     th.start()
 
@@ -247,7 +247,7 @@ def parseCommandLine():
     actions.add_argument ("--testled", type=float,  help="testled" )
     actions.add_argument ("--testledburst", type=float,  help="testled in burst mode" )
 
-    actions.add_argument ("--chamberpump", type = bool,  help="cycle detector chaber decissitant" )
+    actions.add_argument ("--chamberpump", type = bool,  help="cycle detector chamber desiccant" )
 
 
     parser.add_argument ("--ledvoltage", type=float, default = None)

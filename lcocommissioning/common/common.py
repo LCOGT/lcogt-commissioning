@@ -80,7 +80,7 @@ listofpm = {'HR9087'  : [18.844,    -9.700],
 
           }
 
-# have a list of cached coordiantes so we do not alwasys need to look it up
+# have a list of cached coordinates so we do not always need to look it up
 listofchachedcoordiantes = {
     'HR9087': [0.4560297510252, -03.0275060205485],
     'HR1544': [72.6530124271, +8.9001803703],

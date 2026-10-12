@@ -69,7 +69,7 @@ def process_fitsobj (hdul):
         plt.axvline (dateobs, color='black', label=f"mid-time\n{dateobs}")
         plt.axvline (weighted_dateobs, color='red', label=f"flux-weighted mid-time\n{weighted_dateobs}")
 
-        # some more fancy axis formating.
+        # some more fancy axis formatting.
         plt.gcf().autofmt_xdate()
         plt.setp(plt.gca().xaxis.get_minorticklabels(), rotation=30)
         plt.setp(plt.gca().xaxis.get_majorticklabels(), rotation=30)

@@ -80,7 +80,7 @@ def main():
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         plt.grid(color='white', ls='solid')
-        plt.savefig (f"{basename}_soirces.png", dpi=200)
+        plt.savefig (f"{basename}_sources.png", dpi=200)
 
 
 

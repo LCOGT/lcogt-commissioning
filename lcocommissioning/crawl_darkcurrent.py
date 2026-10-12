@@ -36,7 +36,7 @@ def get_dark_current_from_master(file):
 
 def parseCommandLine():
     parser = argparse.ArgumentParser(
-        description='Crawl LCO archive tyo measure dark current from master darks',
+        description='Crawl LCO archive to measure dark current from master darks',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--cameratype', type=str, nargs='+', default=['fa??', 'fs??', 'kb??'],

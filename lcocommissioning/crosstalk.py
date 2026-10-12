@@ -103,8 +103,8 @@ def make_source_victim_arrays(image, args):
         xdata = image.getccddata(args.opt_quadrant)[maskidx].flatten()
         ydata = image.getccddata(iquad)[maskidx].flatten()
 
-        # now make sure that we only see crostalk, and not additional stellar stuff in the field.
-        selectidx = ydata < 10+1e-3 * xdata  # TODO: paramterize maximum allowable crosstalk.
+        # now make sure that we only see crosstalk, and not additional stellar stuff in the field.
+        selectidx = ydata < 10+1e-3 * xdata  # TODO: parameterize maximum allowable crosstalk.
         extensionfluxes.append([xdata[selectidx], ydata[selectidx]])
 
     return extensionfluxes

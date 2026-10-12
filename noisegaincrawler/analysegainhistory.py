@@ -152,7 +152,7 @@ def renderHTMLPage(args, cameras, filenames):
 
 
 def make_plots_for_camera(camera, args, database):
-    ''' Create a list of plots for all cameras matching pattern and retuirn a list of filenames of the resulting plots.
+    ''' Create a list of plots for all cameras matching pattern and return a list of filenames of the resulting plots.
     '''
 
     filenames = []
@@ -175,7 +175,7 @@ def make_plots_for_camera(camera, args, database):
 
     for readmode in readmodes:
         dataset = database.getMeasurementsForCamera(camera, levelratio=0.02, filters=goodfilters, readmode=readmode)
-        _logger.info(f"Datasset for  readmode: {readmode}, dataset: {len(dataset)} entries")
+        _logger.info(f"Dataset for  readmode: {readmode}, dataset: {len(dataset)} entries")
         if dataset is None:
             continue
         if len(dataset) == 0:      
@@ -388,7 +388,7 @@ def main():
 
     database = noisegaindb(args.database)
     cameras = args.cameras if args.cameras is not None else database.getCameras()
-    #we are not intersted in old fl data that may be included
+    #we are not interested in old fl data that may be included
     cameras = [ c for c in cameras if ( (not c.startswith('fl')) & (not c.startswith('kb')))]
     _logger.info("Cameras: {}".format(cameras))
 

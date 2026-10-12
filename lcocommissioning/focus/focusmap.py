@@ -11,7 +11,7 @@ from scipy import optimize
 
 from lcocommissioning.common.SourceCatalogProvider import SEPSourceCatalogProvider
 
-''' make  1D and 2D plots of focus / ellipticity / orientaion distriobitions
+''' make  1D and 2D plots of focus / ellipticity / orientation distributions
 
 '''
 

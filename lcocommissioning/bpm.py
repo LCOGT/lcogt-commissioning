@@ -153,14 +153,14 @@ if __name__ == '__main__':
             extensionaveraged = combineData(darkfiles, extension = ext)
             darkbpm = createbpmFromDarkextension(extensionaveraged)
         else:
-            _logger.info ("Ommitting DARK bpm due to lack of sufficient files")
+            _logger.info ("Omitting DARK bpm due to lack of sufficient files")
 
         flatbpm = None
         if len(flatfiles) > 3:
             extensionaveraged = combineData(flatfiles, extension = ext)
             flatbpm = createbpmFromFlatextension(extensionaveraged)
         else:
-            _logger.info ("Ommitting FLAT bpm due to lack of sufficient files")
+            _logger.info ("Omitting FLAT bpm due to lack of sufficient files")
 
         # add up all BPM fields.
         outputdata[ext] = (
@@ -192,7 +192,7 @@ if __name__ == '__main__':
     # BANZAI legacy from pre-fzcompress
     keywordd_to_ext1 = ['SITEID','INSTRUME','CCDSUM','DAY-OBS', 'DATE-OBS']
     for key in keywordd_to_ext1:
-        _logger.debug ("Copy keyword %s to extention 1 for BANZAI" % key)
+        _logger.debug ("Copy keyword %s to extension 1 for BANZAI" % key)
         #hdul[1].header[key] = referenceImage.header[key]
 
     _logger.info ("Writing output file %s to disk" % args.outputfilename)

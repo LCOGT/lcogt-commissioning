@@ -1,4 +1,4 @@
-''' Utility to analyze the par-focallity of the LCo 1-meter
+''' Utility to analyze the parfocality of the LCO 1-meter
 Sinistro (science) and FLI (guider) cameras from a single auto focus request. '''
 
 import argparse
@@ -167,7 +167,7 @@ def getImageData(imagename, minarea=20, deblend=0.5, archive = False):
 
 def parseCommandLine():
     parser = argparse.ArgumentParser(
-        description='Do a simultanesous focus fit of fa and ef focus images to check parfocality.')
+        description='Do a simultaneous focus fit of fa and ef focus images to check parfocality.')
 
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -272,7 +272,7 @@ def main():
     ax1.set_xlim([-2.6, 2.6])
     ax1.set_ylim([0.5, 6])
     overplot_fit(sqrtfit, exponential_p, ax= ax1)
-    plt1, = ax1.plot(focuslist, fwhmlist, 'o', color="blue", label="EF FWWM")
+    plt1, = ax1.plot(focuslist, fwhmlist, 'o', color="blue", label="EF FWHM")
     overplot_fit(sqrtfit, faexponential_p, color="black", ax=ax1)
     plt1fa, = ax1.plot(fafocuslist, fafwhmlist, '.', color="black", label="FA FWHM")
 

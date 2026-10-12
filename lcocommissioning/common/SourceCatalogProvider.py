@@ -61,7 +61,7 @@ class e91SourceCatalogProvider(SourceCatalogProvider):
 
 
 class SEPSourceCatalogProvider(SourceCatalogProvider):
-    """Submit fits image to LCO GAIA astrometry service for WCS refinenement and run SEP source finder on image data."""
+    """Submit fits image to LCO GAIA astrometry service for WCS refinement and run SEP source finder on image data."""
 
     def __init__(self, refineWCSViaLCO=True):
         self.refineWCSViaLCO = refineWCSViaLCO
@@ -118,7 +118,7 @@ class SEPSourceCatalogProvider(SourceCatalogProvider):
             log.debug("No overscan specified")
             image_data = fitsimage[ext].data
 
-        image_data = image_data[40:-40, :]  # Sinsitro: cut away the thinning artifacts.
+        image_data = image_data[40:-40, :]  # Sinistro: cut away the thinning artifacts.
 
         image_data = image_data.astype(float)
         error = ((np.abs(image_data) * gain) + 8**2.0) ** 0.5 / gain
@@ -202,7 +202,7 @@ FOCDMD = "FOCDMD"
 
 
 def getboundariesForSection(sectionid, dimX, dimY):
-    """Get bounddaries for a 3x3 grid on 2d coordiantes"""
+    """Get boundaries for a 3x3 grid on 2d coordinates"""
     ### Quadrants:
     ###   6 7 8
     ###   3 4 5

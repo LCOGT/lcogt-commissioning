@@ -47,7 +47,7 @@ class Image(object):
         -----
         The file can be either compressed or not. If there are multiple extensions,
         e.g. Sinistros, the extensions should be (SCI, 1), (SCI, 2), ...
-        Sinsitro frames that were taken as datacubes will be munged later so that the
+        Sinistro frames that were taken as datacubes will be munged later so that the
         output images are consistent
         """
 
@@ -76,10 +76,10 @@ class Image(object):
         sci_extensions = self.get_extensions_by_name(hdulist, ['SCI', 'SPECTRUM', 'COMPRESSED_IMAGE'])
         _log.debug(f"SCI extensions found: {sci_extensions}")
         if len(sci_extensions) == 0:
-            _log.warning("No SCI extenstion found in image %s. Forcing primary ." % filename)
+            _log.warning("No SCI extension found in image %s. Forcing primary ." % filename)
             sci_extensions = [hdulist[0]]
 
-        # Find out whow big dat are. Warning: assumption is that all extensions have same dimensions.
+        # Find out how big data are. Warning: assumption is that all extensions have same dimensions.
         datasec = sci_extensions[0].header.get('DATASEC')
         _log.debug("DATASEC: {}".format(datasec))
 
@@ -144,7 +144,7 @@ class Image(object):
 
     def getccddata(self, extension, simulatext=True):
         """
-        Returns the data as define by DATASEC in ehader
+        Returns the data as defined by DATASEC in header
         :param extension:
         :return:
         """
@@ -242,7 +242,7 @@ class ImageRegionReader(object):
         self.sci_extensions = [hdu for hdu in hdulist if hdu.name in ('SCI', 'SPECTRUM', 'COMPRESSED_IMAGE')
                                and hdu.header.get('NAXIS', 0) > 0]
         if len(self.sci_extensions) == 0:
-            _log.warning("No SCI extenstion found in image. Forcing primary .")
+            _log.warning("No SCI extension found in image. Forcing primary .")
             self.sci_extensions = [hdulist[0]]
 
         # Assumption is that all extensions have same dimensions.

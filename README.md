@@ -4,7 +4,7 @@ Software for use in astronomical commissioning of instruments on the LCOGT netwo
 Updated by Daniel Harbeck:
 ==
 The original scripts provided by Rachel Street were tuned for the old 3D cube fits format
- of the LCO Sinistro cameras. Since the original commissioning of the Sinsitro cameras, the storage
+ of the LCO Sinistro cameras. Since the original commissioning of the Sinistro cameras, the storage
  format was revised and now uses a MEF format.For continued commissioning and reverification of the
  LCO cameras, these tools are being rewritten by Daniel Harbeck to be compatible with the new format. 
 
@@ -12,8 +12,8 @@ The original scripts provided by Rachel Street were tuned for the old 3D cube fi
  is vestigial code 
 
 
-The buidl system was moved to pyproject.toml March 2026
-use pip install -e . instrad of python setup.py develop / install
+The build system was moved to pyproject.toml March 2026
+use pip install -e . instead of python setup.py develop / install
 
 
 noisegainmef.py
@@ -49,11 +49,11 @@ optional arguments:
   --database DATABASE   sqlite database where to store results. (default:
                         noisegain.sqlite)
   --sortby {exptime,filterlevel}
-                        Automatically group flat fiel;ds by exposure time
-                        (great if using dome flas, or lab flats)., or by
+                        Automatically group flat fields by exposure time
+                        (great if using dome flats, or lab flats), or by
                         measured light level (great when using sky flats, but
                         more computing intensive (default: exptime)
-  --noreprocessing      Do not reprocess if datra are already in database
+  --noreprocessing      Do not reprocess if data are already in database
                         (default: False)
   --loglevel {DEBUG,INFO,WARN}
                         Set the debug level (default: INFO)
@@ -65,7 +65,7 @@ optional arguments:
 Optionally, specify the location of statistics window. All units in pixels with an FITS image extension:
   --minx MINX           minimum x. (default: None)
   --maxx MAXX           maximum x. (default: None)
-  --miny MINY           miniumm y. (default: None)
+  --miny MINY           minimum y. (default: None)
   --maxy MAXY           maximum y. (default: None)
 </pre>
 
@@ -90,7 +90,7 @@ Usage example:
 python crosstalk.py --quadrant 2 --linear --imagepath /nfs/archive/engineering/cpt/fl14/20170913/raw    cpt1m013-fl14-20170913-0106-x00.fits.fz cpt1m013-fl14-20170913-0107-x00.fits.fz cpt1m013-fl14-20170913-0108-x00.fits.fz
 </pre>
 
-Paramters:
+Parameters:
 
 --quadrant [N] parameter defines which extension number (start counting at 0 ) is considered the contaminating quadrant.
   When loading a raw image in ds9 with the -mosaicimage iraf option, this is where the quadrants are:
@@ -106,7 +106,7 @@ Paramters:
 --imagepath [path]  points to the directory where images located and will be prepended to the
  following individual image names. Save a bit of repetitive typing of the same path.
 
-The following fits images wil be analysed for cross talk. While the software was written with the 
+The following fits images will be analysed for cross talk. While the software was written with the 
 LCO Sinistro cameras in mind, the current version o this script should work with any camera as 
 long as the output of amplifiers is stored in equally dimensioned fits extensions. 
 
@@ -131,7 +131,7 @@ usage: submitXtalkObservation.py [-h] --site {lsc,cpt,coj,elp,bpl} --dome
 
 X-Talk calibration submission tool Submit to LAKE the request to observe a
 bright star, defocussed, at 1,3,6,12 sec exposure time, on each quadrant.
-Useful when commissioing a camera that is not available via scheduler yet.
+Useful when commissioning a camera that is not available via scheduler yet.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -144,7 +144,7 @@ optional arguments:
                         To which instrument to submit
   --name {auto,91 Aqr,HD30562,15 Sex,30Psc,51Hya}
                         Name of star for X talk measurement. Will be resolved
-                        via simbad. If resolve failes, program will exit.
+                        via simbad. If resolve fails, program will exit.
                         future version will automatically select a star based
                         on time of observation.
   --start START         Time to start x-talk calibration. If not given,
@@ -173,13 +173,13 @@ bpm.py
 
 Create a BANZAI-compatible bad pixel mask out of a set of bias, dark, and flat field frames.
 
-At the minimum, a set of three bias images have to be given as a parameter. A bpm will be calcualted for each image
- extension based on all bias, dark, and flat iamges given. Images of boas, dark, flat will be median combined before
+At the minimum, a set of three bias images have to be given as a parameter. A bpm will be calculated for each image
+ extension based on all bias, dark, and flat images given. Images of bias, dark, flat will be median combined before
   analysis.
 
-For biases: All pixels with a value larger than 20 times the varaince in the bias will be flagged as bad.
-For darks: All pixels with a value larger than 20 times the varaince in the bias will be flagged as bad.
-For flats: All pixels with a vlaues smaller than 20% of the median level wil be flagged as bad.
+For biases: All pixels with a value larger than 20 times the variance in the bias will be flagged as bad.
+For darks: All pixels with a value larger than 20 times the variance in the bias will be flagged as bad.
+For flats: All pixels with values smaller than 20% of the median level will be flagged as bad.
 
 
 Pixel values indicate in the bpm > 0 indicate a bad pixel; the coding is as:

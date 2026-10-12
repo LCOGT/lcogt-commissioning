@@ -3,7 +3,7 @@ Skeleton: query the LCO archive for flat field images of one camera for a given 
 
 Usage:
     export ARCHIVE_API_TOKEN=xxxxxxxx
-    python flatfield_comaprison.py --camera fa16 --dayobs 20261001
+    python flatfield_comparison.py --camera fa16 --dayobs 20261001
 """
 import argparse
 import datetime as dt
@@ -152,14 +152,14 @@ def plot_flats(entry, args, width=200, normalizeBy=None):
 def main():
     args = parse_args()
 
-    ### Get a libray of existing master flats
+    ### Get a library of existing master flats
     superCalibrationDates = lco_archive_utilities.ArchiveDiskCrawler.get_last_n_days(args.ndays)
 
     masterflatlist = {} 
     
 
 
-    ### Get the most up to datre superalibration flat and plot them
+    ### Get the most up-to-date supercalibration flat and plot them
     for date in superCalibrationDates:
         frames = query_flats(date, args.camera,  site=args.site, filter=args.filter, isMaster=True, readmode=["central_2k_2x2", "full_frame"])
         for frame in frames:
@@ -193,7 +193,7 @@ def main():
                 f = frame
                 dailyFlatList[f'{frame["FILENAME"]}'] = f
 
-    # Get the most recent daily falts and compare them against the super calibration frame to see what changed
+    # Get the most recent daily flats and compare them against the super calibration frame to see what changed
         for filename,  frame in dailyFlatList.items():
                 
             cachedImageName = os.path.join(args.cachedir, frame['FILENAME'])    

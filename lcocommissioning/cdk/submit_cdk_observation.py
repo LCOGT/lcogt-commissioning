@@ -169,7 +169,7 @@ def parseCommandLine():
     repeatgroup.add_argument('--filltime', type=float, help="How long to repeat exposures (seconds)")
 
     parser.add_argument('--readmode', type=str, default='full_frame', )
-    parser.add_argument('--stackexptime', type=float, default=0, help=" Enter self-guideded image stacking mode with a sub-expoure time defined in seconds. No stacking if time is 0 seconds. ")
+    parser.add_argument('--stackexptime', type=float, default=0, help=" Enter self-guided image stacking mode with a sub-exposure time defined in seconds. No stacking if time is 0 seconds. ")
     parser.add_argument('--direct', action='store_true',
                          help='If set, submit directly instead of via scheduler.')
     parser.add_argument('--CONFIRM', dest='opt_confirmed', action='store_true',
@@ -227,7 +227,7 @@ def parseCommandLine():
 
 def ammend_request_for_direct_submission(cdk_request, args):
     """ Need to fill in some extra fields for a direct submission"""
-    SLEWTIME = 120  # Driven by rotator which is excuiciatingly slow.
+    SLEWTIME = 120  # Driven by rotator which is excruciatingly slow.
     READOUTTIME = 6
     # Calculate the end time for this request
     end_time = args.start + dt.timedelta(seconds=SLEWTIME)

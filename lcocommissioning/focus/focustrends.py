@@ -227,7 +227,7 @@ def set_ylim(data, yrange):
 
 
 def analysecamera(args, t=None, ):
-    ''' Do a full thermal / compression analysi for a given telescope'''
+    ''' Do a full thermal / compression analysis for a given telescope'''
     site = args.site
     enc = args.dome
     tel = args.tel
@@ -246,7 +246,7 @@ def analysecamera(args, t=None, ):
     if t is None:
         t = get_focusStackData(args)
 
-    # Multi-linear fit to find dependency on temeprature and zenith distance.
+    # Multi-linear fit to find dependency on temperature and zenith distance.
     coszd = np.cos(t['ZD'] * math.pi / 180)
     temp = t['FOCTEMP']
     simfitresult, simfiterrors, goodvalues = simultaneousfit(temp, coszd, t['ACTFOCUS'], zdterm=0.15 if "1m0" in tel else None, order=args.fitorder, focus_temp_reference=args.focus_temp_reference)
@@ -327,7 +327,7 @@ def analysecamera(args, t=None, ):
     plt.legend()
     set_ylim(t['FOCAFOFF'], 3*focusvaluerange)
 
-    # no wlook how hard autofocus has to work to compenssate for temp & ZD
+    # now look how hard autofocus has to work to compensate for temp & ZD
     # compensation should be noise around constant offset value for good
     # compensation.
     plt.subplot(5, 2, 8)
@@ -354,7 +354,7 @@ def analysecamera(args, t=None, ):
 
     plt.suptitle("{} {} {} \n".format(site, enc, tel), fontsize=24, y=1.05)
 
-    # Lok at some inttersting residuals
+    # Look at some interesting residuals
     plt.subplot(5, 2, 9)
     xdata = t['REFHUMID']
     ydata = residual_focus
@@ -392,7 +392,7 @@ def getargs():
     parser.add_argument('--tel', default='0m4c', type=str)
     parser.add_argument('--after', type=dt.datetime.fromisoformat, help="Consider data only after the given date, in ISO format (e.g., 2022-09-01 00:00:00")
     parser.add_argument('--before',  type=dt.datetime.fromisoformat, default=dt.datetime.utcnow().isoformat())
-    parser.add_argument('--maxfwhm', type=float, default=5.0, help='Maximum allowable seiing in \'\'')
+    parser.add_argument('--maxfwhm', type=float, default=5.0, help='Maximum allowable seeing in \'\'')
     parser.add_argument('--maxsunalt', type=float, default=-18, help='Maximum allowable sun altitude')
     parser.add_argument('--fitorder', type=int, default=1, choices=[1,2], help='Fit order')
     parser.add_argument('--focus_temp_reference', type=float, default=None , help='Focus temp reference point')
