@@ -16,11 +16,11 @@ venv/bin/python -m pytest tests/test_Image.py tests/test_noisegain.py   # offlin
 - Tests depend on FITS files in `testdata/` that are **gitignored** (`*.fits`, `*.fits.fz`); they exist only on the developer's machine.
   - `tests/test_noisegain.py` runs the installed `noisegainmef` console script via subprocess on `testdata/ep60/` and compares output `.dat` tables against the tracked references in `testdata/ep60/ptc_data_*.dat`. Requires `pip install -e .` first.
   - `tests/test_archive.py` hits the live LCO archive/OpenSearch — network-dependent.
-- Version is set in `pyproject.toml`; record releases in `Changenotes` (newest first).
+- Version is set in `pyproject.toml`; record releases in `CHANGELOG` (newest first).
 
 ## Layout
 
-- `lcocommissioning/` — main package (flat layout, no `src/`, despite what `Changenotes` 2.2.1 says).
+- `lcocommissioning/` — main package (flat layout, no `src/`, despite what `CHANGELOG` 2.2.1 says).
   - `common/` — shared library code (see below).
   - Top level: detector analysis CLIs — `noisegainrawmef.py` (the core noise/gain/PTC tool), `crosstalk.py`, `bpm.py`, `flatfield_comparison.py`, dark-current / linearity scripts, `submitXtalkObservation.py`, `submitNameModeTest.py`.
   - Per-instrument subpackages: `focus/`, `cdk/` (Delta Rho / CDK), `muscat/`, `nres/`, `floyds/`, `sophia/`, `sbig/`, `archon/`, `cmostest/` (QHY CMOS; vendors the QHYCCD SDK + `.so` in `qhyccdpython/`), `gpstiming/`, `guide/`.
