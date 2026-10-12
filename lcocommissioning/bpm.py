@@ -106,7 +106,7 @@ def createbpmFromFlatextension (extdata):
 
 
 
-def showanextenstion(data,title=None, minx=None,maxx=None):
+def showanextension(data,title=None, minx=None,maxx=None):
     plt.imshow(data)
     if title is not None:
         plt.title(title)
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
         extensionaveraged = combineData(biasfiles, extension = ext)
         if args.showstackedinput:
-            showanextenstion(extensionaveraged, title="Stacked bias ext #%d" %ext)
+            showanextension(extensionaveraged, title="Stacked bias ext #%d" %ext)
         biasbpm = createbpmFromBiasextension(extensionaveraged, sigma = args.biassigma)
 
         darkbpm = None
@@ -170,7 +170,7 @@ if __name__ == '__main__':
         ).astype(np.uint8)
 
         if args.showbpmimages:
-            showanextenstion(outputdata[ext], title="Final BPM for ext #%d" %ext)
+            showanextension(outputdata[ext], title="Final BPM for ext #%d" %ext)
 
         nbad = sum (i > 0 for i in outputdata[ext].flatten())
         _logger.info ("Extension %d  has %d identified bad pixels." % (ext,nbad))
@@ -190,8 +190,8 @@ if __name__ == '__main__':
         hdul.append (hdu)
 
     # BANZAI legacy from pre-fzcompress
-    keywordd_to_ext1 = ['SITEID','INSTRUME','CCDSUM','DAY-OBS', 'DATE-OBS']
-    for key in keywordd_to_ext1:
+    keywords_to_ext1 = ['SITEID','INSTRUME','CCDSUM','DAY-OBS', 'DATE-OBS']
+    for key in keywords_to_ext1:
         _logger.debug ("Copy keyword %s to extension 1 for BANZAI" % key)
         #hdul[1].header[key] = referenceImage.header[key]
 

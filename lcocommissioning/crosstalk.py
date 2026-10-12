@@ -78,16 +78,16 @@ def iterative_model_fit(xdata, ydata, pinit, fit_function, sigclip=3.0):
     return afit, fitfunc, errfunc, stddev, idx
 
 
-def create_mask(image, extenstion, fluxmin, fluxmax):
+def create_mask(image, extension, fluxmin, fluxmax):
     """
     CValcualte a mask that contains all pixels in a quadrant that are within flux_min and flux_max level
-    :param extenstion:
+    :param extension:
     :param flux_min:
     :param flux_max:
     :return:
     """
 
-    region = image.getccddata(extenstion)
+    region = image.getccddata(extension)
     log.debug(f"Input datacube min max {region.min()} {region.max()}")
     maskidx = statistics.select_pixels_in_flux_range(region, fluxmin, fluxmax)
     if len(maskidx) == 0:

@@ -81,7 +81,7 @@ listofpm = {'HR9087'  : [18.844,    -9.700],
           }
 
 # have a list of cached coordinates so we do not always need to look it up
-listofchachedcoordiantes = {
+listofcachedcoordinates = {
     'HR9087': [0.4560297510252, -03.0275060205485],
     'HR1544': [72.6530124271, +8.9001803703],
     'HR3454': [130.8061458029, +03.3986629753],
@@ -127,8 +127,8 @@ def get_auto_target(targetlist, sitecode, starttime, moonseparation=29, minalt=4
     for starcandidate in targetlist:
         if 'auto' in starcandidate:
             continue
-        if starcandidate in listofchachedcoordiantes:
-            cradec = listofchachedcoordiantes[starcandidate]
+        if starcandidate in listofcachedcoordinates:
+            cradec = listofcachedcoordinates[starcandidate]
             radec = SkyCoord(cradec[0], cradec[1], unit='deg', frame='icrs', )
         else:
             radec = SkyCoord.from_name(starcandidate)

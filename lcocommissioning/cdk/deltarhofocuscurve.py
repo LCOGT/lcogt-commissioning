@@ -80,7 +80,7 @@ def overplot_fit(func, paramset, ax):
              label="sqrt {:5.2f}".format(paramset[3]) if func == sqrtfit else "parabola")
 
 
-def anaylse_deltarho_tilt(bestfits):
+def analyse_deltarho_tilt(bestfits):
 
     # Get rid of focus zeropoint, not relevant for us
     focuszeropoint = bestfits[4]
@@ -168,7 +168,7 @@ def main():
     focusdict = {}
     fwhmdict = {}
     thetadict = {}
-    ellipitictydict = {}
+    ellipticitydict = {}
 
     if '.pickle' in sys.argv[1]:
         analyse_tilts(sys.argv[1])
@@ -176,11 +176,11 @@ def main():
 
     for image in sys.argv[1:]:
         fwhmdict[image] = {}
-        focus, fwhm, theta, ellipiticty = getImageFWHM(image, minarea=5, sections=True)
+        focus, fwhm, theta, ellipticity = getImageFWHM(image, minarea=5, sections=True)
         focusdict[image] = focus
         fwhmdict[image] = fwhm
         thetadict[image] = theta
-        ellipitictydict[image] = ellipiticty
+        ellipticitydict[image] = ellipticity
         print (fwhmdict[image])
 
     cameratype = 'sq' if 'sq' in sys.argv[1] else 'fa'
@@ -263,7 +263,7 @@ def main():
         ellipticitylist = []
         for image in focusdict.keys():
             focuslist.append (focusdict[image])
-            ellipticitylist.append (ellipitictydict[image][section])
+            ellipticitylist.append (ellipticitydict[image][section])
         focuslist = np.asarray(focuslist)
         ellipticitylist = np.asarray(ellipticitylist)
         print ("Focus input: {} Ellipticity: {}".format (np.round(focuslist,3), np.round (ellipticitylist,3)))
@@ -327,7 +327,7 @@ def analyse_tilts(filename):
     with open(filename, 'rb') as f:
         bestfits = pickle.load(f)
     plt.figure()
-    anaylse_deltarho_tilt(bestfits)
+    analyse_deltarho_tilt(bestfits)
     plt.tight_layout()
     plt.savefig('deltarhofocus.pdf')
 

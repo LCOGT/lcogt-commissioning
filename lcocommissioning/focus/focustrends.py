@@ -80,7 +80,7 @@ def robustfit(x, y, sigma=3, iterations=3, label=None):
     return p
 
 
-def calulate_compensation(zdinput, tempinput, fitresult, tempref = 0):
+def calculate_compensation(zdinput, tempinput, fitresult, tempref = 0):
     ''' Convenience method to use a multi-linear fit result and apply it to data. '''
     deltaT = tempinput - tempref
     result =  fitresult[0] + fitresult[1] * zdinput + fitresult[2] * deltaT  + fitresult[3] * deltaT**2
@@ -109,7 +109,7 @@ def simultaneousfit(temp, coszd, focus, zdterm = None, focus_temp_reference=0, o
     for iter in range (5):
         popt, pcov, = curve_fit(fn, [coszd[goodvalues], temp[goodvalues]], focus[goodvalues], bounds=bounds)
         errors = np.sqrt(np.diag(pcov))  
-        residual = focus - calulate_compensation(coszd, temp, popt, tempref=focus_temp_reference)
+        residual = focus - calculate_compensation(coszd, temp, popt, tempref=focus_temp_reference)
         residualrms = np.std (residual[goodvalues])
         log.info(f'Multilinear fit result, N={np.sum (goodvalues)}: {popt} +/-  {errors}, measured rms {residualrms:5.2f}')
         goodvalues = np.abs(residual) < 2.2 * residualrms
@@ -250,7 +250,7 @@ def analysecamera(args, t=None, ):
     coszd = np.cos(t['ZD'] * math.pi / 180)
     temp = t['FOCTEMP']
     simfitresult, simfiterrors, goodvalues = simultaneousfit(temp, coszd, t['ACTFOCUS'], zdterm=0.15 if "1m0" in tel else None, order=args.fitorder, focus_temp_reference=args.focus_temp_reference)
-    fitted_focus = calulate_compensation(coszd, temp, simfitresult, tempref=args.focus_temp_reference)
+    fitted_focus = calculate_compensation(coszd, temp, simfitresult, tempref=args.focus_temp_reference)
     residual_focus = t['ACTFOCUS'] - fitted_focus
 
     # Now let's get some diagnostic plots.

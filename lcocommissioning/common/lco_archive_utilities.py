@@ -44,8 +44,8 @@ class ArchiveDiskCrawler:
         for site in sites:
             for camera in cameras:
                 dir = "{}/{}/{}".format(self.archive_root, site, camera)
-                candiates = glob.glob(dir)
-                sitecameras.extend(candiates)
+                candidates = glob.glob(dir)
+                sitecameras.extend(candidates)
         return sitecameras
 
     @staticmethod
@@ -60,8 +60,8 @@ class ArchiveDiskCrawler:
         return date[::-1]
 
     @staticmethod
-    def findfiles_for_camera_dates(sitecamera, date, raworprocessed, filetempalte, prefix=""):
-        dir = "{}{}/{}/{}/{}".format(prefix, sitecamera, date, raworprocessed, filetempalte)
+    def findfiles_for_camera_dates(sitecamera, date, raworprocessed, filetemplate, prefix=""):
+        dir = "{}{}/{}/{}/{}".format(prefix, sitecamera, date, raworprocessed, filetemplate)
         files = glob.glob(dir)
         if (files is not None) and (len(files) > 0):
             myfiles = np.asarray([[f, "-1"] for f in files])

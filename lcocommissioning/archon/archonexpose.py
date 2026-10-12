@@ -194,7 +194,7 @@ class archonexposure:
         log.debug ("Single flush complete")
 
 
-    def contniuousreadout (self, extraheader = None, filename = None, exptimems=0, nframes = 100):
+    def continuousreadout (self, extraheader = None, filename = None, exptimems=0, nframes = 100):
         """ Read out continuously and add up to a data cube"""
 
 
@@ -496,7 +496,7 @@ def main():
         if telescope is not None:
             telescope.openShutter()
 
-        archon.contniuousreadout(None, "continuous.fits", exptimems=args.exptimems, nframes=args.nvideo)
+        archon.continuousreadout(None, "continuous.fits", exptimems=args.exptimems, nframes=args.nvideo)
 
         if telescope is not None:
             telescope.closeShutter()

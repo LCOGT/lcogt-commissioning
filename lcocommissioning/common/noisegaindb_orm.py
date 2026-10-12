@@ -71,7 +71,7 @@ class noisegaindb():
         allrows = np.asarray([e.camera for e in q.all()])
         return allrows
 
-    def getReadmodesFroCamera(self, camera):
+    def getReadmodesForCamera(self, camera):
         q = self.session.query(NoiseGainMeasurement.readmode).filter(NoiseGainMeasurement.camera == camera).distinct()
         allrows = np.asarray([e.readmode for e in q.all()])
         return allrows
@@ -135,6 +135,6 @@ if __name__ == '__main__':
     # TODO: Move this stuff into a test routine
     c = noisegaindb('noisegain.sqlite')
     print(c.getCameras())
-    print(c.getReadmodesFroCamera('fa03'))
+    print(c.getReadmodesForCamera('fa03'))
     print(c.getMeasurementsForCamera('fa03', readmode='full_frame', filter=['gp', 'rp']))
     c.close()

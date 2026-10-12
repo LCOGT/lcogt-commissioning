@@ -50,9 +50,9 @@ def AnalyseFitsObject(FitsObject,where, width=None, ext='SCI'):
 
 def AnalyseFitsFile (fname,  where = 'center', width = None):
     fitsobject = fits.open(fname)
-    fraseconds, mean, std =  AnalyseFitsObject(fitsobject,where,width)
+    fracseconds, mean, std =  AnalyseFitsObject(fitsobject,where,width)
     fitsobject.close()
-    return fraseconds, mean,std
+    return fracseconds, mean,std
 
 
 def parseCommandLine():

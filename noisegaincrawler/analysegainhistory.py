@@ -157,7 +157,7 @@ def make_plots_for_camera(camera, args, database):
 
     filenames = []
     outputdir = args.outputdir
-    _logger.info("readmodes: {} {}".format(camera, database.getReadmodesFroCamera(camera)))
+    _logger.info("readmodes: {} {}".format(camera, database.getReadmodesForCamera(camera)))
     readmodes = [None, ]
 
     starttime = starttimeall

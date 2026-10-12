@@ -101,7 +101,7 @@ def plotLHFunction (x, params, inputname):
 
 
 
-def findditributionparamters(xvec, popt):
+def finddistributionparameters(xvec, popt):
     """ derive the RTN coefficients for a series of readouts based on a maximum likelihood fit.
         popt: 0-> overall scale
               1 -> x0
@@ -125,9 +125,9 @@ def findx0(xvec, A, sigma, leftscale,rightscale, delta,leftscale2,rightscale2,de
     For CMOS RTS: If we have the same exposure level on a given pixel, and N readouts, what is the most likely occurrence?
     """
 
-    def lnprob(paramters, mydata):
+    def lnprob(parameters, mydata):
         # print (f"parameters: {parameters} data: {xvec}")
-        x0 = paramters[0]
+        x0 = parameters[0]
         return -1 * summed_ln_likelihood_5(mydata, A, x0, sigma, leftscale, rightscale, delta,leftscale2,rightscale2,delta2)
 
     guess = [np.mean(xvec), ]
@@ -261,7 +261,7 @@ def analyseandplotdata(minvec, probevec, name=None):
     plt.xlabel ("Signal [ADU]")
 
     # Now do an unbinned fit
-    res=findditributionparamters(probevec, popt_probe)
+    res=finddistributionparameters(probevec, popt_probe)
 
     xbase = np.arange(np.min(probevec)-20, np.max(probevec)+20,1)
     if (False):

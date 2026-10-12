@@ -190,11 +190,11 @@ def parseCommandLine():
 
 def main():
     args = parseCommandLine()
-    requstgroup = createRequest(args)
+    requestgroup = createRequest(args)
     if not args.direct:
-        common.send_request_to_portal(requstgroup, args.opt_confirmed)
+        common.send_request_to_portal(requestgroup, args.opt_confirmed)
     else:
-        directrequest = convert_request_for_direct_submission(requstgroup,args)
+        directrequest = convert_request_for_direct_submission(requestgroup,args)
         _logger.info(f"Attempting direct submission {directrequest['start']} {directrequest['end']}")
         _logger.debug(json.dumps(directrequest, indent=2))
         common.submit_request_group(directrequest, args.opt_confirmed)
