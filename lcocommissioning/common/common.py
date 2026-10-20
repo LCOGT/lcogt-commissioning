@@ -181,7 +181,11 @@ def send_request_to_portal(requestgroup, dosubmit=False, url="https://observe.lc
     try:
         response.raise_for_status()
     except requests.exceptions.HTTPError as exc:
-        print(f'API call failed: {json.dumps(json.loads(response.content),indent=2)}')
+        try:
+            detail = json.dumps(response.json(), indent=2)
+        except ValueError:  # error body is not JSON, e.g. an HTML error page
+            detail = response.text[:2000]
+        print(f'API call failed: HTTP {response.status_code} {response.reason}\n{detail}')
         return
 
     requestgroup_dict = response.json()  # The API will return the newly submitted requestgroup as json
